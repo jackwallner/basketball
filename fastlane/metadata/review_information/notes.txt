@@ -1,0 +1,16 @@
+The App Store name is Basketball Next: StatScout. The app is named Hardwood StatScout in-app and StatScout on the Home Screen. It is a read-only NBA statistics viewer with no accounts or sign-in.
+
+Core flow:
+1. Launch the app and open the Stats tab for current-season player rankings.
+2. Filter by position group (Guards, Forwards, Centers), choose a statistic, and open a player profile for percentile rankings, standard stats, bio, and game log.
+3. Open Games for the schedule, posted scores, box scores, and advanced four-factor breakdowns.
+4. Open Teams for records, standings, team ratings, and projected margins.
+5. Following, player comparisons, Trends, Recent Form, and historical views are available from their tabs or player/team pages.
+
+StatScout+ features (IAP via RevenueCat):
+- Trends, Recent Form, player comparisons, team scouting, historical seasons back to 2002-03, and All-Time career percentiles
+- Restore Purchases is available in Settings; purchases can be tested with an Apple sandbox account
+
+Data: public ESPN box scores mirrored by the open-source hoopR project, refreshed throughout the day. Not affiliated with the NBA, any NBA team, or the NBPA. No league, team, or player imagery is used.
+
+The app has no accounts, social features, live scores, play-by-play, betting odds, wagers, or fantasy team management. Game projections are informational estimates, not betting odds.

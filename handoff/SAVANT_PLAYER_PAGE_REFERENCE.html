@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>StatScout — Savant Visual Reference</title>
+<style>
+  :root {
+    --canvas: #F5F5F5;
+    --surface: #FFFFFF;
+    --surface-alt: #F7F7F8;
+    --surface-sunk: #ECECEE;
+    --hairline: #DBDBDD;
+    --divider: #E8E8EA;
+    --ink: #1A1A1C;
+    --ink-2: #5C5C63;
+    --ink-3: #8C8C93;
+    --navy: #102152;
+    --red: #C71A21;
+    --link: #005CB0;
+    --pctl-hot: #D22D2F;
+    --pctl-mid: #BFBFBF;
+    --pctl-cold: #3661AD;
+    --up: #29873F;
+    --down: #C71A21;
+  }
+
+  html, body {
+    margin: 0;
+    background: #2a2a2e;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .doc-header {
+    color: #ddd;
+    padding: 32px 40px 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+  .doc-header h1 { margin: 0 0 4px; font-size: 22px; }
+  .doc-header p { margin: 0; color: #aaa; font-weight: 500; font-size: 13px; }
+
+  .stage {
+    display: flex;
+    gap: 32px;
+    padding: 24px 40px 80px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .frame-col { display: flex; flex-direction: column; gap: 12px; }
+  .frame-label {
+    color: #ddd;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  /* iPhone-width frame: 390 logical px content area */
+  .iphone {
+    width: 390px;
+    background: var(--canvas);
+    border-radius: 38px;
+    padding: 14px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    border: 1px solid #1a1a1e;
+  }
+  .iphone-screen {
+    width: 100%;
+    background: var(--canvas);
+    border-radius: 26px;
+    overflow: hidden;
+    height: 1500px;
+    overflow-y: auto;
+    position: relative;
+  }
+  .iphone-screen.short { height: 1100px; }
+
+  /* status bar */
+  .statusbar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    background: var(--navy);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .statusbar .right { display: flex; gap: 6px; align-items: center; opacity: 0.9; font-size: 12px; }
+
+  /* App header band (savant wordmark) */
+  .app-header {
+    height: 56px;
+    background: var(--navy);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+  }
+  .wordmark {
+    font-style: italic;
+    font-weight: 900;
+    color: #fff;
+    font-size: 26px;
+    letter-spacing: -0.5px;
+  }
+  .wordmark sup {
+    font-size: 9px;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: rgba(255,255,255,0.65);
+    margin-left: 6px;
+    vertical-align: 6px;
+  }
+  .app-tag {
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 2px;
+    padding: 4px 8px;
+    color: rgba(255,255,255,0.92);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+
+  /* Breadcrumb strip */
+  .breadcrumbs {
+    background: var(--surface);
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border-bottom: 0.5px solid var(--hairline);
+  }
+  .breadcrumbs .sep { color: var(--ink-3); }
+  .breadcrumbs .crumb { color: var(--ink-2); }
+  .breadcrumbs .crumb.active { color: var(--ink); }
+
+  /* Identity strip */
+  .identity-strip {
+    background: var(--navy);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #fff;
+  }
+  .headshot {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #d6d6d6 url('https://midfield.mlbstatic.com/v1/people/592450/spots/240') center/cover no-repeat;
+    border: 2px solid #fff;
+    flex-shrink: 0;
+  }
+  .headshot.ohtani { background-image: url('https://midfield.mlbstatic.com/v1/people/660271/spots/240'); }
+  .headshot.witt { background-image: url('https://midfield.mlbstatic.com/v1/people/677951/spots/240'); }
+  .headshot.skenes { background-image: url('https://midfield.mlbstatic.com/v1/people/694973/spots/240'); }
+  .headshot.sm { width: 36px; height: 36px; border: 0.5px solid var(--hairline); }
+  .headshot.xs { width: 28px; height: 28px; border: 0.5px solid var(--hairline); }
+  .identity-strip .name {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.3px;
+  }
+  .identity-strip .team {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.88);
+    margin-top: 4px;
+  }
+  .identity-strip .meta {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    margin-top: 2px;
+  }
+  .identity-strip .meta .dot { color: rgba(255,255,255,0.35); padding: 0 4px; }
+
+  .pctl-badge {
+    width: 64px; height: 64px;
+    border-radius: 2px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .pctl-badge .num { font-size: 28px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+  .pctl-badge .lbl { font-size: 9px; font-weight: 800; letter-spacing: 0.7px; opacity: 0.88; margin-top: 4px; }
+
+  /* Tab bar */
+  .tabbar {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--hairline);
+    display: flex;
+    overflow-x: auto;
+  }
+  .tabbar .tab {
+    padding: 14px 16px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ink-3);
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tabbar .tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--red);
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--hairline);
+    border-radius: 4px;
+    margin: 12px 12px 0;
+    overflow: hidden;
+  }
+  .card.flush { margin: 0; border-radius: 0; border-left: 0; border-right: 0; }
+
+  /* Section bar */
+  .section-bar {
+    height: 28px;
+    background: var(--surface-sunk);
+    display: flex;
+    align-items: center;
+    border-left: 2px solid var(--red);
+    padding: 0 12px;
+    justify-content: space-between;
+  }
+  .section-bar .title {
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--ink);
+  }
+  .section-bar .trail {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ink-2);
+    display: flex; align-items: center; gap: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Sub section header (smaller, inside percentile rankings) */
+  .subsection-bar {
+    height: 26px;
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--divider);
+    padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .subsection-bar .title {
+    font-size: 11px; font-weight: 900; letter-spacing: 0.6px; text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .subsection-bar .avg {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Metric bar row */
+  .metric-row {
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--divider);
+  }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .metric-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    flex: 1;
+  }
+  .metric-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+    min-width: 64px;
+    text-align: right;
+  }
+  .metric-pctl {
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    width: 32px;
+    text-align: right;
+  }
+  .metric-bar {
+    position: relative;
+    height: 12px;
+  }
+  .metric-bar .track {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%; transform: translateY(-50%);
+    height: 4px;
+    background: var(--hairline);
+    border-radius: 2px;
+  }
+  .metric-bar .midline {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 1px; height: 10px;
+    background: var(--ink-3);
+  }
+  .metric-bar .marker {
+    position: absolute;
+    top: 50%;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid #fff;
+    box-sizing: content-box;
+  }
+
+  /* Standard stats grid */
+  .kvp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .kvp {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--divider);
+    border-right: 0.5px solid var(--divider);
+    font-size: 13px;
+  }
+  .kvp:nth-child(2n) { border-right: none; }
+  .kvp:nth-last-child(-n+2) { border-bottom: none; }
+  .kvp .k { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink-3); }
+  .kvp .v { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  /* Tables */
+  .table-header, .table-row {
+    display: grid;
+    align-items: center;
+    padding: 0 12px;
+  }
+  .table-header {
+    height: 28px;
+    background: var(--surface-alt);
+    border-bottom: 0.5px solid var(--divider);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .table-row {
+    height: 56px;
+    border-bottom: 0.5px solid var(--divider);
+  }
+  .table-row:nth-child(even) { background: var(--surface-alt); }
+  .table-row:last-child { border-bottom: none; }
+
+  .col-r { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* Game-by-game cols */
+  .gbg-grid { grid-template-columns: 60px 44px 56px 1fr; gap: 8px; }
+  .gbg-grid .delta-up { color: var(--up); font-weight: 800; }
+  .gbg-grid .delta-down { color: var(--down); font-weight: 800; }
+
+  /* Leaderboard cols (dashboard) */
+  .lb-grid { grid-template-columns: 24px 1fr 56px 92px 28px; gap: 8px; }
+  .lb-grid .player {
+    display: flex; align-items: center; gap: 10px; min-width: 0;
+  }
+  .lb-grid .player .stack {
+    display: flex; flex-direction: column; min-width: 0;
+  }
+  .lb-grid .player .name {
+    font-size: 14px; font-weight: 700; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lb-grid .player .team-line {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 700;
+    color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .lb-grid .player .team-line .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+
+  .lb-bar {
+    position: relative; height: 18px;
+  }
+  .lb-bar .track {
+    position: absolute; left: 0; right: 0; top: 50%;
+    height: 4px; background: var(--hairline);
+    border-radius: 2px; transform: translateY(-50%);
+  }
+  .lb-bar .midline {
+    position: absolute; left: 50%; top: 50%;
+    width: 1px; height: 8px; background: var(--ink-3);
+    transform: translate(-50%,-50%);
+  }
+  .lb-bar .marker {
+    position: absolute; top: 50%;
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 1.5px solid #fff;
+    transform: translate(-50%,-50%);
+  }
+
+  /* Filter pill row */
+  .filter-row {
+    background: var(--surface);
+    padding: 12px 16px;
+    display: flex; gap: 8px; align-items: center;
+    border-bottom: 0.5px solid var(--hairline);
+  }
+  .pill {
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    background: #fff;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .pill.flex { flex: 1; }
+  .pill .chev { color: var(--ink-2); font-size: 10px; }
+  .pill.cta {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-size: 11px;
+    padding: 0 14px;
+    margin-left: auto;
+  }
+
+  /* Featured strip */
+  .featured-strip {
+    background: var(--surface-alt);
+    padding: 14px 12px;
+    display: flex; gap: 10px;
+    overflow-x: auto;
+    border-bottom: 0.5px solid var(--hairline);
+  }
+  .featured-tile {
+    width: 240px;
+    height: 80px;
+    background: #fff;
+    border: 0.5px solid var(--hairline);
+    border-radius: 4px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    flex-shrink: 0;
+  }
+  .featured-tile .info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .featured-tile .name { font-size: 14px; font-weight: 800; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .featured-tile .team-line {
+    font-size: 10px; font-weight: 700; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: 0.4px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .featured-tile .headline {
+    margin-top: 4px;
+    font-size: 11px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* small percentile-colored chip */
+  .pctl-chip {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.3px;
+  }
+
+  /* Glyphs */
+  .arrow-up::before { content: "▲"; font-size: 9px; margin-right: 2px; }
+  .arrow-down::before { content: "▼"; font-size: 9px; margin-right: 2px; }
+
+  /* Dot for team colors */
+  .td-NYY { background: #003087; }
+  .td-LAD { background: #005A9C; }
+  .td-KC  { background: #004687; }
+  .td-PIT { background: #FDB827; }
+  .td-BOS { background: #BD3039; }
+  .td-TB  { background: #092C5C; }
+  .td-DET { background: #0C2C56; }
+  .td-CLE { background: #0C2340; }
+  .td-CHC { background: #0E3386; }
+  .td-MIL { background: #12284B; }
+  .td-SF  { background: #FD5A1E; }
+  .td-SD  { background: #2F241D; }
+  .td-CHC { background: #0E3386; }
+
+  /* annotations */
+  .annot {
+    color: #ccc;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .annot-h {
+    color: #ccc;
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .annot-list {
+    color: #aaa;
+    font-size: 11px;
+    line-height: 1.5;
+    max-width: 360px;
+  }
+  .annot-list code {
+    background: #1f1f23;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    color: #ddd;
+  }
+
+  /* Token swatches */
+  .tokens {
+    background: #1f1f23;
+    color: #eee;
+    padding: 24px 32px;
+    margin: 0 40px 60px;
+    border-radius: 8px;
+  }
+  .tokens h2 {
+    font-size: 14px;
+    margin: 0 0 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #ddd;
+  }
+  .swatches { display: flex; flex-wrap: wrap; gap: 14px; }
+  .sw {
+    background: #2a2a2e;
+    border-radius: 4px;
+    padding: 12px;
+    width: 130px;
+    border: 0.5px solid #3a3a40;
+  }
+  .sw .chip {
+    width: 100%; height: 36px;
+    border-radius: 3px; margin-bottom: 8px;
+    border: 0.5px solid rgba(255,255,255,0.08);
+  }
+  .sw .name { font-size: 11px; font-weight: 700; color: #ddd; }
+  .sw .hex { font-size: 10px; color: #888; font-family: monospace; }
+
+  /* Percentile gradient strip demo */
+  .gradient-demo {
+    margin-top: 18px;
+    padding: 16px;
+    background: #2a2a2e;
+    border-radius: 4px;
+  }
+  .gradient-demo .strip {
+    height: 16px; border-radius: 8px;
+    background: linear-gradient(to right, #3661AD 0%, #BFBFBF 50%, #D22D2F 100%);
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .gradient-demo .ticks {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: #aaa; font-family: monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <h1>STATSCOUT — SAVANT PLAYER PAGE VISUAL REFERENCE</h1>
+  <p>Pixel-accurate target for the iOS rebuild · open alongside STATSCOUT_SAVANT_HANDOFF.md</p>
+</div>
+
+<div class="stage">
+
+  <!-- ============== FRAME 1: PLAYER PROFILE ============== -->
+  <div class="frame-col">
+    <div class="frame-label">PlayerProfileView · the canonical Savant page</div>
+    <div class="iphone">
+      <div class="iphone-screen">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="right">●●●●● <span style="opacity:0.6">5G</span> ▮</span>
+        </div>
+
+        <!-- Identity strip -->
+        <div class="identity-strip">
+          <div class="headshot"></div>
+          <div style="flex: 1; min-width: 0;">
+            <div class="name">Aaron Judge</div>
+            <div class="team">New York Yankees</div>
+            <div class="meta">RF<span class="dot">·</span>R/R<span class="dot">·</span>2026</div>
+          </div>
+          <div class="pctl-badge" style="background:#D22D2F">
+            <div class="num">90</div>
+            <div class="lbl">PCTL</div>
+          </div>
+        </div>
+
+        <!-- Tab bar -->
+        <div class="tabbar">
+          <div class="tab">Standard</div>
+          <div class="tab active">Statcast</div>
+          <div class="tab">Game Logs</div>
+          <div class="tab">Splits</div>
+        </div>
+
+        <!-- Percentile rankings card -->
+        <div class="card">
+          <div class="section-bar">
+            <span class="title">Percentile Rankings</span>
+            <span class="trail">2026 ⓘ</span>
+          </div>
+
+          <div class="subsection-bar">
+            <span class="title">Hitting</span>
+            <span class="avg" style="color:#D22D2F">AVG 100</span>
+          </div>
+          <div class="metric-row">
+            <div class="metric-head">
+              <span class="metric-label">xwOBA</span>
+              <span class="metric-value">.463</span>
+              <span class="metric-pctl" style="color:#D22D2F">100</span>
+            </div>
+            <div class="metric-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 99%; background:#D22D2F"></div>
+            </div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-head">
+              <span class="metric-label">Avg Exit Velocity</span>
+              <span class="metric-value">96.2 mph</span>
+              <span class="metric-pctl" style="color:#D22D2F">100</span>
+            </div>
+            <div class="metric-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 99%; background:#D22D2F"></div>
+            </div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-head">
+              <span class="metric-label">Barrel %</span>
+              <span class="metric-value">26.9%</span>
+              <span class="metric-pctl" style="color:#D22D2F">100</span>
+            </div>
+            <div class="metric-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 99%; background:#D22D2F"></div>
+            </div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-head">
+              <span class="metric-label">Hard-Hit %</span>
+              <span class="metric-value">55.4%</span>
+              <span class="metric-pctl" style="color:#CB3733">97</span>
+            </div>
+            <div class="metric-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 97%; background:#CB3733"></div>
+            </div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-head">
+              <span class="metric-label">Chase %</span>
+              <span class="metric-value">21.3%</span>
+              <span class="metric-pctl" style="color:#A95246">82</span>
+            </div>
+            <div class="metric-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 82%; background:#A95246"></div>
+            </div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-head">
+              <span class="metric-label">Whiff %</span>
+              <span class="metric-value">28.5%</span>
+              <span class="metric-pctl" style="color:#7C7474">52</span>
+            </div>
+            <div class="metric-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 52%; background:#7C7474"></div>
+            </div>
+          </div>
+
+          <div class="subsection-bar">
+            <span class="title">Running</span>
+            <span class="avg" style="color:#7C7474">AVG 58</span>
+          </div>
+          <div class="metric-row">
+            <div class="metric-head">
+              <span class="metric-label">Sprint Speed</span>
+              <span class="metric-value">27.2 ft/s</span>
+              <span class="metric-pctl" style="color:#807575">58</span>
+            </div>
+            <div class="metric-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 58%; background:#807575"></div>
+            </div>
+          </div>
+
+          <div class="subsection-bar">
+            <span class="title">Fielding</span>
+            <span class="avg" style="color:#998080">68</span>
+          </div>
+          <div class="metric-row">
+            <div class="metric-head">
+              <span class="metric-label">OAA</span>
+              <span class="metric-value">+4</span>
+              <span class="metric-pctl" style="color:#998080">68</span>
+            </div>
+            <div class="metric-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 68%; background:#998080"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Standard stats card -->
+        <div class="card">
+          <div class="section-bar">
+            <span class="title">Standard Stats · 2026</span>
+          </div>
+          <div class="kvp-grid">
+            <div class="kvp"><span class="k">xwOBA</span><span class="v">.463</span></div>
+            <div class="kvp"><span class="k">Avg EV</span><span class="v">96.2</span></div>
+            <div class="kvp"><span class="k">Barrel%</span><span class="v">26.9</span></div>
+            <div class="kvp"><span class="k">Hard-Hit%</span><span class="v">55.4</span></div>
+            <div class="kvp"><span class="k">Chase%</span><span class="v">21.3</span></div>
+            <div class="kvp"><span class="k">Sprint</span><span class="v">27.2</span></div>
+          </div>
+        </div>
+
+        <!-- Recent games -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="section-bar">
+            <span class="title">Game-by-Game</span>
+          </div>
+          <div class="table-header gbg-grid">
+            <span>Date</span>
+            <span>Opp</span>
+            <span class="col-r">Δ Pctl</span>
+            <span>Key Metric</span>
+          </div>
+          <div class="table-row gbg-grid">
+            <span style="font-size:12px;font-weight:600;color:var(--ink-2)">Apr 25</span>
+            <span style="font-size:12px;font-weight:700">BOS</span>
+            <span class="col-r delta-up arrow-up">+3</span>
+            <span style="font-size:12px;font-weight:700">Barrel%</span>
+          </div>
+          <div class="table-row gbg-grid">
+            <span style="font-size:12px;font-weight:600;color:var(--ink-2)">Apr 24</span>
+            <span style="font-size:12px;font-weight:700">TB</span>
+            <span class="col-r delta-up arrow-up">+1</span>
+            <span style="font-size:12px;font-weight:700">xwOBA</span>
+          </div>
+          <div class="table-row gbg-grid">
+            <span style="font-size:12px;font-weight:600;color:var(--ink-2)">Apr 23</span>
+            <span style="font-size:12px;font-weight:700">TB</span>
+            <span class="col-r delta-down arrow-down">-2</span>
+            <span style="font-size:12px;font-weight:700">Hard-Hit%</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="annot-list">
+      Identity strip = navy <code>#102152</code>, 72pt headshot, percentile pill in continuous gradient color.<br>
+      Tab bar = inline underline (no pills) with 2pt red active indicator.<br>
+      Section bar = 28pt, surface-sunk bg, 2pt red leading edge.<br>
+      Metric rows = 12pt circle marker on 4pt gray track + 50th-percentile midline.
+    </div>
+  </div>
+
+  <!-- ============== FRAME 2: DASHBOARD ============== -->
+  <div class="frame-col">
+    <div class="frame-label">DashboardView · same modules, leaderboard-first</div>
+    <div class="iphone">
+      <div class="iphone-screen">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="right">●●●●● <span style="opacity:0.6">5G</span> ▮</span>
+        </div>
+
+        <div class="app-header">
+          <div class="wordmark">savant<sup>STATSCOUT</sup></div>
+          <div class="app-tag">v1.0</div>
+        </div>
+        <div class="breadcrumbs">
+          <span class="crumb">Leaderboard</span>
+          <span class="sep">›</span>
+          <span class="crumb active">Percentile Rankings</span>
+        </div>
+
+        <!-- Filter row -->
+        <div class="filter-row">
+          <div class="pill">Batters <span class="chev">▾</span></div>
+          <div class="pill">All Teams <span class="chev">▾</span></div>
+          <div class="pill">2026 <span class="chev">▾</span></div>
+          <div class="pill cta">Update</div>
+        </div>
+
+        <!-- Category tabs -->
+        <div class="tabbar">
+          <div class="tab active">All</div>
+          <div class="tab">Hitting</div>
+          <div class="tab">Pitching</div>
+          <div class="tab">Fielding</div>
+          <div class="tab">Running</div>
+        </div>
+
+        <!-- Featured strip -->
+        <div class="featured-strip">
+          <div class="featured-tile">
+            <div class="headshot sm"></div>
+            <div class="info">
+              <div class="name">Aaron Judge</div>
+              <div class="team-line"><span class="dot td-NYY"></span>NYY · RF</div>
+              <div class="headline" style="color:#D22D2F">xwOBA .463 · 100 PCTL</div>
+            </div>
+          </div>
+          <div class="featured-tile">
+            <div class="headshot sm ohtani"></div>
+            <div class="info">
+              <div class="name">Shohei Ohtani</div>
+              <div class="team-line"><span class="dot td-LAD"></span>LAD · DH</div>
+              <div class="headline" style="color:#D22D2F">xSLG .676 · 100 PCTL</div>
+            </div>
+          </div>
+          <div class="featured-tile">
+            <div class="headshot sm witt"></div>
+            <div class="info">
+              <div class="name">Bobby Witt Jr.</div>
+              <div class="team-line"><span class="dot td-KC"></span>KC · SS</div>
+              <div class="headline" style="color:#D22D2F">Sprint 30.5 · 100 PCTL</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leaderboard table -->
+        <div class="card flush">
+          <div class="section-bar">
+            <span class="title">Leaderboard</span>
+            <span class="trail">8 players</span>
+          </div>
+          <div class="table-header lb-grid">
+            <span class="col-r">#</span>
+            <span>Player</span>
+            <span class="col-r">Val</span>
+            <span>Pctl</span>
+            <span class="col-r">·</span>
+          </div>
+
+          <div class="table-row lb-grid">
+            <span class="col-r" style="font-size:12px;font-weight:700;color:var(--ink-2)">1</span>
+            <div class="player">
+              <div class="headshot sm"></div>
+              <div class="stack">
+                <div class="name">Aaron Judge</div>
+                <div class="team-line"><span class="dot td-NYY"></span>NYY · RF</div>
+              </div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800">.463</span>
+            <div class="lb-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 99%; background:#D22D2F"></div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800;color:#D22D2F">100</span>
+          </div>
+
+          <div class="table-row lb-grid">
+            <span class="col-r" style="font-size:12px;font-weight:700;color:var(--ink-2)">2</span>
+            <div class="player">
+              <div class="headshot sm ohtani"></div>
+              <div class="stack">
+                <div class="name">Shohei Ohtani</div>
+                <div class="team-line"><span class="dot td-LAD"></span>LAD · DH</div>
+              </div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800">.676</span>
+            <div class="lb-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 96%; background:#CE3132"></div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800;color:#CE3132">96</span>
+          </div>
+
+          <div class="table-row lb-grid">
+            <span class="col-r" style="font-size:12px;font-weight:700;color:var(--ink-2)">3</span>
+            <div class="player">
+              <div class="headshot sm witt"></div>
+              <div class="stack">
+                <div class="name">Bobby Witt Jr.</div>
+                <div class="team-line"><span class="dot td-KC"></span>KC · SS</div>
+              </div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800">30.5</span>
+            <div class="lb-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 94%; background:#CC332F"></div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800;color:#CC332F">94</span>
+          </div>
+
+          <div class="table-row lb-grid">
+            <span class="col-r" style="font-size:12px;font-weight:700;color:var(--ink-2)">4</span>
+            <div class="player">
+              <div class="headshot sm skenes"></div>
+              <div class="stack">
+                <div class="name">Paul Skenes</div>
+                <div class="team-line"><span class="dot td-PIT"></span>PIT · SP</div>
+              </div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800">98.8</span>
+            <div class="lb-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 93%; background:#C9342B"></div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800;color:#C9342B">93</span>
+          </div>
+
+          <div class="table-row lb-grid">
+            <span class="col-r" style="font-size:12px;font-weight:700;color:var(--ink-2)">5</span>
+            <div class="player">
+              <div class="headshot sm" style="background-image:url('https://midfield.mlbstatic.com/v1/people/665742/spots/240')"></div>
+              <div class="stack">
+                <div class="name">Juan Soto</div>
+                <div class="team-line"><span class="dot td-NYY"></span>NYY · RF</div>
+              </div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800">.421</span>
+            <div class="lb-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 88%; background:#B73E36"></div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800;color:#B73E36">88</span>
+          </div>
+
+          <div class="table-row lb-grid">
+            <span class="col-r" style="font-size:12px;font-weight:700;color:var(--ink-2)">6</span>
+            <div class="player">
+              <div class="headshot sm" style="background-image:url('https://midfield.mlbstatic.com/v1/people/605141/spots/240')"></div>
+              <div class="stack">
+                <div class="name">Mookie Betts</div>
+                <div class="team-line"><span class="dot td-LAD"></span>LAD · 2B</div>
+              </div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800">.394</span>
+            <div class="lb-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 76%; background:#B25844"></div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800;color:#B25844">76</span>
+          </div>
+
+          <div class="table-row lb-grid">
+            <span class="col-r" style="font-size:12px;font-weight:700;color:var(--ink-2)">7</span>
+            <div class="player">
+              <div class="headshot sm" style="background-image:url('https://midfield.mlbstatic.com/v1/people/596142/spots/240')"></div>
+              <div class="stack">
+                <div class="name">Ronald Acuña Jr.</div>
+                <div class="team-line"><span class="dot td-NYY" style="background:#CE1141"></span>ATL · RF</div>
+              </div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800">.358</span>
+            <div class="lb-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 62%; background:#9B7773"></div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800;color:#9B7773">62</span>
+          </div>
+
+          <div class="table-row lb-grid">
+            <span class="col-r" style="font-size:12px;font-weight:700;color:var(--ink-2)">8</span>
+            <div class="player">
+              <div class="headshot sm" style="background-image:url('https://midfield.mlbstatic.com/v1/people/665487/spots/240')"></div>
+              <div class="stack">
+                <div class="name">Fernando Tatis Jr.</div>
+                <div class="team-line"><span class="dot td-NYY" style="background:#2F241D"></span>SD · RF</div>
+              </div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800">.310</span>
+            <div class="lb-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 38%; background:#7B7B86"></div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800;color:#7B7B86">38</span>
+          </div>
+
+          <div class="table-row lb-grid">
+            <span class="col-r" style="font-size:12px;font-weight:700;color:var(--ink-2)">9</span>
+            <div class="player">
+              <div class="headshot sm" style="background-image:url('https://midfield.mlbstatic.com/v1/people/673357/spots/240')"></div>
+              <div class="stack">
+                <div class="name">Vladimir Guerrero Jr.</div>
+                <div class="team-line"><span class="dot td-NYY" style="background:#134A8E"></span>TOR · 1B</div>
+              </div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800">.278</span>
+            <div class="lb-bar">
+              <div class="track"></div>
+              <div class="midline"></div>
+              <div class="marker" style="left: 22%; background:#5C739B"></div>
+            </div>
+            <span class="col-r" style="font-size:13px;font-weight:800;color:#5C739B">22</span>
+          </div>
+
+        </div>
+
+        <div style="height: 24px;"></div>
+
+      </div>
+    </div>
+    <div class="annot-list">
+      Same six modules — composed differently. Filter row replaces the old red Random Player capsule. Featured strip is a thin horizontal scroll on <code>surface-alt</code>. Leaderboard is one true table, edge-to-edge, hairlines + zebra. Each row's percentile is its own mini bar.
+    </div>
+  </div>
+</div>
+
+<!-- ============== TOKENS ============== -->
+<div class="tokens">
+  <h2>Color Tokens</h2>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#F5F5F5"></div><div class="name">canvas</div><div class="hex">#F5F5F5</div></div>
+    <div class="sw"><div class="chip" style="background:#FFFFFF"></div><div class="name">surface</div><div class="hex">#FFFFFF</div></div>
+    <div class="sw"><div class="chip" style="background:#F7F7F8"></div><div class="name">surface-alt</div><div class="hex">#F7F7F8</div></div>
+    <div class="sw"><div class="chip" style="background:#ECECEE"></div><div class="name">surface-sunk</div><div class="hex">#ECECEE</div></div>
+    <div class="sw"><div class="chip" style="background:#DBDBDD"></div><div class="name">hairline</div><div class="hex">#DBDBDD</div></div>
+    <div class="sw"><div class="chip" style="background:#1A1A1C"></div><div class="name">ink</div><div class="hex">#1A1A1C</div></div>
+    <div class="sw"><div class="chip" style="background:#5C5C63"></div><div class="name">ink-secondary</div><div class="hex">#5C5C63</div></div>
+    <div class="sw"><div class="chip" style="background:#8C8C93"></div><div class="name">ink-tertiary</div><div class="hex">#8C8C93</div></div>
+    <div class="sw"><div class="chip" style="background:#102152"></div><div class="name">savant-navy</div><div class="hex">#102152</div></div>
+    <div class="sw"><div class="chip" style="background:#C71A21"></div><div class="name">savant-red</div><div class="hex">#C71A21</div></div>
+    <div class="sw"><div class="chip" style="background:#D22D2F"></div><div class="name">pctl-hot</div><div class="hex">#D22D2F</div></div>
+    <div class="sw"><div class="chip" style="background:#BFBFBF"></div><div class="name">pctl-mid</div><div class="hex">#BFBFBF</div></div>
+    <div class="sw"><div class="chip" style="background:#3661AD"></div><div class="name">pctl-cold</div><div class="hex">#3661AD</div></div>
+    <div class="sw"><div class="chip" style="background:#29873F"></div><div class="name">up</div><div class="hex">#29873F</div></div>
+  </div>
+
+  <div class="gradient-demo">
+    <div class="annot-h" style="margin-bottom:10px;">Continuous Percentile Gradient · cold → mid → hot</div>
+    <div class="strip"></div>
+    <div class="ticks">
+      <span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span><span>70</span><span>80</span><span>90</span><span>100</span>
+    </div>
+    <div class="annot" style="color:#aaa; margin-top:10px;">
+      Every percentile-tinted element in the app interpolates through these three stops.
+      Use <code style="background:#1f1f23;padding:1px 4px;border-radius:3px;font-family:monospace;color:#ddd;">SavantPalette.color(forPercentile:)</code> — never hardcode 4-step thresholds.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
