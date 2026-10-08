@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Export current and historical NFL snapshots from Supabase for the iOS bundle.
+"""Export current and historical NBA snapshots from Supabase for the iOS bundle.
 
 Ahead of a September rollover, run this with next season's number to fold the
 outgoing season into the historical archive before it becomes historical:
 
-    STATCAST_SEASON=2026 python3 scripts/export_historical.py --historical-only
+    STATCAST_SEASON=2027 python3 scripts/export_historical.py --historical-only
 
 `--historical-only` is what makes that safe. The current-season export would
 otherwise go looking for a season that has not kicked off yet and fail
@@ -16,36 +16,38 @@ calendar catches up), so the build can ship months early.
 import argparse
 import json
 import os
-import subprocess
+import plistlib
 import time
 import urllib.parse
 import urllib.request
 from collections import Counter
-from datetime import date
+from datetime import date, datetime, timezone
 
 
 def _resolve_season() -> int:
     """The season the pipeline is currently writing.
 
     Same rule as backend/ingest.py::resolve_season and the app's
-    StatScoutSeason.current: an NFL season is named for the year it kicks off
-    in, so September onward belongs to this year. This used to fall back to a
-    literal 2025, which would have silently exported the 2026 season as
-    "historical" and shipped a bundle with no current year in it.
+    StatScoutSeason.current: hoopR names an NBA season for the year it ENDS, so
+    October onward belongs to next year's season (2026-10-20 is season 2027,
+    "2026-27"). Reusing the football rule (start year) would export the season
+    that just finished as the current one and ship a bundle with a hole in it.
     """
     today = date.today()
-    return today.year if today.month >= 9 else today.year - 1
+    return today.year + 1 if today.month >= 10 else today.year
 
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 KEY = os.environ["SUPABASE_ANON_KEY"]
 CURRENT_SEASON = int(os.environ.get("STATCAST_SEASON") or _resolve_season())
-OLDEST_SUPPORTED_SEASON = 2000
+OLDEST_SUPPORTED_SEASON = 2003
 # Career rollup sentinel, written by backend/rollup_all_time.py. It ships in the
 # historical bundle so "All Time" works on first launch rather than waiting on a
 # fetch, the same as every other past season.
 ALL_TIME_SEASON = 0
-REQUIRED_TYPES = {"qb", "rb", "wr", "te", "def"}
+REQUIRED_TYPES = {"g", "f", "c"}
+# The league had 29 clubs until the Charlotte Bobcats joined for 2004-05.
+FIRST_THIRTY_TEAM_SEASON = 2005
 
 URL = f"{SUPABASE_URL}/rest/v1/player_snapshots"
 HEADERS = {
@@ -59,7 +61,7 @@ HEADERS = {
 def fetch_page(query: str, attempts: int = 4) -> list[dict]:
     """One page, retried on transient failure.
 
-    The historical export walks ~34k rows a thousand at a time, so a single
+    The historical export walks ~15k rows a thousand at a time, so a single
     hiccup from the API used to throw away the whole multi-minute run. Retrying
     the page is cheaper than restarting the export.
     """
@@ -127,8 +129,8 @@ def validate_export(
         teams = {player.get("team") for player in season_players if player.get("team")}
         types = {str(player.get("player_type") or "").lower() for player in season_players}
         missing_types = REQUIRED_TYPES - types
-        # The 30-team floor is a real-season integrity check: a season missing a
-        # franchise means a partial ingest. It says nothing about the career
+        # The team floor is a real-season integrity check: a season missing a
+        # franchise means a partial ingest (29 clubs before 2005, 30 after). It says nothing about the career
         # rollup, whose cohort is a few hundred players carrying whichever team
         # they last played for, so that one is checked on types and size instead.
         if season == ALL_TIME_SEASON:
@@ -145,7 +147,7 @@ def validate_export(
                     f"Incomplete current season: {len(teams)} teams, "
                     f"{len(season_players)} players, missing types={sorted(missing_types)}"
                 )
-        elif len(teams) < 30 or missing_types:
+        elif len(teams) < (30 if season >= FIRST_THIRTY_TEAM_SEASON else 29) or missing_types:
             raise RuntimeError(
                 f"Incomplete {season}: {len(teams)} teams, missing types={sorted(missing_types)}"
             )
@@ -158,7 +160,7 @@ def validate_export(
             for player in players
             for metric in player.get("metrics", [])
         }
-        missing_rates = {"EPA/Play", "EPA/Rush", "EPA/Tgt"} - labels
+        missing_rates = {"Pts/100", "TS%", "USG%"} - labels
         if missing_rates:
             raise RuntimeError(f"Missing current rate metrics: {sorted(missing_rates)}")
 
@@ -180,17 +182,47 @@ def export(
     for player in players:
         player.pop("image_url", None)
         player.pop("created_at", None)
-    output = f"StatScout/Data/{name}.json"
-    with open(output, "w") as file:
-        json.dump(players, file, separators=(",", ":"))
+    output = f"StatScout/Data/{name}.plist"
+    write_plist(players, output)
 
     teams = {player.get("team") for player in players if player.get("team")}
     types = Counter(player.get("player_type") for player in players if player.get("player_type"))
-    print(f"Saved {len(players)} rows, {len(teams)} teams, types={dict(sorted(types.items()))}")
-    subprocess.run(
-        ["swift", "scripts/convert_historical_to_plist.swift", name],
-        check=True,
-    )
+    size = os.path.getsize(output) / 1e6
+    print(f"Saved {len(players)} rows, {len(teams)} teams, types={dict(sorted(types.items()))}, {size:.1f} MB")
+
+
+# Keys whose string values are ISO8601 timestamps: stored as native dates, since
+# PropertyListDecoder has no date strategy and needs them native in the plist.
+PLIST_DATE_KEYS = {"updated_at", "date"}
+
+
+def _plist_ready(value, key=None):
+    """Drop nulls (plists have none) and turn known timestamp strings into dates."""
+    if isinstance(value, dict):
+        return {k: v for k, v in ((k, _plist_ready(v, k)) for k, v in value.items()) if v is not None}
+    if isinstance(value, list):
+        return [v for v in (_plist_ready(v, key) for v in value) if v is not None]
+    if isinstance(value, str) and key in PLIST_DATE_KEYS:
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return value
+        # plistlib stores naive datetimes as UTC.
+        return parsed.astimezone(timezone.utc).replace(tzinfo=None) if parsed.tzinfo else parsed
+    return value
+
+
+def write_plist(players: list[dict], path: str) -> None:
+    """Write the bundle as a binary property list.
+
+    Written with plistlib rather than scripts/convert_historical_to_plist.swift:
+    plistlib stores each distinct string once, and the 11k-row NBA bundle (about
+    46 metrics per row, every one repeating the same label and category) comes
+    out ~30% smaller that way (about 35 MB against 49 MB), with the same
+    semantics for the decoder.
+    """
+    with open(path, "wb") as file:
+        plistlib.dump(_plist_ready(players), file, fmt=plistlib.FMT_BINARY)
 
 
 def main() -> None:

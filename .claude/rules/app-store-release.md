@@ -15,7 +15,7 @@ paths:
 - App Store Connect app `6820647074` ("Basketball Next: StatScout", SKU
   `basketball-statscout`, bundle id `com.jackwallner.basketball`, portal id
   `69QDVP4NJT`), created 2026-10-08.
-- Version 1.0.0 (build 1) is the first build. Submit with manual release
+- Version 1.0 (build 1) is the first build; ASC created the 1.0 version with the app record. Submit with manual release
   (`automatic_release: false`, releaseType MANUAL).
 - The first subscription group ships with the version: attach the three IAPs to
   the version before submitting, or review will reject the paywall.
@@ -34,7 +34,7 @@ phone). Keep a local copy; the Fastfile reads `notes.txt` from there.
 ## Draft version helper
 
 `ASC_DRAFT_VERSION` is the version to bump from, not the target version. For
-example, with 1.0.0 live, setting `ASC_DRAFT_VERSION=1.0.0` creates 1.0.1 when
+example, with 1.0 live, setting `ASC_DRAFT_VERSION=1.0` creates 1.0.1 when
 there is no editable draft. `scripts/asc_lib.py` reuses an editable draft and
 bumps an existing live version instead of returning it.
 

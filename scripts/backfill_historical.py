@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Backfill and validate Hardwood StatScout season snapshots from 2000 onward."""
+"""Backfill and validate Hardwood StatScout season snapshots from 2003 (2002-03) onward."""
 
 import argparse
 import os
@@ -7,13 +7,15 @@ import subprocess
 import sys
 from collections import Counter
 from typing import Any
+from urllib.parse import urlparse
 
 from supabase import create_client
 
-OLDEST_SUPPORTED_SEASON = 2000
-DEFAULT_CURRENT_SEASON = 2025
-REQUIRED_TYPES = {"qb", "rb", "wr", "te", "def"}
-MINIMUM_TEAMS = 30
+OLDEST_SUPPORTED_SEASON = 2003
+DEFAULT_CURRENT_SEASON = 2026
+REQUIRED_TYPES = {"g", "f", "c"}
+MINIMUM_TEAMS = 29  # 30 from 2005 (Charlotte Bobcats joined for 2004-05)
+FIRST_THIRTY_TEAM_SEASON = 2005
 MINIMUM_ROWS = 150
 
 
@@ -56,7 +58,8 @@ def validate_season(rows: list[dict], season: int) -> list[str]:
 
     regular = [row for row in rows if row.get("season_type", "REG") == "REG"]
     teams = {row.get("team") for row in regular if row.get("team")}
-    if len(teams) < MINIMUM_TEAMS:
+    minimum_teams = 30 if season >= FIRST_THIRTY_TEAM_SEASON else MINIMUM_TEAMS
+    if len(teams) < minimum_teams:
         errors.append(f"only {len(teams)} teams")
 
     player_types = {
@@ -111,6 +114,10 @@ def main() -> None:
     if not url or not key:
         raise SystemExit("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.")
 
+    # The football repo this lineage came from shares this script's name and the
+    # same environment variables; never let a stale credential write to its project.
+    if (urlparse(url).hostname or "") == "qwkmpwnhrejsuplcwxrb.supabase.co":
+        raise SystemExit("Refusing to use the Football Supabase project.")
     client = create_client(url, key)
     backend_ingest = os.path.join("backend", "ingest.py")
 
