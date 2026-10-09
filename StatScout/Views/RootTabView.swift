@@ -32,13 +32,9 @@ struct RootTabView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @EnvironmentObject private var store: StoreService
     @Environment(\.requestReview) private var requestReview
-    @StateObject private var reviewPromptCoordinator = ReviewPromptCoordinator.shared
     @State private var viewModel: DashboardViewModel
     @State private var selection = 0
-    @State private var showReviewPrompt = false
-    @State private var reviewPromptInitialStep: ReviewPromptSheet.Step = .enjoyment
-    @State private var reviewPromptShownThisSession = false
-    @State private var pendingNativeReviewAfterDismiss = false
+    @State private var reviewRequestedThisSession = false
     // Owned here so TeamsView can auto-push the favorite team and the user can
     // still pop back to the list.
     @State private var teamsPath = NavigationPath()
@@ -50,65 +46,27 @@ struct RootTabView: View {
     var body: some View {
         tabView
             .tint(HardwoodPalette.court)
-            .sheet(isPresented: $showReviewPrompt, onDismiss: {
-            // "Maybe later" already recorded a soft defer; calling markShown
-            // here would clear it and apply the full 120-day cooldown to a
-            // user who most likely never saw Apple's prompt at all.
-            if pendingNativeReviewAfterDismiss {
-                pendingNativeReviewAfterDismiss = false
-                ReviewPromptTracker.markSoftDeferred()
-                requestReview()
-            } else if !ReviewPromptTracker.isSoftDeferred {
-                ReviewPromptTracker.markShown()
+            .onReceive(NotificationCenter.default.publisher(for: .statscoutPositiveMomentForReview)) { _ in
+                scheduleReviewRequestAfterPositiveMoment()
             }
-        }) {
-            ReviewPromptSheet(initialStep: reviewPromptInitialStep, onFinish: handleReviewPromptFinish)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .statscoutPositiveMomentForReview)) { _ in
-            scheduleReviewPromptAfterPositiveMoment()
-        }
-        .onChange(of: reviewPromptCoordinator.pendingPresentation) { _, presentation in
-            guard let presentation else { return }
-            defer { reviewPromptCoordinator.clear() }
-            guard !showReviewPrompt else { return }
-            switch presentation {
-            case .enjoymentPrompt:
-                presentReviewPrompt(step: .enjoyment)
-            case .feedbackOnly:
-                presentReviewPrompt(step: .feedback)
-            }
-        }
     }
 
-    private func scheduleReviewPromptAfterPositiveMoment() {
-        guard ReviewPromptTracker.shouldShowAfterPositiveMoment(hasCompletedOnboarding: hasCompletedOnboarding),
-              !reviewPromptShownThisSession,
-              !showReviewPrompt
+    /// Asks Apple for the rating prompt a few seconds after a passive positive
+    /// moment, with no question of our own first. Apple decides whether to show
+    /// it; either way the cooldown starts so we do not ask again soon.
+    private func scheduleReviewRequestAfterPositiveMoment() {
+        guard ReviewPromptTracker.shouldRequestAfterPositiveMoment(hasCompletedOnboarding: hasCompletedOnboarding),
+              !reviewRequestedThisSession
         else { return }
 
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 3_500_000_000)
-            guard !showReviewPrompt,
-                  ReviewPromptTracker.shouldShowAfterPositiveMoment(hasCompletedOnboarding: hasCompletedOnboarding)
+            guard ReviewPromptTracker.shouldRequestAfterPositiveMoment(hasCompletedOnboarding: hasCompletedOnboarding)
             else { return }
-            ReviewPromptTracker.consumePendingPositiveMoment()
-            reviewPromptInitialStep = .enjoyment
-            reviewPromptShownThisSession = true
-            showReviewPrompt = true
+            reviewRequestedThisSession = true
+            ReviewPromptTracker.markRequested()
+            requestReview()
         }
-    }
-
-    private func handleReviewPromptFinish(_ outcome: ReviewPromptDismissOutcome) {
-        showReviewPrompt = false
-        if outcome == .enjoyedMaybeLater {
-            pendingNativeReviewAfterDismiss = true
-        }
-    }
-
-    private func presentReviewPrompt(step: ReviewPromptSheet.Step) {
-        reviewPromptInitialStep = step
-        reviewPromptShownThisSession = true
-        showReviewPrompt = true
     }
 
     /// Hand-rolled tab bar rather than a `TabView`.
@@ -417,14 +375,7 @@ private struct HomeTabToolbar: ViewModifier {
             .navigationDestination(isPresented: $showingSettings) {
                 AboutView(
                     lastUpdated: lastUpdated,
-                    dataCoverage: dataCoverage,
-                    onRequestReview: {
-                        showingSettings = false
-                        Task { @MainActor in
-                            try? await Task.sleep(nanoseconds: 400_000_000)
-                            ReviewPromptCoordinator.shared.requestEnjoymentPrompt()
-                        }
-                    }
+                    dataCoverage: dataCoverage
                 )
                 .navigationTitle("Settings")
                 .navigationBarTitleDisplayMode(.inline)

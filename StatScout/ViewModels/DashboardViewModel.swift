@@ -334,6 +334,58 @@ final class DashboardViewModel {
         )
     }
 
+    // MARK: - Launch prefetch
+
+    /// Network reads started before the first screen is built.
+    ///
+    /// The app spends its first second or two creating views on the main thread,
+    /// and the status row and the live season's players are plain network calls
+    /// that do not need it. Starting them from `ContentView.init` lets the
+    /// download overlap that work instead of waiting for it. `performLoad` takes
+    /// each result exactly once and falls back to a normal fetch for anything
+    /// that was not prefetched, or was prefetched for a season that turned out
+    /// not to be live.
+    private struct Prefetch {
+        let season: Int
+        var players: Task<[Player], Error>?
+        var freshness: Task<DataFreshness?, Error>?
+    }
+
+    private var prefetch: Prefetch?
+
+    /// Idempotent. Call once, as early as possible; a no-op once a load has
+    /// started or when the screenshot and preview providers are in use.
+    func startPrefetch() {
+        guard prefetch == nil, !hasStartedLoading else { return }
+        let provider = provider
+        let season = live.season
+        prefetch = Prefetch(
+            season: season,
+            players: Task.detached { try await provider.fetchCurrentPlayers(season: season) },
+            freshness: Task.detached { try await provider.fetchDataFreshness() }
+        )
+        StartupTrace.mark("prefetch started")
+    }
+
+    private func takePrefetchedFreshness() -> Task<DataFreshness?, Error>? {
+        defer { prefetch?.freshness = nil }
+        return prefetch?.freshness
+    }
+
+    /// The live season's players: the prefetched copy when it is for this
+    /// season, otherwise a fresh fetch.
+    private func fetchLivePlayers(season: Int) async throws -> [Player] {
+        if let pending = prefetch {
+            prefetch = nil
+            if pending.season == season, let task = pending.players {
+                return try await task.value
+            }
+            pending.players?.cancel()
+            pending.freshness?.cancel()
+        }
+        return try await provider.fetchCurrentPlayers(season: season)
+    }
+
     init(
         provider: StatcastProviding,
         cache: PlayerCaching? = nil,
@@ -498,25 +550,32 @@ final class DashboardViewModel {
         let season = freeSeason
         let upcoming = upcomingSeason
         do {
+            // Everything the Games tab needs goes out at once. The next season's
+            // schedule used to wait for this season's to finish, and the
+            // ratings and projections for both, which added up to several
+            // sequential round trips.
             async let schedule = provider.fetchGames(season: season)
             async let withStats = provider.fetchGameIdsWithStats(season: season)
+            async let nextSchedule = fetchUpcomingGames(upcoming)
+            async let ratings = try? provider.fetchTeamRatings(season: season)
+            async let projected = try? provider.fetchGameProjections(season: upcoming ?? season)
             let (loadedGames, loadedIds) = try await (schedule, withStats)
+            StartupTrace.mark("games fetched (\(loadedGames.count) rows)")
             if !loadedGames.isEmpty || games.isEmpty {
                 games = loadedGames
             }
-            if let upcoming {
-                upcomingGames = (try? await provider.fetchGames(season: upcoming)) ?? upcomingGames
+            if upcoming != nil {
+                upcomingGames = (await nextSchedule) ?? upcomingGames
             } else {
                 upcomingGames = []
             }
+            StartupTrace.mark("upcoming games fetched")
             gameIdsWithStats = loadedIds
             gamesError = nil
             gamesLoadedAt = Date()
             // Ratings and projections ride along with the schedule they
             // describe. Optional: a failure keeps whatever was there. The
             // projections belong to the season whose games are still to come.
-            async let ratings = try? provider.fetchTeamRatings(season: season)
-            async let projected = try? provider.fetchGameProjections(season: upcoming ?? season)
             if let loadedRatings = await ratings, !loadedRatings.isEmpty {
                 teamRatings = Dictionary(
                     loadedRatings.map { (normalizedTeamAbbreviation($0.team), $0) },
@@ -535,6 +594,11 @@ final class DashboardViewModel {
             }
         }
         isGamesLoading = false
+    }
+
+    private func fetchUpcomingGames(_ season: Int?) async -> [Game]? {
+        guard let season else { return nil }
+        return try? await provider.fetchGames(season: season)
     }
 
     func game(id: String) -> Game? {
@@ -1169,7 +1233,13 @@ final class DashboardViewModel {
         localLastCheckedAt = now
 
         do {
-            guard let remote = try await provider.fetchDataFreshness() else {
+            let fetched: DataFreshness?
+            if let prefetched = takePrefetchedFreshness() {
+                fetched = try await prefetched.value
+            } else {
+                fetched = try await provider.fetchDataFreshness()
+            }
+            guard let remote = fetched else {
                 // The endpoint is optional while the backend rolls out. The
                 // player load remains the source of truth in that case.
                 return .unavailable
@@ -1240,6 +1310,7 @@ final class DashboardViewModel {
 
     private func performLoad() async {
         defer { loadTask = nil }
+        StartupTrace.mark("load begins")
         hasStartedLoading = true
         isLoading = players.isEmpty
         loadingMessage = players.isEmpty ? "Loading saved players…" : "Refreshing player data…"
@@ -1252,8 +1323,10 @@ final class DashboardViewModel {
             return (try? cache?.loadPlayers()) ?? []
         }.value
 
+        StartupTrace.mark("saved players read (\(cached.count) rows)")
         if players.isEmpty, !cached.isEmpty {
             ingestPlayers(cached)
+            StartupTrace.mark("saved players on screen")
         }
 
         loadingMessage = "Checking for updates…"
@@ -1264,15 +1337,18 @@ final class DashboardViewModel {
         lastFailureWasConnectivity = false
 
         let freshnessResult = await checkForUpdates(force: true)
+        StartupTrace.mark("freshness check done")
         let revisionAtStart = dataFreshness?.revision
 
         var acceptedCurrent: [Player] = []
         var loadedCurrentData = false
         var playersToIngest: [Player] = []
+        var drewLeaderboardEarly = false
 
         do {
             let liveSeason = live.season
-            let current = try await provider.fetchCurrentPlayers(season: liveSeason)
+            let current = try await fetchLivePlayers(season: liveSeason)
+            StartupTrace.mark("live players fetched and decoded (\(current.count) rows)")
             let fallbackPlayers = cached.isEmpty ? playerHistories.values.flatMap { $0 } : cached
             let hasCompleteFallback = PlayerSnapshotValidator.isCompleteCurrent(fallbackPlayers, season: liveSeason)
             let passesCompleteness = PlayerSnapshotValidator.isCompleteCurrent(current, season: liveSeason)
@@ -1292,17 +1368,10 @@ final class DashboardViewModel {
 
             if allPlayers.isEmpty {
                 // No current data (offseason / cold cache / offline). Fall back to
-                // bundled historical so the app is usable instead of trapped on an
-                // empty state; season gating still applies via isSeasonLocked.
-                let historicalFallback: [Player] = await Task.detached { [cache] in
-                    if let cache = cache as? TwoTierPlayerCache {
-                        return cache.loadHistoricalPlayers()
-                    }
-                    return (try? cache?.loadPlayers()) ?? []
-                }.value
-                if !historicalFallback.isEmpty {
-                    ingestPlayers(historicalFallback)
-                } else {
+                // the bundled archive so the app is usable instead of trapped on
+                // an empty state; season gating still applies via isSeasonLocked.
+                await showBundledSeasonIfNothingIsShown()
+                if players.isEmpty {
                     errorMessage = "No players found."
                     lastFetchFailed = true
                 }
@@ -1316,16 +1385,35 @@ final class DashboardViewModel {
                     errorMessage = "Showing complete saved data while the live feed finishes updating."
                     lastFetchFailed = true
                 }
+                // Nothing is on screen yet, so draw the leaderboard now rather
+                // than after the coverage read and the closing status check
+                // below, which are two more round trips of a blank screen. A
+                // revision that moves during them is handled as before: the
+                // snapshot is simply not saved or adopted, and the next check
+                // reloads.
+                if players.isEmpty {
+                    ingestPlayers(allPlayers)
+                    drewLeaderboardEarly = true
+                    isLoading = false
+                    loadingProgress = 1
+                    StartupTrace.mark("live players on screen")
+                }
             }
 
         } catch is DecodingError {
+            await showBundledSeasonIfNothingIsShown()
             errorMessage = "Data format changed - app may need an update."
             lastFetchFailed = true
         } catch _ as URLError {
+            // A first launch with no connection and nothing saved: the bundled
+            // season is the board, not an empty "no data" card under a caption
+            // that says saved stats are showing.
+            await showBundledSeasonIfNothingIsShown()
             errorMessage = players.isEmpty ? "Can't reach data feed. Check your connection." : "Showing saved data. Pull to refresh when your connection improves."
             lastFetchFailed = true
             lastFailureWasConnectivity = true
         } catch {
+            await showBundledSeasonIfNothingIsShown()
             errorMessage = players.isEmpty ? "Something went wrong loading player data." : "Showing saved data. Pull to refresh to try again."
             lastFetchFailed = true
         }
@@ -1337,12 +1425,14 @@ final class DashboardViewModel {
         // failure here leaves the coverage line blank rather than failing the
         // load.
         let candidateCoverage = try? await provider.fetchDataCoverage(season: freeSeason)
+        StartupTrace.mark("coverage fetched")
 
         // The source can publish a new revision while snapshots are being
         // fetched. Bracket the candidate with a second status read so a new
         // status row cannot be paired with older player rows. Keep the prior
         // display and wait for the next check when the bracket moves.
         let endingResult = await checkForUpdates(force: true)
+        StartupTrace.mark("closing freshness check done")
         let revisionAtEnd = dataFreshness?.revision
         // Only a revision that actually moved counts. A first status read that
         // failed (nil) and a second that succeeded is not drift; treating it as
@@ -1361,8 +1451,9 @@ final class DashboardViewModel {
                     isCached: .some(true)
                 )
             }
-        } else if !playersToIngest.isEmpty {
+        } else if !playersToIngest.isEmpty, !drewLeaderboardEarly {
             ingestPlayers(playersToIngest)
+            StartupTrace.mark("live players on screen")
         }
         if loadedCurrentData {
             dataCoverage = dataFreshness?.coverage ?? candidateCoverage
@@ -1379,8 +1470,27 @@ final class DashboardViewModel {
             )
         }
         persistFreshness()
+        StartupTrace.mark("load persisted, profiles and games next")
         await loadProfiles()
         await loadGames(force: true)
+        StartupTrace.mark("load finished")
+    }
+
+    /// Draws the newest bundled season (no later than the live one) when nothing
+    /// else is on screen. Only that one season is decoded, not the archive: it
+    /// is the board being shown, and the rest loads when something asks for it.
+    private func showBundledSeasonIfNothingIsShown() async {
+        guard players.isEmpty else { return }
+        let season = live.season
+        let rows: [Player] = await Task.detached { [cache] in
+            if let cache = cache as? TwoTierPlayerCache {
+                return cache.loadNewestBundledSeason(atMost: season)
+            }
+            return (try? cache?.loadPlayers()) ?? []
+        }.value
+        guard players.isEmpty, !rows.isEmpty else { return }
+        ingestPlayers(rows)
+        StartupTrace.mark("bundled season on screen")
     }
 
     /// Marks a successfully accepted snapshot as the revision shown by every
@@ -1475,6 +1585,21 @@ final class DashboardViewModel {
         loadingMessage = "Loading past seasons…"
         loadingProgress = 0.12
 
+        // A past season the user is already looking at comes first, on its own:
+        // one season decodes in a fraction of a second, where the whole archive
+        // takes several, and it is the board they are waiting on. Year-over-year
+        // views need every season, and get them next.
+        let wanted = selectedSeason
+        if wanted != live.season, !hasSeasonLoaded(wanted) {
+            let first: [Player] = await Task.detached { [cache] in
+                (cache as? TwoTierPlayerCache)?.loadHistoricalSeason(wanted) ?? []
+            }.value
+            if !first.isEmpty {
+                ingestPlayers(mergePlayers(replacing: first))
+                StartupTrace.mark("selected past season on screen")
+            }
+        }
+
         var historical: [Player] = await Task.detached { [cache] in
             if let cache = cache as? TwoTierPlayerCache {
                 return cache.loadHistoricalPlayers()
@@ -1501,12 +1626,18 @@ final class DashboardViewModel {
             let archive = historical.filter {
                 ($0.season ?? 0) < liveSeason || !loadedIDs.contains($0.id)
             }
+            StartupTrace.mark("archive loaded, merging")
             ingestPlayers(mergePlayers(replacing: archive))
+            StartupTrace.mark("archive on screen")
             hasLoadedHistorical = true
         }
 
         isHistoricalLoading = false
         loadingProgress = 1
+    }
+
+    private func hasSeasonLoaded(_ season: Int) -> Bool {
+        playerHistories.values.contains { $0.contains { $0.season == season } }
     }
 
     private func ingestPlayers(_ players: [Player]) {

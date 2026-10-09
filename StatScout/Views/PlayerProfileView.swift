@@ -253,7 +253,7 @@ struct PlayerProfileView: View {
                 trialPitchTrigger = .playerScouting
             } else if opens >= 3 {
                 // Third+ profile visit = engaged browsing. Never on a visit that
-                // just showed the pitch, or "Enjoying StatScout?" lands the
+                // just showed the pitch, or the rating request lands the
                 // moment the user dismisses a subscription sheet.
                 ReviewPromptTracker.recordPositiveMoment()
             }

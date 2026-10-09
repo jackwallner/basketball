@@ -22,7 +22,9 @@ targets:
           - Data/*.json
     resources:
       - StatScout/PrivacyInfo.xcprivacy
-      - StatScout/Data/players-historical.plist
+      - path: StatScout/Data
+        includes:
+          - players-historical-*.plist
     settings:
       base:
         DEVELOPMENT_TEAM: YXG4MP6W39

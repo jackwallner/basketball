@@ -212,17 +212,55 @@ final class TwoTierCacheTests: XCTestCase {
         try cache.savePlayers(players(season: 2026, name: "Live"), liveSeason: 2026)
         XCTAssertEqual(try cache.loadCurrentPlayers().count, 24)
         XCTAssertTrue(FileManager.default.fileExists(atPath: dir.appending(path: "players-current.json").path))
-        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.appending(path: "players-historical.plist").path),
-                       "a live-season save writes no history")
+        let written = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
+        XCTAssertFalse(written.contains { $0.hasPrefix("players-historical") },
+                       "a save writes no history: the bundle is the archive")
     }
 
     // MARK: - The real bundle
 
+    /// The archive is a set of per-season resources of the app, which hosts
+    /// these tests.
+    private var hostBundle: Bundle { Bundle(for: DashboardViewModel.self) }
+
+    private func bundledCache(directory: URL? = nil) -> TwoTierPlayerCache {
+        TwoTierPlayerCache(directory: directory, bundle: hostBundle)
+    }
+
     private func bundledPlayers() throws -> [Player] {
-        // The archive is a resource of the app, which hosts these tests.
-        let bundle = Bundle(for: DashboardViewModel.self)
-        let url = try XCTUnwrap(bundle.url(forResource: "players-historical", withExtension: "plist"))
-        return try PropertyListDecoder.statScout.decode([Player].self, from: Data(contentsOf: url))
+        bundledCache().loadHistoricalPlayers()
+    }
+
+    /// The archive ships one file per season so a screen decodes only the
+    /// season it shows. A single combined file would put the multi-second decode
+    /// back in front of an offline first launch.
+    func testTheArchiveIsOneFilePerSeasonAndNoCombinedFile() {
+        XCTAssertNil(hostBundle.url(forResource: "players-historical", withExtension: "plist"))
+        for season in TwoTierPlayerCache.bundledSeasons {
+            XCTAssertNotNil(
+                hostBundle.url(forResource: "players-historical-\(season)", withExtension: "plist"),
+                "missing file for season \(season)"
+            )
+        }
+        XCTAssertEqual(TwoTierPlayerCache.bundledSeasons.count, 25, "All Time plus 2003 through 2026")
+    }
+
+    func testOneSeasonDecodesWithoutTheRest() {
+        let rows = bundledCache().loadHistoricalSeason(2026)
+        XCTAssertGreaterThan(rows.count, 400)
+        XCTAssertEqual(Set(rows.compactMap(\.season)), [2026])
+        XCTAssertEqual(Set(bundledCache().loadHistoricalSeason(StatScoutSeason.allTime).compactMap(\.season)), [0])
+        XCTAssertTrue(bundledCache().loadHistoricalSeason(1999).isEmpty, "no file, no rows")
+    }
+
+    /// An offline first launch shows the newest bundled season no later than
+    /// the live one, and that is a single file.
+    func testTheOfflineFallbackIsTheNewestBundledSeasonAtMostTheLiveOne() {
+        let cache = bundledCache()
+        XCTAssertEqual(Set(cache.loadNewestBundledSeason(atMost: 2027).compactMap(\.season)), [2026],
+                       "2027 is pending and not bundled, so 2026 is what there is")
+        XCTAssertEqual(Set(cache.loadNewestBundledSeason(atMost: 2010).compactMap(\.season)), [2010])
+        XCTAssertTrue(cache.loadNewestBundledSeason(atMost: 2002).isEmpty)
     }
 
     /// The bundled archive carries 2025-26 too, which is why the network copy

@@ -52,35 +52,6 @@ extension DiskPlayerCache {
     }
 }
 
-/// Binary-plist-backed cache for the heavyweight historical dataset.
-/// Plist decode is ~2-3× faster than JSON on the same payload, and the file is ~30% smaller.
-struct PlistPlayerCache: PlayerCaching {
-    private let fileURL: URL
-
-    init(fileURL: URL) {
-        self.fileURL = fileURL
-    }
-
-    func loadPlayers() throws -> [Player] {
-        let data = try Data(contentsOf: fileURL)
-        // Lossy per row, like the network path: one malformed row must not take
-        // every past season down with it.
-        return try PropertyListDecoder.statScout.decode([Lenient<Player>].self, from: data).compactMap(\.value)
-    }
-
-    func savePlayers(_ players: [Player], liveSeason: Int) throws {
-        let data = try PropertyListEncoder.statScout.encode(players)
-        try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try data.write(to: fileURL, options: [.atomic])
-    }
-}
-
-extension PlistPlayerCache {
-    func savePlayers(_ players: [Player]) throws {
-        try savePlayers(players, liveSeason: 0)
-    }
-}
-
 /// Proof that the current-season snapshot on disk came from the server, written
 /// beside it whenever this build saves one.
 ///
@@ -105,8 +76,6 @@ struct CurrentSnapshotProvenance: Codable {
 /// wins when present, and the bundled copy is what a cold, offline start shows
 /// until it arrives.
 struct TwoTierPlayerCache: PlayerCaching {
-    private let historical: PlistPlayerCache
-    private let legacyHistorical: DiskPlayerCache
     private let current: DiskPlayerCache
     private let currentProvenanceURL: URL
     private let bundle: Bundle
@@ -121,8 +90,6 @@ struct TwoTierPlayerCache: PlayerCaching {
         let directory = directory
             ?? fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? fileManager.temporaryDirectory
-        self.historical = PlistPlayerCache(fileURL: directory.appending(path: "players-historical.plist"))
-        self.legacyHistorical = DiskPlayerCache(fileURL: directory.appending(path: "players-historical.json"), maxAge: nil)
         self.current = DiskPlayerCache(fileURL: directory.appending(path: "players-current.json"), maxAge: nil)
         self.currentProvenanceURL = directory.appending(path: "players-current-provenance.json")
         self.bundle = bundle
@@ -178,58 +145,57 @@ struct TwoTierPlayerCache: PlayerCaching {
         try? data.write(to: currentProvenanceURL, options: [.atomic])
     }
 
-    /// The permanent archive: every completed season the bundle carries, plus
-    /// the season-0 career rollup. This includes the season that is still live
-    /// while the next has not published, so a cold offline start has a board to
-    /// draw. Callers merge it *under* server rows (see `loadPlayers`), never
-    /// over them, so a frozen bundled snapshot can never overwrite the live feed.
+    /// Every season the bundle carries, in the order `bundledSeasons` lists them.
+    ///
+    /// The archive is one plist per season (see `scripts/export_historical.py`),
+    /// because PropertyListDecoder costs about half a millisecond a row: the
+    /// old single file took around five seconds to decode in a release build, and
+    /// an offline first launch waited on all of it before showing a row. Each
+    /// file is independent, so this decodes them on every core at once.
+    ///
+    /// Callers merge it *under* server rows (see `loadPlayers`), never over
+    /// them, so a frozen bundled snapshot can never overwrite the live feed.
     func loadHistoricalPlayers() -> [Player] {
-        let bundled = loadBundledPlayers(named: historicalBundleResourceName)
-        let bundledIsComplete = bundled.map { PlayerSnapshotValidator.isCompleteHistorical($0) } ?? false
-
-        // 1. Permanent disk cache, unless the bundled archive has broader coverage.
-        if let cached = try? historical.loadPlayers(), !cached.isEmpty {
-            if PlayerSnapshotValidator.isCompleteHistorical(cached) || !bundledIsComplete {
-                return cached
-            }
+        let seasons = Self.bundledSeasons
+        let results = ResultSlots<[Player]>(count: seasons.count)
+        DispatchQueue.concurrentPerform(iterations: seasons.count) { index in
+            results.set(index, loadHistoricalSeason(seasons[index]))
         }
-        // 2. Bundled binary plist (shipped with the app).
-        if let bundled, bundledIsComplete {
-            try? historical.savePlayers(bundled)
-            try? FileManager.default.removeItem(at: legacyHistorical.fileURL)
-            return bundled
-        }
-        // 3. Legacy on-disk JSON cache from older builds - migrate forward.
-        if let players = try? legacyHistorical.loadPlayers(), !players.isEmpty {
-            try? historical.savePlayers(players)
-            try? FileManager.default.removeItem(at: legacyHistorical.fileURL)
-            return players
-        }
-        // 4. Bundled JSON fallback (in case the plist asset is ever missing).
-        if let players = loadBundledPlayers(named: historicalBundleResourceName, extension: "json"), !players.isEmpty {
-            try? historical.savePlayers(players)
-            return players
-        }
-        return []
+        return results.values.flatMap { $0 }
     }
 
-    private func loadBundledPlayers(named name: String, extension fileExtension: String = "plist") -> [Player]? {
-        guard let url = bundle.url(forResource: name, withExtension: fileExtension),
+    /// One bundled season, or the career rollup for `StatScoutSeason.allTime`.
+    /// Empty when the bundle has no file for it.
+    func loadHistoricalSeason(_ season: Int) -> [Player] {
+        loadBundledPlayers(named: "\(historicalBundleResourceName)-\(season)") ?? []
+    }
+
+    /// The newest bundled season that is no later than `season`: what an offline
+    /// cold start can show in place of a live feed it cannot reach.
+    func loadNewestBundledSeason(atMost season: Int) -> [Player] {
+        guard let newest = Self.bundledSeasons.filter({ $0 != StatScoutSeason.allTime && $0 <= season }).max()
+        else { return [] }
+        return loadHistoricalSeason(newest)
+    }
+
+    /// The career rollup first, then each season from the earliest up.
+    static var bundledSeasons: [Int] {
+        [StatScoutSeason.allTime] + Array(StatScoutSeason.earliest...StatScoutSeason.bundledNewest)
+    }
+
+    private func loadBundledPlayers(named name: String) -> [Player]? {
+        guard let url = bundle.url(forResource: name, withExtension: "plist"),
               let data = try? Data(contentsOf: url) else {
             return nil
         }
-        if fileExtension == "plist" {
-            return try? PropertyListDecoder.statScout.decode([Lenient<Player>].self, from: data).compactMap(\.value)
-        }
-        return try? JSONDecoder.statScout.decode([Lenient<Player>].self, from: data).compactMap(\.value)
+        return try? PropertyListDecoder.statScout.decode([Lenient<Player>].self, from: data).compactMap(\.value)
     }
 
+    /// Saves the live season's rows. Past seasons are never written: the bundle
+    /// is the permanent archive, and a second copy in Caches only cost a
+    /// multi-second write the first time anything asked for history.
     func savePlayers(_ players: [Player], liveSeason: Int) throws {
-        let historicalPlayers = players.filter { ($0.season ?? 0) < liveSeason }
         let currentPlayers = players.filter { ($0.season ?? 0) >= liveSeason }
-        if !historicalPlayers.isEmpty {
-            try historical.savePlayers(historicalPlayers)
-        }
         if !currentPlayers.isEmpty, PlayerSnapshotValidator.isCompleteCurrent(currentPlayers) {
             try current.savePlayers(currentPlayers)
             // Only after the rows are safely down, so a failed write never
@@ -237,6 +203,23 @@ struct TwoTierPlayerCache: PlayerCaching {
             writeCurrentProvenance()
         }
     }
+}
+
+/// Fixed-size result slots for `DispatchQueue.concurrentPerform`, which hands
+/// out indices rather than collecting return values.
+private final class ResultSlots<Value>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var slots: [Value?]
+
+    init(count: Int) { slots = Array(repeating: nil, count: count) }
+
+    func set(_ index: Int, _ value: Value) {
+        lock.lock()
+        slots[index] = value
+        lock.unlock()
+    }
+
+    var values: [Value] { lock.lock(); defer { lock.unlock() }; return slots.compactMap { $0 } }
 }
 
 enum PlayerSnapshotValidator {

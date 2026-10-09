@@ -3,10 +3,15 @@ import RevenueCat
 
 @main
 struct StatScoutApp: App {
-    private let api: (any StatcastProviding)?
+    /// Created once, here, rather than in `ContentView.init`: SwiftUI re-runs a
+    /// view's init as it re-evaluates the body and keeps only the first
+    /// `State`, so a model built there is built (and, with the launch prefetch,
+    /// downloads the league) more than once.
+    private let viewModel: DashboardViewModel?
     @StateObject private var store = StoreService.shared
 
     init() {
+        StartupTrace.begin()
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-ResetUITestState"),
            let bundleIdentifier = Bundle.main.bundleIdentifier {
@@ -32,7 +37,8 @@ struct StatScoutApp: App {
         #if DEBUG
         if ScreenshotFixtureAPI.isEnabled {
             ScreenshotFixtureAPI.prepareUserDefaults()
-            self.api = ScreenshotFixtureAPI()
+            let fixture = ScreenshotFixtureAPI()
+            self.viewModel = Self.makeViewModel(api: fixture, usesDiskCache: false)
             StoreService.shared.start()
             return
         }
@@ -41,16 +47,27 @@ struct StatScoutApp: App {
               let url = URL(string: urlString),
               let key = Self.configValue(for: "SUPABASE_ANON_KEY") else {
             #if targetEnvironment(simulator)
-            self.api = OfflineStatcastAPI()
+            let offline = OfflineStatcastAPI()
+            self.viewModel = Self.makeViewModel(api: offline, usesDiskCache: true)
             StoreService.shared.start()
             return
             #else
-            self.api = nil
+            self.viewModel = nil
             return
             #endif
         }
-        self.api = StatcastAPI(baseURL: url, apiKey: key)
+        self.viewModel = Self.makeViewModel(api: StatcastAPI(baseURL: url, apiKey: key), usesDiskCache: true)
         StoreService.shared.start()
+        StartupTrace.mark("store started")
+    }
+
+    /// The one view model, with the launch downloads already under way so they
+    /// overlap the time spent building the first screen.
+    private static func makeViewModel(api: any StatcastProviding, usesDiskCache: Bool) -> DashboardViewModel {
+        let model = DashboardViewModel(provider: api, cache: usesDiskCache ? TwoTierPlayerCache() : nil)
+        model.startPrefetch()
+        StartupTrace.mark("view model created")
+        return model
     }
 
     private static func configValue(for key: String) -> String? {
@@ -69,8 +86,8 @@ struct StatScoutApp: App {
                 PaywallScreenshotHarness(mode: mode)
                     .environmentObject(store)
                     .preferredColorScheme(.light)
-            } else if let api {
-                ContentView(api: api)
+            } else if let viewModel {
+                ContentView(viewModel: viewModel)
                     .environmentObject(store)
                     .preferredColorScheme(.light)
                     .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
@@ -81,8 +98,8 @@ struct StatScoutApp: App {
                     .preferredColorScheme(.light)
             }
             #else
-            if let api {
-                ContentView(api: api)
+            if let viewModel {
+                ContentView(viewModel: viewModel)
                     .environmentObject(store)
                     .preferredColorScheme(.light)
                     .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
@@ -104,14 +121,8 @@ struct ContentView: View {
 
     @State private var viewModel: DashboardViewModel
 
-    init(api: any StatcastProviding) {
-        let cache: PlayerCaching?
-        #if DEBUG
-        cache = ScreenshotFixtureAPI.isEnabled ? nil : TwoTierPlayerCache()
-        #else
-        cache = TwoTierPlayerCache()
-        #endif
-        _viewModel = State(initialValue: DashboardViewModel(provider: api, cache: cache))
+    init(viewModel: DashboardViewModel) {
+        _viewModel = State(initialValue: viewModel)
     }
 
     var body: some View {
@@ -126,7 +137,10 @@ struct ContentView: View {
                     .zIndex(1)
             }
         }
-        .task { await viewModel.loadIfNeeded() }
+        .task {
+            StartupTrace.mark("first screen task running")
+            await viewModel.loadIfNeeded()
+        }
         .task(id: store.isPro) {
             guard store.isPro else { return }
             await viewModel.loadHistoricalIfNeeded()

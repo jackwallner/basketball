@@ -5,7 +5,6 @@ struct AboutView: View {
     let lastUpdated: Date?
     var dataCoverage: DataCoverage?
     var freshness: DataFreshness?
-    var onRequestReview: (() -> Void)?
     @State private var paywallTrigger: PaywallTrigger?
 
     private var version: String {
@@ -216,26 +215,9 @@ struct AboutView: View {
     private var linkCard: some View {
         VStack(spacing: 0) {
             HardwoodSectionBar(title: "SUPPORT & PRIVACY")
-            Button {
-                if let onRequestReview {
-                    onRequestReview()
-                } else {
-                    ReviewPromptCoordinator.shared.requestEnjoymentPrompt()
-                }
-            } label: {
-                row(
-                    icon: "star.fill",
-                    title: "Rate or Send Feedback",
-                    subtitle: "Help StatScout grow - or tell us what to improve."
-                )
-            }
-            .buttonStyle(.plain)
-
-            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
-
-            // Always-works fallback: the native rating sheet is rate-limited and
-            // may show nothing, so keep a direct write-review link for users who
-            // explicitly want to leave a review.
+            // The native rating sheet is rate-limited and may show nothing, so
+            // this is the way for a user who wants to leave a review to do it.
+            // Feedback is a separate action below (Contact Support).
             Link(destination: AppStoreReviewLinks.writeReviewURL) {
                 row(
                     icon: "square.and.pencil",

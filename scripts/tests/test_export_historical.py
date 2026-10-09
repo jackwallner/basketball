@@ -63,6 +63,26 @@ class ExportCoverageTests(unittest.TestCase):
         self.assertNotIn("image_url", back)
         self.assertEqual(back["metrics"][0]["percentile"], 88)
 
+    def test_historical_archive_is_written_one_plist_per_season(self) -> None:
+        import plistlib, tempfile
+        rows = self.rows(2025) + self.rows(2026) + [dict(self.rows(0)[0], season=0)]
+        here = os.getcwd()
+        with tempfile.TemporaryDirectory() as folder:
+            os.chdir(folder)
+            try:
+                os.makedirs("StatScout/Data")
+                Path("StatScout/Data/players-historical.plist").write_bytes(b"stale")
+                paths = exporter.write_per_season("players-historical", rows)
+                self.assertEqual(
+                    sorted(paths),
+                    [f"StatScout/Data/players-historical-{season}.plist" for season in (0, 2025, 2026)],
+                )
+                self.assertFalse(Path("StatScout/Data/players-historical.plist").exists())
+                counts = {p: len(plistlib.load(open(p, "rb"))) for p in paths}
+                self.assertEqual(sorted(counts.values()), [1, 20, 20])
+            finally:
+                os.chdir(here)
+
     def test_duplicate_player_phase_cannot_ship(self) -> None:
         rows = self.rows(2027)
         with self.assertRaisesRegex(RuntimeError, "Duplicate"):

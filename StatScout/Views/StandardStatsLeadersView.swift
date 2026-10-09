@@ -259,6 +259,9 @@ struct StandardStatsLeadersView: View {
                 }
                 ForEach(ranked, id: \.element.id) { index, player in
                     playerRow(rank: index + 1, player: player, peerValues: peerValues)
+                        .onAppear {
+                            if index == 0 { StartupTrace.mark("first leaderboard row appeared") }
+                        }
                 }
             }
         }

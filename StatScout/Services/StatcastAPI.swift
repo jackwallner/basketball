@@ -449,6 +449,7 @@ struct StatcastAPI: StatcastProviding {
             request.setValue("application/json", forHTTPHeaderField: "Accept")
 
             let (data, response) = try await URLSession.shared.data(for: request)
+            StartupTrace.mark("players page at offset \(offset) downloaded (\(data.count / 1024) KB)")
             guard let httpResponse = response as? HTTPURLResponse,
                   200..<300 ~= httpResponse.statusCode || httpResponse.statusCode == 206 else {
                 throw URLError(.badServerResponse)
@@ -456,6 +457,7 @@ struct StatcastAPI: StatcastProviding {
 
             let rows = try JSONDecoder.statScout.decode([Lenient<Player>].self, from: data)
             let page = rows.compactMap(\.value)
+            StartupTrace.mark("players page at offset \(offset) decoded")
             // A non-empty page that decodes to zero players means the schema
             // changed under us - surface it instead of silently going blank.
             if !rows.isEmpty && page.isEmpty {

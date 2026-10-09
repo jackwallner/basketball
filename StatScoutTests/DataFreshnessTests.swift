@@ -83,9 +83,14 @@ final class DataFreshnessTests: XCTestCase {
         let provider = RevisionProvider(revisions: ["v1", "v2"])
         let model = makeViewModel(provider: provider)
         await model.load()
+        // A cold start draws the players it fetched rather than a blank
+        // screen, but a revision that moved under the fetch is never adopted
+        // or paired with the newer status: no revision, no coverage, and the
+        // next check (which sees a revision it has not displayed) reloads.
+        XCTAssertFalse(model.players.isEmpty)
         XCTAssertNil(model.freshnessRevision)
-        XCTAssertTrue(model.players.isEmpty)
         XCTAssertNil(model.freshnessForDisplay?.coverage)
+        XCTAssertEqual(model.freshnessStatus, .checking)
     }
 
     @MainActor

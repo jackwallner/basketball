@@ -9,8 +9,16 @@ outgoing season into the historical archive before it becomes historical:
 `--historical-only` is what makes that safe. The current-season export would
 otherwise go looking for a season that has not kicked off yet and fail
 validation on an empty result. The app tolerates a bundle carrying the still-live
-season (`TwoTierPlayerCache.loadHistoricalPlayers` filters it out until the
-calendar catches up), so the build can ship months early.
+season (the archive is read per season, so an extra file for a season that is
+still live is simply unused until the calendar catches up), so the build can
+ship months early.
+
+The historical archive is written as one binary plist per season,
+`StatScout/Data/players-historical-<season>.plist` (season 0 is the career
+rollup). The app decodes only the season a screen asks for: PropertyListDecoder
+costs about half a millisecond a row, so the old single 34 MB file kept an
+offline first launch blank for seconds. The `project.yml` resource glob
+`players-historical-*.plist` picks the files up with no list to maintain.
 """
 
 import argparse
@@ -182,12 +190,18 @@ def export(
     for player in players:
         player.pop("image_url", None)
         player.pop("created_at", None)
-    output = f"StatScout/Data/{name}.plist"
-    write_plist(players, output)
+    if name == "players-historical":
+        output = write_per_season(name, players)
+    else:
+        output = f"StatScout/Data/{name}.plist"
+        write_plist(players, output)
 
     teams = {player.get("team") for player in players if player.get("team")}
     types = Counter(player.get("player_type") for player in players if player.get("player_type"))
-    size = os.path.getsize(output) / 1e6
+    size = (
+        sum(os.path.getsize(path) for path in output) if isinstance(output, list)
+        else os.path.getsize(output)
+    ) / 1e6
     print(f"Saved {len(players)} rows, {len(teams)} teams, types={dict(sorted(types.items()))}, {size:.1f} MB")
 
 
@@ -223,6 +237,25 @@ def write_plist(players: list[dict], path: str) -> None:
     """
     with open(path, "wb") as file:
         plistlib.dump(_plist_ready(players), file, fmt=plistlib.FMT_BINARY)
+
+
+def write_per_season(name: str, players: list[dict]) -> list[str]:
+    """One plist per season, and no combined file left behind.
+
+    A stale `players-historical.plist` from an older export would ship as dead
+    weight (and as a second copy of every row), so it is removed.
+    """
+    legacy = f"StatScout/Data/{name}.plist"
+    if os.path.exists(legacy):
+        os.remove(legacy)
+    paths: list[str] = []
+    seasons = sorted({player["season"] for player in players})
+    for season in seasons:
+        rows = [player for player in players if player["season"] == season]
+        path = f"StatScout/Data/{name}-{season}.plist"
+        write_plist(rows, path)
+        paths.append(path)
+    return paths
 
 
 def main() -> None:
