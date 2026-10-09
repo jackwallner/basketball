@@ -198,9 +198,6 @@ struct OnboardingCards: View {
     /// is what stops them drifting apart, which is how this shipped wrong once:
     /// a hard-coded "Continue with StatScout+" over a disclosure that is nil
     /// until products load is a paid button with no price anywhere near it.
-    ///
-    /// The billed amount leads here too, so every transactional surface follows
-    /// the same App Store pricing hierarchy.
     private var monthlyOffer: (label: String, disclosure: String)? {
         guard store.monthlyPackage != nil,
               let disclosure = store.onboardingMonthlyDisclosureText else { return nil }

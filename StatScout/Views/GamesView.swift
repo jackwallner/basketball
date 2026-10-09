@@ -16,7 +16,7 @@ struct GamesView: View {
     @State private var favorites = FavoritesStore.shared
     @State private var selectedDayID: String?
 
-    private var days: [GameDay] { GameDay.days(in: viewModel.slateGames) }
+    private var days: [GameDay] { viewModel.slateDays }
 
     private var selectedDay: GameDay? {
         days.first { $0.id == selectedDayID } ?? viewModel.currentGameDay
@@ -24,7 +24,7 @@ struct GamesView: View {
 
     private var slate: [Game] {
         guard let selectedDay else { return [] }
-        return Game.slateOrder(selectedDay.games(from: viewModel.slateGames))
+        return Game.slateOrder(viewModel.slateGames(on: selectedDay))
     }
 
     /// "Tue, Oct 20 · 2026-27 · 3 games".
@@ -40,7 +40,7 @@ struct GamesView: View {
         return slate.first { $0.involves(team) }
     }
 
-    var body: some View {
+    var body: some View { let _ = TabProbe.hit("GamesView") // TABPROBE
         ScrollView {
             LazyVStack(spacing: 0) {
                 if viewModel.slateGames.isEmpty {
@@ -94,11 +94,12 @@ struct GamesView: View {
     // MARK: - Day selector
 
     private var daySelector: some View {
-        ScrollViewReader { proxy in
+        let selectedID = selectedDay?.id
+        return ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(days) { day in
-                        let isSelected = day.id == selectedDay?.id
+                        let isSelected = day.id == selectedID
                         Button {
                             selectedDayID = day.id
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()

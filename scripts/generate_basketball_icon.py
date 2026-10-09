@@ -33,6 +33,12 @@ GOLD            = (0xD6, 0xA1, 0x30)
 CANVAS          = (0xF0, 0xED, 0xE3)
 PERF_LOW        = (0xB2, 0x33, 0x14)
 
+ORANGE_TOP      = (0xF5, 0x8A, 0x3A)
+ORANGE_BOTTOM   = (0xD8, 0x55, 0x18)
+ORANGE_TRACK    = (0x9E, 0x3C, 0x10)
+CREAM           = (0xFF, 0xF3, 0xE2)
+OUTLINE         = (0x3A, 0x16, 0x06)
+
 TRACK_DARK      = (0x20, 0x2C, 0x28)
 TRACK_LIGHT     = (0xDB, 0xD7, 0xC9)
 
@@ -191,8 +197,14 @@ def main():
           ramp=[PERF_HIGH, GOLD, PERF_LOW], halo=MIDNIGHT,
           fractions=FRACTIONS_3, bar_h=152, bar_gap=106)
 
+    # Shipping icon: basketball orange court, cream fills, dark-brown outline
+    # on each ball so it still separates from the orange behind it.
+    build(os.path.join(OUT, "concept_e_orange.png"),
+          bg_top=ORANGE_TOP, bg_bottom=ORANGE_BOTTOM, track=ORANGE_TRACK,
+          ramp=[CREAM] * 4, halo=OUTLINE)
+
     for name in ("concept_a_dark", "concept_b_two_hue", "concept_c_cream",
-                 "concept_d_three_bar"):
+                 "concept_d_three_bar", "concept_e_orange"):
         src = os.path.join(OUT, f"{name}.png")
         proof(src, os.path.join(OUT, f"proof_{name}_light.png"), (0xE8, 0xE8, 0xE8))
         proof(src, os.path.join(OUT, f"proof_{name}_dark.png"), (0x18, 0x18, 0x1A))

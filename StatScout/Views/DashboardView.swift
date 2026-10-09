@@ -8,7 +8,7 @@ struct DashboardView: View {
     @State private var paywallTrigger: PaywallTrigger?
     @State private var isSearching = false
 
-    var body: some View {
+    var body: some View { let _ = TabProbe.hit("DashboardView") // TABPROBE
         ZStack {
             VStack(spacing: 0) {
                 unifiedControlBar

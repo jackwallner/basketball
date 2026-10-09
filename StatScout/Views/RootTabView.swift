@@ -84,8 +84,14 @@ struct RootTabView: View {
     private var tabView: some View {
         ZStack(alignment: .bottom) {
             ForEach(Tab.allCases) { tab in
-                tabContent(tab)
-                    .frame(maxWidth: 900, maxHeight: .infinity)
+                TabSlot(
+                    isActive: selection == tab.rawValue,
+                    tracksActivity: tab.tracksActivity
+                ) {
+                    tabContent(tab)
+                }
+                .equatable()
+                .frame(maxWidth: 900, maxHeight: .infinity)
                     .opacity(selection == tab.rawValue ? 1 : 0)
                     .allowsHitTesting(selection == tab.rawValue)
                     .accessibilityHidden(selection != tab.rawValue)
@@ -100,6 +106,10 @@ struct RootTabView: View {
         .onAppear {
             if let tab = Tab.launchArgument { selection = tab.rawValue }
         }
+        .task {
+            guard ProcessInfo.processInfo.arguments.contains("-TabSwitchBenchmark") else { return }
+            await TabSwitchBenchmark.run(isReady: { viewModel.isReady }) { selection = $0 }
+        }
         #endif
     }
 
@@ -107,6 +117,15 @@ struct RootTabView: View {
         case stats, games, trends, teams, compare
 
         var id: Int { rawValue }
+
+        /// Whether the tab's screen reads `isActive` (to poll or preload only
+        /// while on screen). The others never need re-rendering on a switch.
+        var tracksActivity: Bool {
+            switch self {
+            case .games, .trends, .compare: return true
+            case .stats, .teams: return false
+            }
+        }
 
         #if DEBUG
         /// Launch with `-StartTab trends|teams|compare` to open straight on a
@@ -272,6 +291,92 @@ struct RootTabView: View {
         }
     }
 
+}
+
+#if DEBUG
+@MainActor
+enum TabProbe {
+    static var counts: [String: Int] = [:]
+    static func hit(_ name: String) -> Bool { counts[name, default: 0] += 1; return true }
+}
+
+/// `-TabSwitchBenchmark`: once data is in, walks every tab several times and
+/// logs the longest stretch the main thread stays blocked after each switch.
+@MainActor
+enum TabSwitchBenchmark {
+    /// Ticks a 1 ms timer on the main run loop and keeps the longest gap
+    /// between ticks: how long the main thread was busy in one stretch.
+    private final class GapMeter {
+        private var timer: Timer?
+        private var last = CACurrentMediaTime()
+        private var longest: CFTimeInterval = 0
+
+        func start() {
+            last = CACurrentMediaTime()
+            longest = 0
+            let timer = Timer(timeInterval: 0.001, repeats: true) { [weak self] _ in
+                guard let self else { return }
+                let now = CACurrentMediaTime()
+                longest = max(longest, now - last)
+                last = now
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            self.timer = timer
+        }
+
+        func stop() -> Double {
+            timer?.invalidate()
+            timer = nil
+            return max(longest, CACurrentMediaTime() - last) * 1000
+        }
+    }
+
+    static func run(isReady: () -> Bool, select: (Int) -> Void) async {
+        NSLog("%@", "TABBENCH waiting for data")
+        while !isReady() { try? await Task.sleep(for: .milliseconds(250)) }
+        try? await Task.sleep(for: .seconds(4))
+        NSLog("%@", "TABBENCH start")
+        let meter = GapMeter()
+        var samples: [Int: [Double]] = [:]
+        for _ in 0..<6 {
+            for tab in [1, 2, 3, 4, 0] {
+                TabProbe.counts = [:]
+                meter.start()
+                select(tab)
+                try? await Task.sleep(for: .milliseconds(800))
+                let gap = meter.stop()
+                samples[tab, default: []].append(gap)
+                NSLog("%@", "TABBENCH switch tab=\(tab) gap=\(Int(gap)) bodies=\(TabProbe.counts.sorted { $0.key < $1.key })")
+            }
+        }
+        for tab in samples.keys.sorted() {
+            let values = samples[tab, default: []].sorted()
+            let median = values[values.count / 2]
+            NSLog("%@", "TABBENCH tab=\(tab) median=\(Int(median))ms max=\(Int(values.last ?? 0))ms all=\(values.map { Int($0) })")
+        }
+        NSLog("%@", "TABBENCH done")
+    }
+}
+#endif
+
+/// One tab's screen, which the root re-renders only when the tab's own
+/// on-screen state flips.
+///
+/// All five tabs stay alive in the root's `ZStack`, so without this every tab
+/// switch re-ran the body of every tab, hidden ones included, and the Stats,
+/// Teams and Games bodies each walk a full season. Data changes still reach a
+/// hidden tab through observation; only the root's own re-render is cut off.
+private struct TabSlot<Content: View>: View, Equatable {
+    let isActive: Bool
+    let tracksActivity: Bool
+    @ViewBuilder let content: () -> Content
+
+    var body: some View { content() }
+
+    nonisolated static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.tracksActivity == rhs.tracksActivity
+            && (!lhs.tracksActivity || lhs.isActive == rhs.isActive)
+    }
 }
 
 /// One item in the hand-rolled floating tab bar. The selected pill uses the

@@ -177,8 +177,15 @@ struct GameDay: Hashable, Identifiable, Sendable {
     /// Eastern midnight of the game date, the league's calendar.
     let date: Date
     let phase: SeasonPhase
+    /// "2026-10-20". Formatted once here: the strip compares ids for every
+    /// chip on every render.
+    let id: String
 
-    var id: String { Self.dayFormatter.string(from: date) }
+    init(date: Date, phase: SeasonPhase) {
+        self.date = date
+        self.phase = phase
+        self.id = Self.dayFormatter.string(from: date)
+    }
 
     private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -213,8 +220,12 @@ struct GameDay: Hashable, Identifiable, Sendable {
     /// as people start planning for it. Before the season it is the opening
     /// night; after it, the last day played.
     static func current(in games: [Game], now: Date = .now) -> GameDay? {
-        let days = days(in: games)
-        return days.first { now < $0.date.addingTimeInterval(32 * 3_600) } ?? days.last
+        current(among: days(in: games), now: now)
+    }
+
+    /// `current(in:)` over days already worked out, in date order.
+    static func current(among days: [GameDay], now: Date = .now) -> GameDay? {
+        days.first { now < $0.date.addingTimeInterval(32 * 3_600) } ?? days.last
     }
 
     func games(from games: [Game]) -> [Game] {

@@ -218,14 +218,14 @@ final class BasketballMetricRegistryTests: XCTestCase {
     }
 
     func testPositionBoardDefaults() {
-        XCTAssertEqual(PlayerPositionGroup.guard.preferredAdvancedMetrics, ["AST%", "TS%", "USG%", "On-Off"])
-        XCTAssertEqual(PlayerPositionGroup.forward.preferredAdvancedMetrics, ["Pts/100", "TS%", "USG%", "On-Off"])
-        XCTAssertEqual(PlayerPositionGroup.center.preferredAdvancedMetrics, ["REB%", "Rim FG%", "BLK%", "On-Off"])
+        XCTAssertEqual(PlayerPositionGroup.guard.preferredAdvancedMetrics, ["On-Off", "On-Court +/-", "AST%", "TS%", "USG%"])
+        XCTAssertEqual(PlayerPositionGroup.forward.preferredAdvancedMetrics, ["On-Off", "On-Court +/-", "Pts/100", "TS%", "USG%"])
+        XCTAssertEqual(PlayerPositionGroup.center.preferredAdvancedMetrics, ["On-Off", "On-Court +/-", "REB%", "Rim FG%", "BLK%"])
         XCTAssertEqual(PlayerPositionGroup.guard.preferredTraditionalMetrics, ["APG", "PPG", "SPG"])
         XCTAssertEqual(PlayerPositionGroup.forward.preferredTraditionalMetrics, ["PPG", "RPG", "3PM"])
         XCTAssertEqual(PlayerPositionGroup.center.preferredTraditionalMetrics, ["RPG", "BPG", "FG%"])
-        // The All board leads with scoring.
-        XCTAssertEqual(PlayerPositionGroup.all.preferredAdvancedMetrics.first, "Pts/100")
+        // Every board opens on the all-in-one impact number.
+        XCTAssertEqual(PlayerPositionGroup.all.preferredAdvancedMetrics.first, "On-Off")
         XCTAssertEqual(PlayerPositionGroup.all.preferredTraditionalMetrics.first, "PPG")
         XCTAssertEqual(PlayerPositionGroup.allCases.map(\.rawValue), ["All", "G", "F", "C"])
     }

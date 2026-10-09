@@ -24,20 +24,23 @@ struct StandardStatsLeadersView: View {
         }
     }
 
+    /// Each player's sort keys are read once, not on every comparison: reading
+    /// one means a case-insensitive search of the stat line and parsing it.
     private var sortedPlayers: [Player] {
-        filteredPlayers.sorted { first, second in
-            let firstValue = numericStat(for: first) ?? 0
-            let secondValue = numericStat(for: second) ?? 0
-            if firstValue != secondValue {
-                return sortDescending
-                    ? firstValue > secondValue
-                    : firstValue < secondValue
+        filteredPlayers
+            .map { (player: $0, value: numericStat(for: $0) ?? 0, games: games(for: $0)) }
+            .sorted { first, second in
+                if first.value != second.value {
+                    return sortDescending
+                        ? first.value > second.value
+                        : first.value < second.value
+                }
+                return first.games > second.games
             }
-            return games(for: first) > games(for: second)
-        }
+            .map(\.player)
     }
 
-    var body: some View {
+    var body: some View { let _ = TabProbe.hit("StandardStatsLeadersView") // TABPROBE
         VStack(spacing: 0) {
             positionSelector
             controlRow
@@ -237,7 +240,7 @@ struct StandardStatsLeadersView: View {
             if viewModel?.isLoading == true && players.isEmpty {
                 ProgressView("Loading player stats")
                     .padding(.vertical, 48)
-            } else if sortedPlayers.isEmpty {
+            } else if filteredPlayers.isEmpty {
                 ContentUnavailableView {
                     Label("No data available", systemImage: "chart.bar")
                 } description: {

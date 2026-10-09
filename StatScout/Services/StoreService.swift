@@ -191,9 +191,9 @@ final class PaywallGate: ObservableObject {
 }
 
 /// Which part of an introductory offer gets the primary visual position.
-/// Every live purchase surface uses `billedAmountFirst` for Guideline 3.1.2(c).
-/// `trialFirst` remains only so the pure formatting helpers can guard against a
-/// future regression in tests.
+/// The one-tap pop-ups use `billedAmountFirst` for Guideline 3.1.2(c), the
+/// cited surface. Onboarding uses `trialFirst`, the baseball app's approved
+/// pitch.
 enum PriceEmphasis {
     case trialFirst
     case billedAmountFirst
@@ -615,19 +615,25 @@ final class StoreService: NSObject, ObservableObject {
     /// identical on both, so the smaller number is the smaller commitment to
     /// agree to before the user has seen the app work; the yearly plan is what
     /// `PaywallView` sells, where the savings are visible next to it.
+    ///
+    /// The one surface that leads with the trial, on the same ladder as the
+    /// approved Baseball Savvy StatScout onboarding: "Start 7-day free trial"
+    /// on the button, "7-Day Free Trial, then $1.99/month" opening the
+    /// disclosure. A user with no trial left gets the price on the button.
     var onboardingMonthlyCTALabel: String {
         guard let monthly = monthlyPackage else { return "Upgrade to StatScout+" }
         return Self.directCTALabel(
             price: monthly.priceLabel,
             trial: isEligibleForIntroOffer(monthly) ? monthly.introOfferLabel : nil,
-            isWinback: false
+            isWinback: false,
+            emphasis: .trialFirst
         )
     }
 
     /// Full Apple-3.1.2 auto-renew disclosure for the monthly plan, for the
     /// onboarding CTA that buys it directly.
     var onboardingMonthlyDisclosureText: String? {
-        monthlyPackage.map { disclosureText(for: $0) }
+        monthlyPackage.map { disclosureText(for: $0, emphasis: .trialFirst) }
     }
 
     /// The monthly package, when present. Used as the anchor when computing

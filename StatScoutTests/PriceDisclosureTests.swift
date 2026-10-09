@@ -15,7 +15,8 @@ import XCTest
 /// The fix applies to every one-tap transactional surface and demotes the trial
 /// rather than deleting it. `.billedAmountFirst` puts the price on the button's
 /// primary line and keeps the trial on a subordinate one beneath it, in micro.
-/// The old trial-first ordering remains testable but is never the live default.
+/// Onboarding is the exception that leads with the trial, matching the baseball
+/// app's approved onboarding; see `testOnboardingLeadsWithTheTrial`.
 ///
 /// `PaywallView` is the deliberate exception, and it clears the guideline a
 /// different way: its button names no price *and* no trial-versus-price
@@ -26,6 +27,32 @@ final class PriceDisclosureTests: XCTestCase {
 
     private let renewSentence = "Auto-renews unless cancelled at least 24 hours before the end of the current period."
     private let cancelSentence = "Manage or cancel in Settings › Apple ID › Subscriptions."
+
+    // MARK: - Onboarding: the trial leads
+
+    func testOnboardingLeadsWithTheTrial() {
+        XCTAssertEqual(
+            StoreService.directCTALabel(
+                price: "$1.99/month", trial: "7-day free trial", isWinback: false, emphasis: .trialFirst
+            ),
+            "Start 7-day free trial"
+        )
+        XCTAssertEqual(
+            StoreService.disclosureText(
+                price: "$1.99/month", isSubscription: true, trial: "7-day free trial", emphasis: .trialFirst
+            ),
+            "7-Day Free Trial, then $1.99/month. \(renewSentence) \(cancelSentence)"
+        )
+    }
+
+    func testOnboardingWithNoTrialLeftNamesThePrice() {
+        XCTAssertEqual(
+            StoreService.directCTALabel(
+                price: "$1.99/month", trial: nil, isWinback: false, emphasis: .trialFirst
+            ),
+            "Try StatScout+ for $1.99/month"
+        )
+    }
 
     // MARK: - Every purchase surface: billed amount first
 

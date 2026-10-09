@@ -10,7 +10,16 @@ final class DashboardViewModel {
     private let defaults: UserDefaults
 
     var players: [Player] = []
-    var playerHistories: [Int: [Player]] = [:]
+    var playerHistories: [Int: [Player]] = [:] {
+        didSet {
+            rostersBySeason.removeAll()
+            sortMetricCache = nil
+        }
+    }
+    /// Season rosters cut from `playerHistories`, rebuilt only when it changes.
+    /// Every board reads its roster several times per render, and each cut
+    /// walks every season the app holds.
+    @ObservationIgnored private var rostersBySeason: [String: [Player]] = [:]
     var searchText = ""
     var selectedConference: NBAConference = .all
     var selectedPosition: PlayerPositionGroup = .all {
@@ -35,23 +44,50 @@ final class DashboardViewModel {
         return determineSortMetricLabel()
     }
 
-    var availableSortMetrics: [String] {
-        var seen = Set<String>()
-        return BasketballMetricRegistry.sorted(eligibleMetrics)
-            .filter { seen.insert($0.label).inserted }
-            .map(\.label)
+    var availableSortMetrics: [String] { sortMetricLists.all }
+
+    var availableAdvancedSortMetrics: [String] { sortMetricLists.advanced }
+
+    private struct SortMetricLists {
+        let key: String
+        let eligible: [Metric]
+        let all: [String]
+        let advanced: [String]
     }
 
-    var availableAdvancedSortMetrics: [String] {
-        availableSortMetrics.filter { label in
-            eligibleMetrics.contains { metric in
-                metric.label == label
-                    && BasketballMetricRegistry.definition(
-                        for: metric.label,
-                        category: metric.category
-                    )?.kind == .advanced
-            }
-        }
+    /// The metrics the current board can rank by, worked out once per season,
+    /// phase and position rather than on every read: the menus, the sort chip
+    /// and the qualifier gate all ask several times per render, and each
+    /// answer walks every metric of every player in the season.
+    @ObservationIgnored private var sortMetricCache: SortMetricLists?
+
+    private var sortMetricLists: SortMetricLists {
+        let roster = seasonPlayers
+        let position = selectedPosition
+        let key = "\(selectedSeason)-\(selectedPhase.rawValue)-\(position.rawValue)"
+        if let sortMetricCache, sortMetricCache.key == key { return sortMetricCache }
+
+        let eligible = roster
+            .filter { position.includes($0) }
+            .flatMap(\.metrics)
+            .filter { BasketballMetricRegistry.isSupported($0, by: position) }
+        var seenPairs = Set<String>()
+        let distinct = eligible.filter { seenPairs.insert("\($0.label)|\($0.category.rawValue)").inserted }
+        var seenLabels = Set<String>()
+        let all = BasketballMetricRegistry.sorted(distinct)
+            .filter { seenLabels.insert($0.label).inserted }
+            .map(\.label)
+        let advancedLabels = Set(distinct.filter {
+            BasketballMetricRegistry.definition(for: $0.label, category: $0.category)?.kind == .advanced
+        }.map(\.label))
+        let lists = SortMetricLists(
+            key: key,
+            eligible: eligible,
+            all: all,
+            advanced: all.filter { advancedLabels.contains($0) }
+        )
+        sortMetricCache = lists
+        return lists
     }
 
     func setUserSortMetric(_ label: String?) {
@@ -453,21 +489,31 @@ final class DashboardViewModel {
     // Returns empty when the selected season has no data so callers render an empty state
     // instead of falling back to a stale "latest snapshot" set.
     var seasonPlayers: [Player] {
-        let allSeasonPlayers = playerHistories.values.flatMap { $0 }.filter {
-            $0.season == selectedSeason && $0.seasonPhase == selectedPhase
-        }
-        var seenIds = Set<Int>()
-        return allSeasonPlayers.filter { seenIds.insert($0.playerId).inserted }
+        players(forSeason: selectedSeason, phase: selectedPhase)
     }
 
     // MARK: - Games
 
     /// The live season's schedule and posted finals, from `public.games`.
-    private(set) var games: [Game] = []
+    private(set) var games: [Game] = [] {
+        didSet { scheduleCache = ScheduleCache() }
+    }
     /// The next season's schedule while it is pending: scheduled games with no
     /// scores, loaded beside the live season so the Games tab has a front door
     /// in October.
-    private(set) var upcomingGames: [Game] = []
+    private(set) var upcomingGames: [Game] = [] {
+        didSet { scheduleCache = ScheduleCache() }
+    }
+
+    /// Answers derived from the schedule, kept until the next load replaces
+    /// it. The Games strip and every team disk on the Teams grid ask for these
+    /// on each render, and each answer otherwise walks the whole season.
+    private struct ScheduleCache {
+        var slateDays: [GameDay]?
+        var gamesByDay: [String: [Game]]?
+        var records: [String: String?] = [:]
+    }
+    @ObservationIgnored private var scheduleCache = ScheduleCache()
     /// Games whose advanced breakdown is published, so a final can say whether
     /// its box score is in yet.
     private(set) var gameIdsWithStats: Set<String> = []
@@ -480,7 +526,31 @@ final class DashboardViewModel {
     /// season is pending, the live season otherwise.
     var slateGames: [Game] { isSeasonPending && !upcomingGames.isEmpty ? upcomingGames : games }
 
-    var currentGameDay: GameDay? { GameDay.current(in: slateGames) }
+    /// Every day on the slate, in order.
+    var slateDays: [GameDay] {
+        let slate = slateGames
+        if let days = scheduleCache.slateDays { return days }
+        let days = GameDay.days(in: slate)
+        scheduleCache.slateDays = days
+        return days
+    }
+
+    var currentGameDay: GameDay? { GameDay.current(among: slateDays) }
+
+    /// The slate's games on one day.
+    func slateGames(on day: GameDay) -> [Game] {
+        let slate = slateGames
+        if scheduleCache.gamesByDay == nil {
+            scheduleCache.gamesByDay = Dictionary(grouping: slate) {
+                Self.dayKey(GameDay(date: $0.gameDate, phase: $0.seasonPhase))
+            }
+        }
+        return scheduleCache.gamesByDay?[Self.dayKey(day)] ?? []
+    }
+
+    private static func dayKey(_ day: GameDay) -> String {
+        "\(day.id)|\(day.phase.rawValue)"
+    }
 
     /// The last day of games the live season played, for the "how it ended" card
     /// under the upcoming slate. Empty unless the next season is pending.
@@ -609,7 +679,7 @@ final class DashboardViewModel {
     /// night.
     func currentGame(forTeam team: String) -> Game? {
         guard let day = currentGameDay else { return nil }
-        return day.games(from: slateGames).first { $0.involves(team) }
+        return slateGames(on: day).first { $0.involves(team) }
     }
 
     /// Regular-season record from posted finals, "52-30". When `through` is
@@ -617,6 +687,15 @@ final class DashboardViewModel {
     /// another season has no record in the live one.
     func record(forTeam team: String, through game: Game? = nil) -> String? {
         if let game, game.season != freeSeason { return nil }
+        guard game == nil else { return computeRecord(forTeam: team, through: game) }
+        _ = games
+        if let cached = scheduleCache.records[team] { return cached }
+        let record = computeRecord(forTeam: team, through: nil)
+        scheduleCache.records[team] = .some(record)
+        return record
+    }
+
+    private func computeRecord(forTeam team: String, through game: Game?) -> String? {
         let cutoff = game?.tipoff ?? .distantFuture
         let finals = games.filter {
             $0.seasonPhase == .regular && $0.isFinal && $0.involves(team)
@@ -847,11 +926,17 @@ final class DashboardViewModel {
     /// that profile is showing, which can differ from `selectedSeason`.
     func players(forSeason season: Int, phase: SeasonPhase? = nil) -> [Player] {
         let targetPhase = phase ?? selectedPhase
-        let all = playerHistories.values.flatMap { $0 }.filter {
+        // Read before the cache so the caller still observes the histories.
+        let histories = playerHistories
+        let key = "\(season)-\(targetPhase.rawValue)"
+        if let cached = rostersBySeason[key] { return cached }
+        let all = histories.values.flatMap { $0 }.filter {
             $0.season == season && $0.seasonPhase == targetPhase
         }
         var seen = Set<Int>()
-        return all.filter { seen.insert($0.playerId).inserted }
+        let roster = all.filter { seen.insert($0.playerId).inserted }
+        rostersBySeason[key] = roster
+        return roster
     }
 
     /// Teams whose name or abbreviation matches the current search.
@@ -874,12 +959,7 @@ final class DashboardViewModel {
             .sorted { teamFullName($0) < teamFullName($1) }
     }
 
-    private var eligibleMetrics: [Metric] {
-        seasonPlayers
-            .filter { selectedPosition.includes($0) }
-            .flatMap(\.metrics)
-            .filter { BasketballMetricRegistry.isSupported($0, by: selectedPosition) }
-    }
+    private var eligibleMetrics: [Metric] { sortMetricLists.eligible }
 
     var filteredPlayers: [Player] {
         // Resolved once: it walks every metric in the season.
@@ -1093,7 +1173,8 @@ final class DashboardViewModel {
 
     private func determineSortMetricLabel() -> String? {
         let preferred = selectedPosition.preferredAdvancedMetrics + selectedPosition.preferredTraditionalMetrics
-        for label in preferred where eligibleMetrics.contains(where: { $0.label == label }) {
+        let available = Set(availableSortMetrics)
+        for label in preferred where available.contains(label) {
             return label
         }
         return availableSortMetrics.first

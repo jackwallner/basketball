@@ -7,7 +7,7 @@ owner `basketball`. Bundle id `com.jackwallner.basketball`, product name "Hardwo
 
 **App Store name:** **"Basketball Next: StatScout"**, chosen for ASO. In-app it is
 `PRODUCT_NAME: "Hardwood StatScout"`, home-screen `StatScout`, paid tier `StatScout+`.
-ASO plan: `project-docs/marketing/aso-plan.md`.
+ASO plan: none yet; write `project-docs/marketing/aso-plan.md` once the listing is live.
 
 **The web reference is Cleaning the Glass**: percentiles within a position group
 (G / F / C), points and rates per 100 possessions, shooting split into zone
