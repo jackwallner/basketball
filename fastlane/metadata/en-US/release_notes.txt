@@ -1,1 +1,0 @@
-First release. Percentile rankings for every NBA player across Scoring, Shooting, Playmaking, Rebounding, Defense and Impact, full player profiles, game box scores, team scouting and history back to 2002-03.

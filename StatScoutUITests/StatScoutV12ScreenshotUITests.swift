@@ -99,6 +99,9 @@ final class StatScoutV12ScreenshotUITests: XCTestCase {
         ]
         app.launchArguments = [
             "-ScreenshotData",
+            // Store screenshots show a settled season, not the pre-tip-off banner,
+            // which would date the listing the week it goes live.
+            "-ScreenshotSeasonStatus", "published",
             "-hasCompletedOnboarding", "YES",
             "-stats.board", "advanced",
             "-stats.qualifier", "All Players",

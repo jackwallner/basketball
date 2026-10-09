@@ -44,6 +44,7 @@
 		530DACB92F83D8B251DD53FA /* TrialPitchSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 227F1309E0C8906969049D9F /* TrialPitchSheet.swift */; };
 		53AAA361EDCCDA0BB2681CD8 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28F7C1A7CADA7CA917C9B9BF /* Components.swift */; };
 		546D608E319D793C05C8EF0B /* DashboardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5656B47DF4560469CCFA8564 /* DashboardViewModelTests.swift */; };
+		548A14CA5EA0552DC48968F9 /* ScreenshotRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24CFE6AE61B07BB9D932CBB2 /* ScreenshotRoute.swift */; };
 		54C5816A5F9BF98E9CAC08AB /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = C158C92E74347D277FDBDCFB /* Game.swift */; };
 		552456E3B89CA7610454CA6C /* players-historical-2006.plist in Resources */ = {isa = PBXBuildFile; fileRef = A7ACDC1FEFA982AA6C7A22FA /* players-historical-2006.plist */; };
 		5541A1E46769E9E3299B909A /* DataFreshness.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE145A0A19DDB7FB7DE22243 /* DataFreshness.swift */; };
@@ -164,6 +165,7 @@
 		227F1309E0C8906969049D9F /* TrialPitchSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrialPitchSheet.swift; sourceTree = "<group>"; };
 		22FE0335BB2C3B67BA44ED9B /* StatsBoardControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsBoardControls.swift; sourceTree = "<group>"; };
 		2465A0297E76FA4725698DA2 /* PriceDisclosureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceDisclosureTests.swift; sourceTree = "<group>"; };
+		24CFE6AE61B07BB9D932CBB2 /* ScreenshotRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotRoute.swift; sourceTree = "<group>"; };
 		278BC9B90F41966E86B41E02 /* SavantSegmented.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavantSegmented.swift; sourceTree = "<group>"; };
 		28F7C1A7CADA7CA917C9B9BF /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		2A090851695C302F3D93BBD8 /* players-historical-2008.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "players-historical-2008.plist"; sourceTree = "<group>"; };
@@ -400,6 +402,7 @@
 			children = (
 				32B545E98CC346F651DBE948 /* AppStoreReviewLinks.swift */,
 				572A0EB8383B16EB9207EE2A /* PaywallScreenshotMode.swift */,
+				24CFE6AE61B07BB9D932CBB2 /* ScreenshotRoute.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -800,6 +803,7 @@
 				56EA8C43A6C48A00D0DE3E48 /* SavantSegmented.swift in Sources */,
 				E4F4F9DCDD33436ED0A01207 /* ScreenshotFixtureAPI.swift in Sources */,
 				E37AD3BED6CF8071095B5474 /* ScreenshotFixtureData.swift in Sources */,
+				548A14CA5EA0552DC48968F9 /* ScreenshotRoute.swift in Sources */,
 				189D1222312FEE374CFA4DEE /* SettingsView.swift in Sources */,
 				194BDDCA1D45B8E71852DF10 /* StandardStatsLeadersView.swift in Sources */,
 				8AC1BEA32FB20856292D426A /* StartupTrace.swift in Sources */,
@@ -854,7 +858,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = StatScout/StatScout.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = YXG4MP6W39;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = StatScout/Info.plist;
@@ -973,7 +977,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = StatScout/StatScout.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = YXG4MP6W39;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = StatScout/Info.plist;

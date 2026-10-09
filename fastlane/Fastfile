@@ -99,6 +99,9 @@ platform :ios do
         first_name: "Jack",
         last_name: "Wallner",
         email: "jackwallner@gmail.com",
+        # The review phone lives in the gitignored review_information folder so
+        # it never lands in this public repo.
+        phone_number: (File.read(File.join(__dir__, "metadata/review_information/phone_number.txt")).strip rescue ""),
         demo_user: "N/A - no login or account system",
         demo_password: "",
         notes: File.read(File.join(__dir__, "metadata/review_information/notes.txt")).strip

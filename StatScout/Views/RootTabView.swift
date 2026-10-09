@@ -38,6 +38,7 @@ struct RootTabView: View {
     // Owned here so TeamsView can auto-push the favorite team and the user can
     // still pop back to the list.
     @State private var teamsPath = NavigationPath()
+    @State private var statsPath = NavigationPath()
 
     init(viewModel: DashboardViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -198,14 +199,37 @@ struct RootTabView: View {
     }
 
     private var statsTab: some View {
-        NavigationStack {
+        NavigationStack(path: $statsPath) {
             StatsView(viewModel: viewModel)
                 // Title and season pills come from SeasonPhaseNavBar.
                 .modifier(HardwoodNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
+        #if DEBUG
+        .onChange(of: viewModel.players.count, initial: true) { _, _ in
+            pushScreenshotRouteIfNeeded()
+        }
+        #endif
     }
+
+    #if DEBUG
+    private func pushScreenshotRouteIfNeeded() {
+        // The cached archive loads first, so wait for the live season's row;
+        // pushing the first name match would open last season's profile.
+        let live = viewModel.players.filter { $0.season == viewModel.freeSeason }
+        guard let route = ScreenshotRoute.current, statsPath.isEmpty,
+              let player = live.first(where: { $0.name == ScreenshotRoute.playerName })
+        else { return }
+        switch route {
+        case .profile, .yearCompare:
+            statsPath.append(player)
+        case .compare:
+            guard let peer = live.first(where: { $0.name == ScreenshotRoute.peerName }) else { return }
+            statsPath.append(ComparisonRoute(playerA: player, playerB: peer))
+        }
+    }
+    #endif
 
     private var trendsTab: some View {
         NavigationStack {

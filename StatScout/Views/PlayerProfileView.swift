@@ -31,7 +31,12 @@ struct PlayerProfileView: View {
     var freshnessViewModel: DashboardViewModel? = nil
     var comparisonCatalog: ComparisonCatalog?
     @State private var showPercentileInfo = false
-    @State private var selectedTab: PlayerStatTab = .advanced
+    @State private var selectedTab: PlayerStatTab = {
+        #if DEBUG
+        if ScreenshotRoute.current == .yearCompare { return .yearCompare }
+        #endif
+        return .advanced
+    }()
     @State private var selectedPercentileSeason: Int? = nil
     @State private var paywallTrigger: PaywallTrigger?
     @State private var showingPlayerPicker = false
