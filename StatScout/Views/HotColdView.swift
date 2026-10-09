@@ -3,9 +3,9 @@ import SwiftUI
 /// League-wide recent form, ranked by change rather than by level.
 ///
 /// The same THEN / NOW / delta framing the baseball app's rolling leaderboard
-/// uses, because the delta is the story. A 9.1 Y/A is interesting; a 9.1 that
-/// was 6.2 three weeks ago is a quarterback you want to know about right now,
-/// and that is the thing season totals cannot tell you.
+/// uses, because the delta is the story. A 38% three-point mark is interesting;
+/// a 38% that was 31% over the two weeks before is a shooter you want to know
+/// about right now, and that is the thing season totals cannot tell you.
 ///
 /// Colour is the app's own performance gradient. The flame / snowflake accent
 /// is reserved for the direction control rather than applied to every row:
@@ -23,8 +23,8 @@ struct HotColdView: View {
     let isActive: Bool
     @State private var favorites = FavoritesStore.shared
     @State private var showingCold = false
-    @State private var side: TrendSide = .qb
-    @State private var metric: TrendMetric = TrendMetric.qbAdvanced[0]
+    @State private var side: TrendSide = .guard
+    @State private var metric: TrendMetric = TrendMetric.guardAdvanced[0]
     @State private var selectedSeason: Int
     @State private var selectedPhase: SeasonPhase
     @State private var paywallTrigger: PaywallTrigger?
@@ -53,29 +53,36 @@ struct HotColdView: View {
         )
     }
 
+    private static let zeroIsReal: Set<String> = [
+        "fg_pct", "ft_pct", "ts_pct", "efg_pct", "rim_fg", "three_pct", "three_pm",
+    ]
+
     /// How much better this player got. Falling numbers are the improvement for
-    /// an interception rate or a sack rate, so the board ranks on this rather
+    /// a turnover rate or a foul rate, so the board ranks on this rather
     /// than on the raw delta.
     private func improvement(_ form: RecentForm) -> Double? {
         guard let delta = form.delta[metric.key] else { return nil }
+        // A prior window of exactly zero means the player barely played in it
+        // (a rate with no possessions behind it reads 0.0), so the "rise" is
+        // the whole value and tops every board. Shooting percentages are the
+        // exception: an honest 0-for-5 is a real zero.
+        if form.priorMetrics[metric.key] == 0, !Self.zeroIsReal.contains(metric.key) { return nil }
         return metric.lowerIsBetter ? -delta : delta
     }
 
     /// True when nobody on this board has a prior window for the metric yet.
     ///
-    /// Movement compares a window with the same span before it, so a three-week
-    /// window has nothing to compare until Week 4, five weeks until Week 6. Until
-    /// then the board ranks the current window by level instead of showing an
-    /// empty "no movement" screen in the weeks new fans arrive.
+    /// Movement compares a window with the same span before it, so a two-week
+    /// window has nothing to compare until the fifth week of the season, four
+    /// weeks until the ninth. Until then the board ranks the current window by
+    /// level instead of showing an empty "no movement" screen in the weeks new
+    /// fans arrive.
     private var isEarlySeason: Bool {
         !forms.isEmpty && !forms.contains { $0.priorMetrics[metric.key] != nil }
     }
 
-    /// The first week a comparison exists for the selected window.
-    private var movementStartWeek: Int { viewModel.recentWindow.rawValue + 1 }
-
     /// Early-season board: the current window ranked by the metric itself.
-    /// A volume floor still applies, so one long catch can't top Y/R.
+    /// A volume floor still applies, so one hot night can't top TS%.
     private var earlyRanked: [RecentForm] {
         forms
             .filter { $0.metrics[metric.key] != nil && !$0.isSmallSample(minimumGames: 1) }
@@ -87,13 +94,12 @@ struct HotColdView: View {
     }
 
     private var earlyTitle: String {
-        let weeks = forms.compactMap(\.weekRangeLabel).first ?? "This season"
-        return "\(side.label.uppercased()) · \(weeks.uppercased()) LEADERS"
+        "\(side.label.uppercased()) · \(viewModel.recentWindow.label.uppercased()) LEADERS"
     }
 
     /// Ranked by improvement, hot first or cold first. Small samples are
-    /// excluded outright: four carries in a mop-up week produce enormous deltas
-    /// that would crowd out every real riser.
+    /// excluded outright: two garbage-time games produce enormous deltas that
+    /// would crowd out every real riser.
     private var ranked: [RecentForm] {
         forms
             .filter { !$0.isSmallSample && improvement($0) != nil }
@@ -135,7 +141,7 @@ struct HotColdView: View {
                 }
                 .safeAreaInset(edge: .top, spacing: 0) {
                     header
-                        .background(GridironPalette.canvas)
+                        .background(HardwoodPalette.canvas)
                 }
             } else {
                 VStack(spacing: 0) {
@@ -152,13 +158,13 @@ struct HotColdView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(GridironPalette.canvas)
+        .background(HardwoodPalette.canvas)
         .modifier(
             SeasonPhaseNavBar(
                 title: "Trends",
-                // Two seasons, not the full menu. Everything older than last
-                // season has no recent-form rows to rank, so listing 2000-2024
-                // here offered twenty-five ways to reach an empty board.
+                // Two seasons at most, not the full menu. Everything older has no
+                // recent-form rows to rank, so listing 2002-03 through 2023-24
+                // here offered twenty-two ways to reach an empty board.
                 seasons: viewModel.recentFormSeasons,
                 selectedSeason: selectedSeason,
                 selectedPhase: selectedPhase,
@@ -211,8 +217,8 @@ struct HotColdView: View {
                     Spacer(minLength: 0)
                     if let through = throughLabel {
                         Text(through)
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
                     }
                 }
 
@@ -220,26 +226,26 @@ struct HotColdView: View {
                 // fill differs, because here the choice itself encodes hot vs
                 // cold.
                 if !isEarlySeason {
-                    GridironSegmented(
+                    HardwoodSegmented(
                         segments: [
                             .init(value: false, label: "Heating up", systemImage: "flame.fill"),
                             .init(value: true, label: "Cooling off", systemImage: "snowflake"),
                         ],
                         selection: $showingCold,
-                        selectedFill: { $0 ? GridironPalette.performanceLow : GridironPalette.performanceHigh }
+                        selectedFill: { $0 ? HardwoodPalette.performanceLow : HardwoodPalette.performanceHigh }
                     )
                 }
 
-                GridironSegmented(
+                HardwoodSegmented(
                     segments: TrendWindow.allCases.map { .init(value: $0, label: $0.segmentLabel) },
                     selection: $viewModel.recentWindow
                 )
 
                 Text(isEarlySeason
-                     ? "Too early for movement: a \(viewModel.recentWindow.rawValue)-week comparison starts in Week \(movementStartWeek). Until then, the best of the season so far."
-                     : "League weeks, compared with the same span before them. Players inactive for the current span are excluded.")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                     ? "Too early for movement: comparing the \(viewModel.recentWindow.prose) with the span before it needs twice as many games. Until then, the best of the \(viewModel.recentWindow.prose)."
+                     : "The \(viewModel.recentWindow.prose) across the league, compared with the same span before it. Players with no games in it are excluded.")
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -248,21 +254,14 @@ struct HotColdView: View {
             // no gap the stat chip sat welded to the bottom of the tab strip
             // and read as part of it. Same 10pt Stats puts above its own
             // control row.
-            .padding(.top, GridironGeo.controlRowGap)
+            .padding(.top, HardwoodGeo.controlRowGap)
         }
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// Weeks read better than dates in a sport that plays once a week, but the
-    /// rollup only started storing them recently, so the date is the fallback.
+    /// The last game the window covers: the league plays most nights, so a date
+    /// says exactly how current the board is.
     private var throughLabel: String? {
-        if let week = viewModel.recentFormThroughWeek(
-            window: viewModel.recentWindow,
-            season: selectedSeason,
-            phase: selectedPhase
-        ) {
-            return "Through Week \(week)"
-        }
         if let asOf = viewModel.recentFormAsOf(
             window: viewModel.recentWindow,
             season: selectedSeason,
@@ -273,7 +272,7 @@ struct HotColdView: View {
         return nil
     }
 
-    /// Two seasons are offered, and the older one is Pro: the free tier is
+    /// Up to two seasons are offered, and the older one is Pro: the free tier is
     /// pinned to the live season everywhere, Trends included. So the locked row
     /// opens the paywall rather than doing nothing, the same as the Stats menu.
     private func selectSeason(_ season: Int) {
@@ -287,7 +286,7 @@ struct HotColdView: View {
 
     /// Matches the persistent underlined position row at the top of Stats.
     private var positionSelector: some View {
-        GridironTabs(
+        HardwoodTabs(
             tabs: TrendSide.allCases.map(\.shortLabel),
             selected: Binding(
                 get: { side.shortLabel },
@@ -343,7 +342,7 @@ struct HotColdView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(GridironPalette.turf)
+                .tint(HardwoodPalette.court)
             }
             .padding(.vertical, 32)
         } else if isEarlySeason, !earlyRanked.isEmpty {
@@ -374,7 +373,7 @@ struct HotColdView: View {
     /// security boundary, so the rows behind it were never real numbers.
     private var lockedContent: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: isEarlySeason ? earlyTitle : boardTitle)
+            HardwoodSectionBar(title: isEarlySeason ? earlyTitle : boardTitle)
 
             leaderRow
 
@@ -403,17 +402,17 @@ struct HotColdView: View {
                         // Early on there is no movement yet, and the screen
                         // says so above; sell what is actually behind the blur.
                         headline: isEarlySeason
-                            ? "See the full board: every player's last \(viewModel.recentWindow.rawValue) weeks at every position, with movement from Week \(movementStartWeek)"
+                            ? "See the full board: every player's \(viewModel.recentWindow.prose) at every position, with movement once there is a span to compare"
                             : "See the full board: every position ranked by how far they've moved",
                         trigger: .recentForm
                     )
                 }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -439,15 +438,15 @@ struct HotColdView: View {
                     ProgressView().scaleEffect(0.7)
                 }
                 Text(viewModel.isRecentFormLoading ? "Loading the board…" : "No movement to rank yet")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, GridironGeo.padInline)
-            .frame(height: GridironGeo.rowHeight)
-            .background(GridironPalette.surface)
+            .padding(.horizontal, HardwoodGeo.padInline)
+            .frame(height: HardwoodGeo.rowHeight)
+            .background(HardwoodPalette.surface)
             .overlay(
-                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline),
                 alignment: .bottom
             )
         }
@@ -455,7 +454,7 @@ struct HotColdView: View {
 
     /// Names the group as well as the direction. Baseball's board covers one of
     /// two sides, so "in the league" is unambiguous there; here it's one of
-    /// five position groups and the group is the more useful half of the title.
+    /// three position groups and the group is the more useful half of the title.
     private var boardTitle: String {
         let direction = showingCold ? "COOLING OFF" : "HEATING UP"
         return "\(side.label.uppercased()) · \(direction)"
@@ -463,16 +462,16 @@ struct HotColdView: View {
 
     private func earlySection(forms: [RecentForm]) -> some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: earlyTitle)
+            HardwoodSectionBar(title: earlyTitle)
             ForEach(Array(forms.enumerated()), id: \.element.id) { index, form in
                 earlyRow(form: form, rank: index + 1, index: index)
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -486,33 +485,33 @@ struct HotColdView: View {
         let value = form.metrics[metric.key].map { metric.format($0) } ?? "-"
         let rowContent = HStack(spacing: 10) {
             Text("\(rank)")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.statSmall)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .frame(width: 26, alignment: .leading)
                 .monospacedDigit()
             PlayerHeadshot(team: player?.team ?? form.team ?? "", initials: player?.initials ?? "-", size: 34)
             VStack(alignment: .leading, spacing: 2) {
                 Text(player?.name ?? "Player \(form.playerId)")
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .lineLimit(1)
                 Text([displayTeamAbbr(player?.team ?? form.team ?? ""), volumeText(form)].joined(separator: " · "))
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Text(value)
-                .font(GridironType.statMed)
-                .foregroundStyle(GridironPalette.turf)
+                .font(HardwoodType.statMed)
+                .foregroundStyle(HardwoodPalette.court)
                 .monospacedDigit()
                 .frame(width: 72, alignment: .trailing)
         }
-        .padding(.horizontal, GridironGeo.padInline)
-        .frame(height: GridironGeo.rowHeight)
-        .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .frame(height: HardwoodGeo.rowHeight)
+        .background(index % 2 == 0 ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
         .overlay(
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline),
             alignment: .bottom
         )
         .contentShape(Rectangle())
@@ -530,24 +529,21 @@ struct HotColdView: View {
 
     private func volumeText(_ form: RecentForm) -> String {
         let games = form.games == 1 ? "1 game" : "\(form.games) games"
-        switch form.playerType {
-        case "qb", "rb", "wr", "te": return "\(games) · \(form.plays) plays"
-        default: return games
-        }
+        return "\(games) · \(form.minutes) min"
     }
 
     private func section(title: String, forms: [RecentForm], ranked: Bool) -> some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: title)
+            HardwoodSectionBar(title: title)
             ForEach(Array(forms.enumerated()), id: \.element.id) { index, form in
                 row(form: form, rank: ranked ? index + 1 : nil, index: index)
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -566,8 +562,8 @@ struct HotColdView: View {
         let rowContent = HStack(spacing: 10) {
             if let rank {
                 Text("\(rank)")
-                    .font(GridironType.statSmall)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.statSmall)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                     .frame(width: 26, alignment: .leading)
                     .monospacedDigit()
             }
@@ -581,8 +577,8 @@ struct HotColdView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     Text(player?.name ?? "Player \(form.playerId)")
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.bodyBold)
+                        .foregroundStyle(HardwoodPalette.ink)
                         .lineLimit(1)
                     if favorites.isFavorite(playerId: form.playerId) {
                         Image(systemName: "star.fill")
@@ -590,16 +586,15 @@ struct HotColdView: View {
                             .foregroundStyle(Color.yellow)
                     }
                 }
-                // THEN to NOW, plus the weeks it covers. Weeks rather than a
-                // game count because in a weekly sport "Weeks 15-17" says both
-                // how many games and when they were.
+                // THEN to NOW, plus the window and the games in it: "2 wk" says
+                // when, "7G" says how many.
                 if let then, let now {
                     Text([
                         "\(metric.format(then)) → \(metric.format(now))",
-                        form.weekRangeLabel ?? "\(form.games)G",
+                        "\(form.windowLabel) · \(form.games)G",
                     ].joined(separator: " · "))
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .lineLimit(1)
                 }
             }
@@ -608,11 +603,11 @@ struct HotColdView: View {
             TrendArrow(delta: delta, decimals: metric.decimals, lowerIsBetter: metric.lowerIsBetter)
                 .frame(width: 56, alignment: .trailing)
         }
-        .padding(.horizontal, GridironGeo.padInline)
-        .frame(height: GridironGeo.rowHeight)
-        .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .frame(height: HardwoodGeo.rowHeight)
+        .background(index % 2 == 0 ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
         .overlay(
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline),
             alignment: .bottom
         )
         .contentShape(Rectangle())
@@ -646,17 +641,17 @@ struct HotColdView: View {
     private func teaserRow(_ teaser: TeaserRow, index: Int) -> some View {
         HStack(spacing: 10) {
             Text("\(index + 1)")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.statSmall)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .frame(width: 26, alignment: .leading)
             PlayerHeadshot(team: teaser.team, initials: teaser.initials, size: 34)
             VStack(alignment: .leading, spacing: 2) {
                 Text(teaser.name)
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
-                Text("\(metric.format(teaser.then)) → \(metric.format(teaser.now)) · Weeks \(teaser.startWeek)-\(teaser.endWeek)")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
+                Text("\(metric.format(teaser.then)) → \(metric.format(teaser.now)) · \(viewModel.recentWindow.segmentLabel) · \(teaser.games)G")
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             TrendArrow(
@@ -666,9 +661,9 @@ struct HotColdView: View {
             )
             .frame(width: 56, alignment: .trailing)
         }
-        .padding(.horizontal, GridironGeo.padInline)
-        .frame(height: GridironGeo.rowHeight)
-        .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .frame(height: HardwoodGeo.rowHeight)
+        .background(index % 2 == 0 ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
     }
 
     struct TeaserRow {
@@ -677,8 +672,7 @@ struct HotColdView: View {
         let initials: String
         let then: Double
         let now: Double
-        let startWeek: Int
-        let endWeek: Int
+        let games: Int
     }
 
     /// Enough plausible rows to overflow the tallest phone behind the gate; the
@@ -696,9 +690,9 @@ struct HotColdView: View {
     /// The seed goes at the *front* of the hashed string, not the end, and that
     /// is load-bearing. `stableSeed` is a rolling `h*31 + c` hash, so a
     /// character appended last contributes a value of 0-127 to a number spread
-    /// across 100,003: switching the window from 3 to 5 games moved every
-    /// player's seed by the same +2 and the sort came out in exactly the same
-    /// order. Only the week labels changed, under a first row that had visibly
+    /// across 100,003: switching the window from 1 to 2 weeks moved every
+    /// player's seed by the same +1 and the sort came out in exactly the same
+    /// order. Only the labels changed, under a first row that had visibly
     /// re-ranked. Put the seed first and each of its characters is multiplied
     /// by 31 once per following character, so one digit reshuffles everything.
     private var teaserRows: [TeaserRow] {
@@ -716,15 +710,15 @@ struct HotColdView: View {
         } else {
             // Pre-load, or a season with no roster yet.
             let placeholders = [
-                ("Player One", "KC", "PO"), ("Player Two", "BUF", "PT"),
-                ("Player Three", "PHI", "PT"), ("Player Four", "SF", "PF"),
-                ("Player Five", "DAL", "PF"), ("Player Six", "BAL", "PS"),
-                ("Player Seven", "DET", "PS"), ("Player Eight", "GB", "PE"),
-                ("Player Nine", "MIA", "PN"), ("Player Ten", "SEA", "PT"),
-                ("Player Eleven", "CIN", "PE"), ("Player Twelve", "MIN", "PT"),
+                ("Player One", "BOS", "PO"), ("Player Two", "OKC", "PT"),
+                ("Player Three", "PHI", "PT"), ("Player Four", "GSW", "PF"),
+                ("Player Five", "DAL", "PF"), ("Player Six", "NYK", "PS"),
+                ("Player Seven", "DET", "PS"), ("Player Eight", "MIL", "PE"),
+                ("Player Nine", "MIA", "PN"), ("Player Ten", "SAS", "PT"),
+                ("Player Eleven", "CLE", "PE"), ("Player Twelve", "MIN", "PT"),
                 ("Player Thirteen", "LAC", "PT"), ("Player Fourteen", "HOU", "PF"),
-                ("Player Fifteen", "TB", "PF"), ("Player Sixteen", "PIT", "PS"),
-                ("Player Seventeen", "DEN", "PS"), ("Player Eighteen", "NYJ", "PE"),
+                ("Player Fifteen", "TOR", "PF"), ("Player Sixteen", "PHX", "PS"),
+                ("Player Seventeen", "DEN", "PS"), ("Player Eighteen", "ORL", "PE"),
             ]
             names = placeholders
                 .map { ($0, Self.stableSeed("\(seed)-\($0.0)")) }
@@ -732,14 +726,14 @@ struct HotColdView: View {
                 .map { $0.0 }
         }
         // Centre and spread the invented values on the metric's own scale, so a
-        // percentage reads 58%→66% and a yardage total reads 240→380.
+        // percentage reads 56%→64% and a per-100 rate reads 21→26.
         let scale: Double
         let spread: Double
         switch metric.decimals {
-        case 0:  scale = 280;  spread = 130
-        case 2:  scale = 0.12; spread = 0.22
-        default: scale = metric.unit == "%" ? 58 : 7.2
-                 spread = metric.unit == "%" ? 12 : 2.4
+        case 0:  scale = 12;   spread = 8
+        case 2:  scale = 0.45; spread = 0.25
+        default: scale = metric.unit == "%" ? 56 : 21
+                 spread = metric.unit == "%" ? 10 : 6
         }
         // The column has to move with the controls as well as the cast. A
         // reshuffled set of faces over an identical ladder of numbers (the same
@@ -750,7 +744,7 @@ struct HotColdView: View {
         let base = scale * (0.9 + 0.2 * drift)
         let swing = spread * (0.85 + 0.3 * drift)
         // Cooling off inverts the movement, and a lower-is-better metric
-        // inverts it again: heating up on INT% means the number falls.
+        // inverts it again: heating up on TOV% means the number falls.
         let improving = !showingCold
         let sign: Double = (improving != metric.lowerIsBetter) ? 1 : -1
         let window = viewModel.recentWindow.rawValue
@@ -762,15 +756,14 @@ struct HotColdView: View {
             let decay = max(0.15, 1.0 - Double(index) * 0.045 + wobble)
             let move = swing * decay
             let then = base - sign * move / 2
-            let endWeek = 18 - (index + Self.stableSeed(seed)) % 3
+            let games = window * 3 + (index + Self.stableSeed(seed)) % 2
             return TeaserRow(
                 name: who.0,
                 team: who.1,
                 initials: who.2,
                 then: then,
                 now: then + sign * move,
-                startWeek: max(1, endWeek - window + 1),
-                endWeek: endWeek
+                games: games
             )
         }
     }
@@ -784,7 +777,7 @@ struct HotColdView: View {
     /// instead of producing a new one, and a seed that differed only in its
     /// last character barely moved the sort at all. The finalizer is what makes
     /// one flipped bit anywhere in the string change the whole result.
-    static func stableSeed(_ text: String) -> Int {
+    nonisolated static func stableSeed(_ text: String) -> Int {
         var hash: UInt64 = 0xcbf2_9ce4_8422_2325
         for scalar in text.unicodeScalars {
             hash = (hash ^ UInt64(scalar.value)) &* 0x100_0000_01b3

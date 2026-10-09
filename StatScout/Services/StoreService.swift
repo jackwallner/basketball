@@ -28,130 +28,147 @@ enum StatScoutProduct {
 }
 
 enum RevenueCatConfig {
-    // RevenueCat "Football" project (proj9c303632), App Store app app039a312379.
-    // Public SDK key (appl_...) - used only in device Release / TestFlight / App
-    // Store builds; simulator runs skip Purchases.configure (see configureIfNeeded).
+    // RevenueCat "Basketball Next: StatScout" project (projf687e8b0), App Store
+    // app app9636969fcd. Public SDK key (appl_...) - used only in device Release /
+    // TestFlight / App Store builds; simulator runs skip Purchases.configure (see
+    // configureIfNeeded).
     static let apiKey = "appl_SOzFGfooveAdhzBwoMAItNGCJIM"
-    static let proEntitlement = "Football Pro"
+    static let proEntitlement = "Basketball Pro"
     static let fallbackEntitlement = "pro"
 }
 
+/// Which season the app treats as live, and how that is decided.
+///
+/// A hoopR season is named for the year it ends: 2026 is 2025-26 and 2027 is
+/// 2026-27. The calendar flips to the new season on October 1, but the first
+/// tip-off is about three weeks later, so for those weeks the calendar's season
+/// has a schedule and nothing else. `resolveLive` is the one place that
+/// reconciles the two, from the publisher's status row, so a build never has to
+/// be released to roll a season over.
 enum StatScoutSeason {
-    /// The season the nightly pipeline is currently writing. Single source of
-    /// truth for the current/historical split - the API filters, the two-tier
-    /// cache partition, and the free-tier gate all read this.
-    ///
-    /// Derived from the calendar rather than pinned to a literal, using the
-    /// same rule `backend/ingest.py::resolve_season` uses: an NFL season is
-    /// named for the year it kicks off in, so anything from September on
-    /// belongs to this year and anything before it to last year. A hard-coded
-    /// year meant a shipped build stopped seeing new data the moment the next
-    /// season started, and only a new App Store release could fix it - the
-    /// pipeline would be writing 2026 rows that no installed copy would ask
-    /// for.
-    ///
-    /// Floored at 2025 so this can never resolve to a season older than the
-    /// one the app shipped with, whatever the device clock says.
-    static let current: Int = {
-        let now = Calendar.current.dateComponents([.year, .month], from: .now)
-        guard let year = now.year, let month = now.month else { return 2025 }
-        return max(2025, month >= 9 ? year : year - 1)
-    }()
+    /// The season the calendar names today: October through December belong to
+    /// the season that ends next summer. Same rule as
+    /// `backend/nbacodes.py::season_for_date`.
+    static func calendarSeason(on date: Date = .now, calendar: Calendar = .current) -> Int {
+        let parts = calendar.dateComponents([.year, .month], from: date)
+        guard let year = parts.year, let month = parts.month else { return bundledNewest }
+        return month >= 10 ? year + 1 : year
+    }
 
-    /// The only season available without Pro, and the one every screen opens on.
-    ///
-    /// Always the calendar's season, the same model as baseball StatScout: the
-    /// moment a season starts it is the free, default year, and every season
-    /// before it is StatScout+. It used to trail the data instead, holding the
-    /// app on last season until the new one had a full slate, which left 2026
-    /// invisible (and 2025 free) after the opener had already been played.
-    static let free = current
+    /// Oldest season in the dataset. hoopR's player box starts in 2002; 2003
+    /// (2002-03) is the first full season. The bundled players-historical.plist
+    /// ships all of it, so the season menus can list every year without waiting
+    /// on a fetch.
+    static let earliest = 2003
 
-    /// Oldest season with per-game history, and so the floor for Recent Form.
-    ///
-    /// `player_game_logs` and the rollup built from it were purged back to 2025
-    /// once; nothing older exists to rank. Without this floor, "the live season
-    /// and the one before it" resolves to a year with no rows the moment the
-    /// live season is the oldest one there is, and Trends offers a menu entry
-    /// that can only ever draw an empty board.
-    static let earliestRecentForm = 2025
+    /// Newest season the bundled archive carries. The archive is regenerated
+    /// ahead of each rollover, so a shipped build always carries the season
+    /// that was last completed when it was built; this is what the app falls
+    /// back to when it has never heard from the server.
+    static let bundledNewest = 2026
 
-    /// Oldest season in the dataset. nflverse player stats run back to 1999;
-    /// StatScout starts at 2000 for a clean round-number historical range.
-    /// The bundled players-historical.plist ships all of it, so the season
-    /// menus can list every year without waiting on a fetch.
-    static let earliest = 2000
+    /// Oldest season that still has per-game history, and so the floor for
+    /// Recent Form. `player_game_logs` and the rollup built from it were never
+    /// ingested before 2025-26; without this floor, "the live season and the
+    /// one before it" resolves to a year with no rows while 2026 is live, and
+    /// Trends offers a menu entry that can only ever draw an empty board.
+    static let earliestRecentForm = 2026
+
+    /// The seasons the app is looking at: the live one (what the free tier and
+    /// every default screen use) and, while the next season has been scheduled
+    /// but not played, the upcoming one.
+    struct Live: Equatable, Sendable {
+        /// The newest season with published data.
+        let season: Int
+        /// A scheduled season with no games played yet, or nil.
+        let upcoming: Int?
+
+        var isPending: Bool { upcoming != nil }
+    }
+
+    /// Reconciles the publisher's status with the calendar.
+    ///
+    /// The status row carries two seasons: `season`, which the calendar names,
+    /// and `published_season`, which the live revision covers. Between the
+    /// October 1 rollover and opening night the first is ahead of the second and
+    /// the row reads `source_pending` / `season_pending`; the app then keeps the
+    /// finished season as live and surfaces the new one only as a schedule. The
+    /// moment the publisher flips to a published or degraded revision for the
+    /// new season, `published_season` catches up and this returns it, with no
+    /// release in between.
+    ///
+    /// With no status at all (offline on a first launch, or a backend without
+    /// the column) the answer is `fallback`: the last season this device knew
+    /// to be live, or the newest one the bundle carries.
+    static func resolveLive(from status: DataFreshness?, fallback: Int) -> Live {
+        guard let status else { return Live(season: fallback, upcoming: nil) }
+        let season = status.publishedSeason ?? status.season ?? fallback
+        let upcoming = status.isSeasonPending ? status.season : nil
+        return Live(season: season, upcoming: upcoming)
+    }
+
+    /// What to show before the first status check lands: the last live season
+    /// this device saw, else the calendar's season capped at what the bundle
+    /// can actually draw.
+    static func initialLive(
+        defaults: UserDefaults = .standard,
+        calendarSeason: Int = calendarSeason()
+    ) -> Live {
+        let stored = defaults.integer(forKey: liveSeasonKey)
+        guard stored >= earliest else {
+            return Live(season: min(calendarSeason, bundledNewest), upcoming: nil)
+        }
+        let upcoming = defaults.integer(forKey: upcomingSeasonKey)
+        return Live(season: stored, upcoming: upcoming > stored ? upcoming : nil)
+    }
+
+    static func remember(_ live: Live, defaults: UserDefaults = .standard) {
+        defaults.set(live.season, forKey: liveSeasonKey)
+        defaults.set(live.upcoming ?? 0, forKey: upcomingSeasonKey)
+    }
+
+    private static let liveSeasonKey = "statscout.liveSeason"
+    private static let upcomingSeasonKey = "statscout.upcomingSeason"
+
     /// Sentinel season for the career / all-time rollup.
     ///
     /// The pipeline writes one extra snapshot per player under `season = 0`,
-    /// aggregating every year from `earliest` to `current`, with percentiles
-    /// ranked inside that career cohort. Modelling it as just another season
-    /// rather than a parallel mode is what keeps it working everywhere for
-    /// free: the leaderboards, Teams, Compare and the player page all key off
-    /// `selectedSeason` and need no all-time branch of their own.
+    /// aggregating every year from `earliest` to the live season, with
+    /// percentiles ranked inside that career cohort. Modelling it as just
+    /// another season rather than a parallel mode is what keeps it working
+    /// everywhere for free: the leaderboards, Teams, Compare and the player page
+    /// all key off `selectedSeason` and need no all-time branch of their own.
     ///
     /// Zero (rather than, say, 9999) because it sorts below every real year, so
     /// nothing that clamps to a min/max can mistake it for a future season.
     static let allTime = 0
 
     static func isAllTime(_ season: Int) -> Bool { season == allTime }
-
-    /// Start date for a rolling game-log window on `season`.
-    ///
-    /// The team cards slice the last 3 / 5 / 8 games out of a wide pull of game
-    /// logs, and they used to ask for "the last 120 days" measured from *today*.
-    /// That only works while the season is being played. An NFL season ends in
-    /// February and the next does not kick off until September, so from roughly
-    /// March onward the window reached back into an empty stretch of calendar,
-    /// the fetch returned nothing, and every Recent control on a team page
-    /// answered "No offense data in the last 5 games" - for the season the app
-    /// was otherwise happily showing season totals for. The same held for any
-    /// past season all year round.
-    ///
-    /// So the window is anchored to the end of the season rather than to now:
-    /// whichever of the two is earlier. A season named `N` runs from September
-    /// `N` to mid-February `N + 1`, so the anchor is capped at 1 March `N + 1`,
-    /// safely past the last possible game and cheap to compute without asking
-    /// the database when the season actually finished. `days` stays the payload
-    /// budget it always was - about a season's worth of weeks, enough to slice
-    /// the longest window from.
-    static func gameLogWindowStart(season: Int, days: Int = 120, now: Date = .now) -> Date {
-        let calendar = Calendar.current
-        let seasonEnd = calendar.date(from: DateComponents(year: season + 1, month: 3, day: 1)) ?? now
-        let anchor = min(now, seasonEnd)
-        return calendar.date(byAdding: .day, value: -days, to: anchor) ?? anchor
-    }
 }
 
 /// How a season reads in the UI. One place, because the sentinel has to render
 /// as "All Time" in the menu, the nav pill, page titles and share text alike -
-/// and `String(0)` leaking into any one of them is an obvious bug.
+/// and `String(0)` or a bare `2026` leaking into any one of them is an obvious
+/// bug: hoopR's integer names the year a season ends, and fans know it as
+/// "2025-26".
 enum SeasonLabel {
-    /// "All since 2000" rather than "All Time".
-    ///
-    /// The rollup covers `earliest` onward, and nflverse only publishes player
-    /// stats back to 1999 - so "All Time" claimed a century of football the
-    /// data does not have, and put Jim Brown's absence down to a bug rather
-    /// than to a start date. Naming the start date is both honest and more
-    /// useful: it tells you what you are about to compare against.
     static func text(_ season: Int) -> String {
-        StatScoutSeason.isAllTime(season)
-            ? "All since \(StatScoutSeason.earliest)"
-            : String(season)
+        guard !StatScoutSeason.isAllTime(season) else { return "All Time" }
+        return "\(season - 1)-" + String(format: "%02d", season % 100)
     }
 
-    /// Longer form for prose and subtitles ("2024 Regular Season").
+    /// Longer form for prose and subtitles ("2025-26 Regular Season").
     static func text(_ season: Int, phase: SeasonPhase) -> String {
         StatScoutSeason.isAllTime(season)
             ? text(season) + " · " + phase.label
-            : String(season) + " " + phase.label
+            : text(season) + " " + phase.label
     }
 }
 
 enum StatScoutLegal {
     /// Apple's standard EULA - required on the paywall unless a custom one is hosted.
     static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    static let privacyURL = URL(string: "https://jackwallner.github.io/football/privacy-policy.html")!
+    static let privacyURL = URL(string: "https://jackwallner.github.io/basketball/privacy-policy.html")!
 }
 
 /// Session-scoped cap so the same contextual paywall can't be re-presented
@@ -909,19 +926,19 @@ final class StoreService: NSObject, ObservableObject {
         // ones make every screenshot taken through this path a picture of copy
         // nobody will ever be shown.
         let monthly = TestStoreProduct(
-            localizedTitle: "Gridiron Pro Monthly", price: 1.99, currencyCode: "USD",
+            localizedTitle: "StatScout+ Monthly", price: 1.99, currencyCode: "USD",
             localizedPriceString: "$1.99", productIdentifier: StatScoutProduct.monthly,
-            productType: .autoRenewableSubscription, localizedDescription: "Gridiron Pro, billed monthly.",
+            productType: .autoRenewableSubscription, localizedDescription: "StatScout+, billed monthly.",
             subscriptionPeriod: .init(value: 1, unit: .month), introductoryDiscount: weekTrial(), locale: locale)
         let yearly = TestStoreProduct(
-            localizedTitle: "Gridiron Pro Yearly", price: 9.99, currencyCode: "USD",
+            localizedTitle: "StatScout+ Yearly", price: 9.99, currencyCode: "USD",
             localizedPriceString: "$9.99", productIdentifier: StatScoutProduct.yearly,
-            productType: .autoRenewableSubscription, localizedDescription: "Gridiron Pro, billed yearly.",
+            productType: .autoRenewableSubscription, localizedDescription: "StatScout+, billed yearly.",
             subscriptionPeriod: .init(value: 1, unit: .year), introductoryDiscount: weekTrial(), locale: locale)
         let lifetime = TestStoreProduct(
-            localizedTitle: "Gridiron Pro Lifetime", price: 19.99, currencyCode: "USD",
+            localizedTitle: "StatScout+ Lifetime", price: 19.99, currencyCode: "USD",
             localizedPriceString: "$19.99", productIdentifier: StatScoutProduct.lifetime,
-            productType: .nonConsumable, localizedDescription: "Gridiron Pro, one-time purchase.",
+            productType: .nonConsumable, localizedDescription: "StatScout+, one-time purchase.",
             subscriptionPeriod: nil, introductoryDiscount: nil, locale: locale)
         products = [
             Package(identifier: "$rc_annual", packageType: .annual,
@@ -1002,7 +1019,7 @@ enum RevenueCatProbe {
     static let testStoreKey = "test_FtMVMMBAPeuKgtivRHTXSamfcEA"
 
     static var appUserID: String {
-        ProcessInfo.processInfo.environment["RC_PROBE_USER"] ?? "funnel-probe-football"
+        ProcessInfo.processInfo.environment["RC_PROBE_USER"] ?? "funnel-probe-basketball"
     }
 
     /// Also run a purchase against the Test Store, so the `converted_*` half of

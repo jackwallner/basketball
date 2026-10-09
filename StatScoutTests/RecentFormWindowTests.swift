@@ -1,71 +1,86 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Hardwood_StatScout
 
-/// What "the last N games" adds up to on a player page.
+/// The rolling windows are 1, 2 and 4 calendar weeks, and say so the same way
+/// on every screen.
 final class RecentFormWindowTests: XCTestCase {
-    private func log(
-        date: String,
-        plays: Int = 30,
-        touches: Int = 20,
-        metrics: [String: Double?]
-    ) throws -> PlayerGameLog {
-        var payload: [String: Any] = [
-            "player_id": 1,
-            "season": 2025,
-            "game_date": date,
-            "player_type": "def",
-            "plays": plays,
-            "touches": touches,
-        ]
-        payload["metrics"] = metrics.mapValues { $0 as Any? ?? NSNull() }
-        let data = try JSONSerialization.data(withJSONObject: payload)
-        return try JSONDecoder().decode(PlayerGameLog.self, from: data)
+    func testWindowsAreOneTwoAndFourWeeks() {
+        XCTAssertEqual(RecentWindow.allCases.map(\.rawValue), [1, 2, 4])
+        XCTAssertEqual(TrendWindow.allCases, RecentWindow.allCases)
     }
 
-    /// The weekly feed publishes solo tackles and assists as separate columns and
-    /// has no combined one, but every board in the app says "Tackles" and means
-    /// the total. The window derives it, so a defender's Recent card has a
-    /// Tackles bar at all - it had none, because the lookup asked for a key that
-    /// never existed.
-    func testCombinedTacklesAreDerivedFromSoloAndAssists() throws {
-        let logs = [
-            try log(date: "2025-11-02", metrics: ["def_tackles_solo": 5, "def_tackle_assists": 2]),
-            try log(date: "2025-11-09", metrics: ["def_tackles_solo": 3, "def_tackle_assists": 1]),
-        ]
-        let window = RecentFormWindow.build(label: "Last 2", span: 2, logs: logs)
-        XCTAssertEqual(window.metrics["tackles"], 11)
+    func testControlLabelsAreShortWeeks() {
+        XCTAssertEqual(RecentWindow.allCases.map(\.segmentLabel), ["1 wk", "2 wk", "4 wk"])
     }
 
-    /// A player who only ever recorded assists still gets a total rather than
-    /// nothing, and one who recorded neither gets no key at all (so the row
-    /// falls back to the season value instead of claiming a real zero).
-    func testTacklesKeyIsAbsentWhenNeitherColumnHasData() throws {
-        let logs = [try log(date: "2025-11-02", metrics: ["passing_yards": 300])]
-        let window = RecentFormWindow.build(label: "Last 1", span: 1, logs: logs)
-        XCTAssertNil(window.metrics["tackles"])
-
-        let assistsOnly = [try log(date: "2025-11-02", metrics: ["def_tackle_assists": 4])]
-        XCTAssertEqual(
-            RecentFormWindow.build(label: "Last 1", span: 1, logs: assistsOnly).metrics["tackles"],
-            4
-        )
+    func testProseNamesTheSpan() {
+        XCTAssertEqual(RecentWindow.week.prose, "last week")
+        XCTAssertEqual(RecentWindow.twoWeeks.prose, "last 2 weeks")
+        XCTAssertEqual(RecentWindow.fourWeeks.prose, "last 4 weeks")
+        XCTAssertEqual(RecentWindow.week.label, "Last week")
+        XCTAssertEqual(RecentWindow.fourWeeks.label, "Last 4 weeks")
+        XCTAssertEqual(RecentWindow.fourWeeks.days, 28)
     }
 
-    /// Counting stats sum; the window's own game count is what was supplied, not
-    /// what was asked for. A three-game window over two played games is two
-    /// games' worth of numbers, which is exactly why the page counts a player's
-    /// games rather than the league's weeks.
-    func testWindowSumsCountingStatsOverTheGamesSupplied() throws {
-        let logs = [
-            try log(date: "2025-11-02", plays: 30, touches: 20, metrics: ["rushing_yards": 88, "rushing_tds": 1]),
-            try log(date: "2025-11-09", plays: 18, touches: 14, metrics: ["rushing_yards": 42, "rushing_tds": 0]),
-        ]
-        let window = RecentFormWindow.build(label: "Last 3", span: 3, logs: logs)
-        XCTAssertEqual(window.games, 2)
-        XCTAssertEqual(window.span, 3)
-        XCTAssertEqual(window.plays, 48)
-        XCTAssertEqual(window.touches, 34)
-        XCTAssertEqual(window.metrics["rushing_yards"], 130)
-        XCTAssertEqual(window.metrics["rushing_tds"], 1)
+    func testRecentFormRowLabelsItsOwnWindow() throws {
+        let json = """
+        {"player_id":1966,"season":2026,"season_type":"REG","player_type":"f","as_of":"2026-04-12",
+         "start_week":28,"end_week":28,"team":"LAL","games":3,"plays":66,"touches":81,"window_weeks":2,
+         "metrics":{"ppg":24.0,"ts_pct":64.4},"prior_metrics":{"ppg":19.5,"ts_pct":59.3},
+         "delta":{"ppg":4.5,"ts_pct":5.1}}
+        """
+        let form = try JSONDecoder.statScout.decode(RecentForm.self, from: Data(json.utf8))
+        XCTAssertEqual(form.windowLabel, "2 wk")
+        XCTAssertEqual(form.minutes, 81)
+        XCTAssertEqual(form.delta["ppg"], 4.5)
+        XCTAssertFalse(form.isSmallSample)
+    }
+
+    func testSmallSampleIsGamesAndMinutes() throws {
+        func form(games: Int, minutes: Int) throws -> RecentForm {
+            let json = """
+            {"player_id":1,"season":2026,"player_type":"g","window_weeks":1,"games":\(games),
+             "plays":10,"touches":\(minutes),"metrics":{},"prior_metrics":{},"delta":{}}
+            """
+            return try JSONDecoder.statScout.decode(RecentForm.self, from: Data(json.utf8))
+        }
+        XCTAssertTrue(try form(games: 1, minutes: 90).isSmallSample)
+        XCTAssertTrue(try form(games: 3, minutes: 40).isSmallSample)
+        XCTAssertFalse(try form(games: 2, minutes: 60).isSmallSample)
+        XCTAssertFalse(try form(games: 1, minutes: 60).isSmallSample(minimumGames: 1))
+    }
+
+    /// The rollup keys are the season metric ids, so every registry metric maps.
+    func testEveryRegistryMetricHasARollupKey() {
+        for definition in BasketballMetricRegistry.definitions {
+            XCTAssertNotNil(RecentMetricKey.key(for: definition.label), definition.label)
+        }
+        XCTAssertEqual(RecentMetricKey.key(for: "Pts/100"), "pts_per_100")
+        XCTAssertEqual(RecentMetricKey.key(for: "On-Court +/-"), "on_net")
+        XCTAssertEqual(RecentMetricKey.key(for: "Non-Corner 3%"), "nc3_fg")
+        XCTAssertEqual(RecentMetricKey.key(for: "FT Rate"), "ftr")
+    }
+
+    func testFormattingFollowsTheMetricKind() {
+        XCTAssertEqual(RecentMetricKey.format(61.24, label: "TS%"), "61.2%")
+        XCTAssertEqual(RecentMetricKey.format(28.0, label: "Rim Freq"), "28.0%")
+        XCTAssertEqual(RecentMetricKey.format(0.38, label: "FT Rate"), "0.38")
+        XCTAssertEqual(RecentMetricKey.format(31.34, label: "On-Off"), "+31.3")
+        XCTAssertEqual(RecentMetricKey.format(-7, label: "+/-"), "-7")
+        XCTAssertEqual(RecentMetricKey.format(1_502, label: "3PM"), "1,502")
+        XCTAssertTrue(RecentMetricKey.lowerIsBetter("TOV%"))
+        XCTAssertFalse(RecentMetricKey.lowerIsBetter("TS%"))
+    }
+
+    func testTrendBoardsCoverAllThreeCohortsWithoutAnEmptyList() {
+        for side in TrendSide.allCases {
+            XCTAssertFalse(TrendMetric.advanced(for: side).isEmpty)
+            XCTAssertFalse(TrendMetric.standard(for: side).isEmpty)
+            XCTAssertEqual(side.playerType, side.rawValue)
+        }
+        XCTAssertEqual(TrendSide.allCases.map(\.shortLabel), ["G", "F", "C"])
+        let turnovers = TrendMetric.advanced(for: .guard).first { $0.label == "TOV%" }
+        XCTAssertEqual(turnovers?.lowerIsBetter, true)
+        XCTAssertEqual(turnovers?.format(12.34), "12.3%")
     }
 }

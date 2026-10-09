@@ -120,9 +120,8 @@ struct PlayerComparisonView: View {
             uniqueKeysWithValues: (b.standardStats ?? []).map { ($0.label, $0.value) }
         )
         let preferredOrder = [
-            "G", "Cmp/Att", "Pass Yds", "Pass TD", "INT",
-            "Car", "Rush Yds", "Rush TD", "Rec/Tgt", "Rec Yds", "Rec TD",
-            "Tackles", "Sacks", "Def INT",
+            "G", "GS", "MPG", "PPG", "RPG", "APG", "SPG", "BPG",
+            "FG", "3P", "FT", "TOV", "PF", "+/-", "MIN",
         ]
         return Set(left.keys).union(right.keys)
             .sorted {
@@ -143,7 +142,7 @@ struct PlayerComparisonView: View {
                         .blur(radius: 8)
                         .overlay(
                             LinearGradient(
-                                colors: [.clear, GridironPalette.canvas.opacity(0.9)],
+                                colors: [.clear, HardwoodPalette.canvas.opacity(0.9)],
                                 startPoint: .center,
                                 endPoint: .bottom
                             )
@@ -157,12 +156,12 @@ struct PlayerComparisonView: View {
                             .foregroundStyle(Color.yellow)
 
                         Text("Find the Edge")
-                            .font(GridironType.cardTitle)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(HardwoodType.cardTitle)
+                            .foregroundStyle(HardwoodPalette.ink)
 
-                        Text("StatScout+ unlocks side-by-side player comparisons across every metric. See who leads in EPA, passing efficiency, separation, and more.")
-                            .font(GridironType.small)
-                            .foregroundStyle(GridironPalette.inkSecondary)
+                        Text("StatScout+ unlocks side-by-side player comparisons across every metric. See who leads in scoring efficiency, playmaking, rebounding, defense, and more.")
+                            .font(HardwoodType.small)
+                            .foregroundStyle(HardwoodPalette.inkSecondary)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -170,37 +169,37 @@ struct PlayerComparisonView: View {
                             showingTrial = true
                         } label: {
                             Text(store.paywallBlurCTA)
-                                .font(GridironType.bodyBold)
+                                .font(HardwoodType.bodyBold)
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
-                                .background(GridironPalette.turf)
+                                .background(HardwoodPalette.court)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                         .buttonStyle(.plain)
 
                         if let subtext = store.paywallBlurSubtext {
                             Text(subtext)
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                                 .multilineTextAlignment(.center)
                         }
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 20)
                     .background(
-                        RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                            .fill(GridironPalette.surface)
+                        RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                            .fill(HardwoodPalette.surface)
                             .shadow(color: .black.opacity(0.08), radius: 12, y: -4)
                     )
                     .overlay(alignment: .top) {
                         Rectangle()
-                            .fill(GridironPalette.divider)
-                            .frame(height: GridironGeo.hairline)
+                            .fill(HardwoodPalette.divider)
+                            .frame(height: HardwoodGeo.hairline)
                     }
                     .offset(y: -8)
                 }
-                .background(GridironPalette.canvas.ignoresSafeArea())
+                .background(HardwoodPalette.canvas.ignoresSafeArea())
                 .sheet(isPresented: $showingTrial) {
                     TrialPitchSheet(trigger: .playerComparison)
                 }
@@ -220,12 +219,9 @@ struct PlayerComparisonView: View {
                         side.season ?? 0,
                         side.seasonPhase
                     ).filter {
-                        (
-                            $0.playerId != other.playerId
-                                || $0.season != other.season
-                                || $0.seasonPhase != other.seasonPhase
-                        )
-                            && $0.canCompareHeadToHead(with: other)
+                        $0.playerId != other.playerId
+                            || $0.season != other.season
+                            || $0.seasonPhase != other.seasonPhase
                     },
                     season: side.season,
                     isLoading: catalog.isLoadingHistory
@@ -250,8 +246,8 @@ struct PlayerComparisonView: View {
 
                 if let note {
                     Text(note)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.turf)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.court)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
                         .padding(.horizontal, 12)
@@ -273,25 +269,33 @@ struct PlayerComparisonView: View {
                         categoryCard(category: category, metrics: metrics)
                     }
                     .padding(.horizontal, 12)
+
+                    if a.positionGroup != b.positionGroup {
+                        Text("Percentiles rank each player within his own position group, so a \(a.positionGroup.noun)'s and a \(b.positionGroup.noun)'s bars sit on different scales.")
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 16)
+                    }
                 }
             }
             .padding(.bottom, 12)
             Color.clear.frame(height: 88)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .navigationTitle("Player Comparison")
         .navigationBarTitleDisplayMode(.inline)
         // Match the midnight bar on the profile it is pushed from. The stack's
         // dark toolbar scheme otherwise draws white status text on the canvas.
-        .toolbarBackground(GridironPalette.midnight, for: .navigationBar)
+        .toolbarBackground(HardwoodPalette.midnight, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
     }
 
     private var standardStatsCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "SEASON TOTALS")
+            HardwoodSectionBar(title: "STANDARD STATS")
 
             HStack(spacing: 8) {
                 Text("STAT")
@@ -301,11 +305,11 @@ struct PlayerComparisonView: View {
                 Text(b.name.split(separator: " ").last.map(String.init) ?? "B")
                     .frame(maxWidth: .infinity)
             }
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
-            .frame(height: GridironGeo.rowHeightHeader)
-            .padding(.horizontal, GridironGeo.padInline)
-            .background(GridironPalette.surfaceAlt)
+            .font(HardwoodType.micro)
+            .foregroundStyle(HardwoodPalette.inkTertiary)
+            .frame(height: HardwoodGeo.rowHeightHeader)
+            .padding(.horizontal, HardwoodGeo.padInline)
+            .background(HardwoodPalette.surfaceAlt)
 
             ForEach(Array(standardComparison.enumerated()), id: \.element.label) { index, item in
                 let winner = StandardStatSemantics.winner(
@@ -315,8 +319,8 @@ struct PlayerComparisonView: View {
                 )
                 HStack(spacing: 8) {
                     Text(item.label)
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.smallBold)
+                        .foregroundStyle(HardwoodPalette.ink)
                         .frame(width: 82, alignment: .leading)
                     aggregateValue(item.a, isWinner: winner == .left)
                     aggregateValue(item.b, isWinner: winner == .right)
@@ -330,22 +334,22 @@ struct PlayerComparisonView: View {
                         winner: winner
                     )
                 )
-                .frame(height: GridironGeo.rowHeight)
-                .padding(.horizontal, GridironGeo.padInline)
-                .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .frame(height: HardwoodGeo.rowHeight)
+                .padding(.horizontal, HardwoodGeo.padInline)
+                .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                 .overlay(
                     Rectangle()
-                        .fill(GridironPalette.divider)
-                        .frame(height: GridironGeo.hairline),
+                        .fill(HardwoodPalette.divider)
+                        .frame(height: HardwoodGeo.hairline),
                     alignment: .bottom
                 )
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -380,11 +384,11 @@ struct PlayerComparisonView: View {
                     .accessibilityHidden(true)
             }
             Text(value ?? "-")
-                .font(GridironType.statMed)
+                .font(HardwoodType.statMed)
                 .foregroundStyle(
                     value == nil
-                        ? GridironPalette.inkTertiary
-                        : (isWinner ? GridironPalette.turf : GridironPalette.inkSecondary)
+                        ? HardwoodPalette.inkTertiary
+                        : (isWinner ? HardwoodPalette.court : HardwoodPalette.inkSecondary)
                 )
                 .monospacedDigit()
         }
@@ -404,11 +408,11 @@ struct PlayerComparisonView: View {
                 } label: {
                     Image(systemName: "arrow.left.arrow.right")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                         .frame(width: 32, height: 32)
-                        .background(GridironPalette.surface)
+                        .background(HardwoodPalette.surface)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(GridironPalette.hairline, lineWidth: 0.5))
+                        .overlay(Circle().stroke(HardwoodPalette.hairline, lineWidth: 0.5))
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 44)
@@ -424,13 +428,13 @@ struct PlayerComparisonView: View {
                 VStack(spacing: 6) {
                     PlayerHeadshot(team: player.team, initials: player.initials, size: 56)
                     Text(player.name)
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.smallBold)
+                        .foregroundStyle(HardwoodPalette.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     Text("\(displayTeamAbbr(player.team)) · \(player.displayPosition)")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                 }
                 .contentShape(Rectangle())
             }
@@ -464,7 +468,7 @@ struct PlayerComparisonView: View {
                         )
                     }
                 ) {
-                    GridironInlinePill(
+                    HardwoodInlinePill(
                         systemImage: nil,
                         title: "\(player.season.map(SeasonLabel.text) ?? "-") · \(player.seasonPhase.label)",
                         compressible: true
@@ -476,7 +480,7 @@ struct PlayerComparisonView: View {
                 Button {
                     picker = target
                 } label: {
-                    GridironInlinePill(
+                    HardwoodInlinePill(
                         systemImage: "arrow.triangle.2.circlepath",
                         title: "Change"
                     )
@@ -485,21 +489,21 @@ struct PlayerComparisonView: View {
                 .accessibilityLabel("Change \(target == .a ? "first" : "second") player")
             } else if let season = player.season {
                 Text(SeasonLabel.text(season))
-                    .font(GridironType.micro)
+                    .font(HardwoodType.micro)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(GridironPalette.midnight)
+                    .background(HardwoodPalette.midnight)
                     .clipShape(Capsule())
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -528,54 +532,54 @@ struct PlayerComparisonView: View {
 
     private func categoryCard(category: MetricCategory, metrics: [(label: String, a: Metric?, b: Metric?)]) -> some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: category.rawValue.uppercased())
+            HardwoodSectionBar(title: category.rawValue.uppercased())
 
             HStack(spacing: 8) {
                 Text("METRIC")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(width: 72, alignment: .leading)
                 Text(a.name.split(separator: " ").last.map(String.init) ?? "A")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
                 Text(b.name.split(separator: " ").last.map(String.init) ?? "B")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
-            .frame(height: GridironGeo.rowHeightHeader)
-            .padding(.horizontal, GridironGeo.padInline)
-            .background(GridironPalette.surfaceAlt)
+            .frame(height: HardwoodGeo.rowHeightHeader)
+            .padding(.horizontal, HardwoodGeo.padInline)
+            .background(HardwoodPalette.surfaceAlt)
             .overlay(
-                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline),
                 alignment: .bottom
             )
 
             ForEach(Array(metrics.enumerated()), id: \.offset) { index, item in
                 HStack(spacing: 8) {
                     Text(item.label)
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.smallBold)
+                        .foregroundStyle(HardwoodPalette.ink)
                         .frame(width: 72, alignment: .leading)
 
                     metricValueCell(metric: item.a, other: item.b)
                     metricValueCell(metric: item.b, other: item.a)
                 }
                 .frame(height: 60)
-                .padding(.horizontal, GridironGeo.padInline)
-                .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .padding(.horizontal, HardwoodGeo.padInline)
+                .background(index % 2 == 0 ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                 .overlay(
-                    Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                    Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline),
                     alignment: .bottom
                 )
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -585,7 +589,7 @@ struct PlayerComparisonView: View {
                 let hasValue = !m.value.isEmpty
                 let comparable = other.map { $0.percentile > 0 || !$0.value.isEmpty } ?? false
                 let isWinner = comparable && (other.map { m.percentile > $0.percentile } ?? false)
-                let pctTextColor = GridironPalette.textColor(forPercentile: m.percentile)
+                let pctTextColor = HardwoodPalette.textColor(forPercentile: m.percentile)
                 VStack(spacing: 4) {
                     HStack(spacing: 4) {
                         if isWinner {
@@ -595,14 +599,14 @@ struct PlayerComparisonView: View {
                                 .accessibilityHidden(true)
                         }
                         Text(hasValue ? m.value : "\(m.percentile)")
-                            .font(GridironType.statMed)
+                            .font(HardwoodType.statMed)
                             .foregroundStyle(pctTextColor)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                     }
                     Text(hasValue ? "" : "PERCENTILE")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .frame(height: 10)
                     // The same track-and-fill bar the boards and the profile
                     // use. The hand-rolled rectangle this replaces had no
@@ -621,8 +625,8 @@ struct PlayerComparisonView: View {
                 )
             } else {
                 Text("-")
-                    .font(GridironType.statSmall)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.statSmall)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(maxWidth: .infinity)
             }
         }

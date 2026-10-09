@@ -91,7 +91,7 @@ struct CompareView: View {
     private var activeTeamSeasonA: Int { teamSeasonA ?? viewModel.selectedSeason }
     private var activeTeamSeasonB: Int { teamSeasonB ?? viewModel.selectedSeason }
 
-    /// The same club twice is a legitimate comparison - a franchise against its
+    /// The same team twice is a legitimate comparison - a franchise against its
     /// own past is the whole point of holding a season picker under each slot.
     /// Only the exactly-identical pair is refused, because that one compares a
     /// roster with itself and every row would tie.
@@ -138,9 +138,10 @@ struct CompareView: View {
     private var resolvedB: Player? {
         resolved(playerB, season: activeSeasonB, phase: phaseB)
     }
+    /// Any two players can be compared: there is no offense and defense to keep
+    /// apart, and every player carries the same six categories.
     private var canCompareResolvedPlayers: Bool {
-        guard let a = resolvedA, let b = resolvedB else { return false }
-        return a.canCompareHeadToHead(with: b)
+        resolvedA != nil && resolvedB != nil
     }
 
     private var slotWarning: String? {
@@ -152,9 +153,6 @@ struct CompareView: View {
         }
         if let playerB, resolvedB == nil {
             return "No \(SeasonLabel.text(activeSeasonB)) \(phaseB.label.lowercased()) data for \(playerB.name)."
-        }
-        if let a = resolvedA, let b = resolvedB, !a.canCompareHeadToHead(with: b) {
-            return "Choose two offensive players or two defensive players."
         }
         return nil
     }
@@ -207,7 +205,7 @@ struct CompareView: View {
                             headline: "Stack any two players, or any player against his own past seasons",
                             trigger: .playerComparison
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
                     }
                 }
             }
@@ -220,7 +218,7 @@ struct CompareView: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .refreshable { await viewModel.load() }
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingFollowSheet) {
             FollowPlayersSheet(viewModel: viewModel)
@@ -257,13 +255,13 @@ struct CompareView: View {
             }()
             switch target {
             case .teamA, .teamB:
-                // Every club with data, including the one already in the other
-                // slot. Seahawks 2016 against Seahawks 2025 is one of the most
-                // natural questions this card can answer, and filtering the
+                // Every team with data, including the one already in the other
+                // slot. Celtics 2007-08 against Celtics 2025-26 is one of the
+                // most natural questions this card can answer, and filtering the
                 // duplicate out made it unaskable: the slots both open on the
                 // selected season, so the team you wanted was missing from the
                 // list at the exact moment you went looking for it. The
-                // degenerate case (same club, same season, same phase) is
+                // degenerate case (same team, same season, same phase) is
                 // handled at the Compare button instead, where it can say why.
                 CompareTeamPicker(
                     teams: teamsWithData(
@@ -290,14 +288,12 @@ struct CompareView: View {
                                     || context.season != activeSeasonB
                                     || context.phase != phaseB
                             )
-                                && (resolvedB?.canCompareHeadToHead(with: candidate) ?? true)
                         case .playerB:
                             return (
                                 candidate.playerId != playerA?.playerId
                                     || context.season != activeSeasonA
                                     || context.phase != phaseA
                             )
-                                && (resolvedA?.canCompareHeadToHead(with: candidate) ?? true)
                         case .yearPlayer: return true
                         case .teamA, .teamB: return false
                         }
@@ -332,7 +328,7 @@ struct CompareView: View {
                     defaultPhase: route.playerA.seasonPhase
                 )
             )
-                .modifier(GridironNavBarPublic())
+                .modifier(HardwoodNavBarPublic())
         }
         .navigationDestination(item: $yearRoute) { route in
             YearCompareDestination(
@@ -340,7 +336,7 @@ struct CompareView: View {
                 viewModel: viewModel,
                 onChangePlayer: { picker = .yearPlayer }
             )
-                .modifier(GridironNavBarPublic())
+                .modifier(HardwoodNavBarPublic())
         }
         .navigationDestination(item: $teamComparisonRoute) { route in
             TeamComparisonView(
@@ -354,18 +350,18 @@ struct CompareView: View {
                     phase: route.phaseB
                 )
             )
-            .modifier(GridironNavBarPublic())
+            .modifier(HardwoodNavBarPublic())
         }
     }
 
     private var intro: some View {
         VStack(spacing: 6) {
             Text("Compare")
-                .font(GridironType.pageTitle)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.pageTitle)
+                .foregroundStyle(HardwoodPalette.ink)
             Text("Stack two players head-to-head, or track one player across seasons.")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -377,15 +373,15 @@ struct CompareView: View {
     /// personal state the app holds, and it feeds the slots below it.
     private var yourPlayersCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(
+            HardwoodSectionBar(
                 title: "YOUR PLAYERS",
                 trailing: AnyView(
                     Button {
                         showingFollowSheet = true
                     } label: {
                         Label(favorites.playerIds.isEmpty ? "Add" : "Edit", systemImage: "star")
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.turf)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.court)
                     }
                     .buttonStyle(.plain)
                 )
@@ -394,19 +390,19 @@ struct CompareView: View {
             if followedPlayers.isEmpty {
                 VStack(spacing: 8) {
                     Text("Follow players to keep them one tap from a comparison, and to spot them on the Trends board.")
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(HardwoodType.small)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     Button {
                         showingFollowSheet = true
                     } label: {
                         Text("Follow players")
-                            .font(GridironType.smallBold)
+                            .font(HardwoodType.smallBold)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 16)
-                            .frame(height: GridironControl.height)
-                            .background(GridironPalette.turf)
+                            .frame(height: HardwoodControl.height)
+                            .background(HardwoodPalette.court)
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -421,18 +417,18 @@ struct CompareView: View {
                 Text(store.isPro
                      ? "Tap a player to load them into a slot below."
                      : "Tap a player to see their stats. Head-to-head needs StatScout+.")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, GridironGeo.padCard)
+                    .padding(.horizontal, HardwoodGeo.padCard)
                     .padding(.vertical, 10)
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -466,8 +462,8 @@ struct CompareView: View {
                 NavigationLink(value: player) {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(GridironPalette.inkTertiary)
-                        .frame(width: 40, height: GridironGeo.rowHeight)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
+                        .frame(width: 40, height: HardwoodGeo.rowHeight)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -481,9 +477,9 @@ struct CompareView: View {
             }
         }
         .padding(.trailing, store.isPro ? 4 : 0)
-        .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .background(index % 2 == 0 ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
         .overlay(
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline),
             alignment: .bottom
         )
         .contextMenu {
@@ -503,21 +499,21 @@ struct CompareView: View {
             PlayerHeadshot(team: player.team, initials: player.initials, size: 34)
             VStack(alignment: .leading, spacing: 2) {
                 Text(player.name)
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .lineLimit(1)
                 Text("\(displayTeamAbbr(player.team)) · \(player.displayPosition)")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
             Spacer(minLength: 0)
             if inSlot {
                 Text("IN SLOT")
-                    .font(GridironType.micro)
+                    .font(HardwoodType.micro)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(GridironPalette.turf)
+                    .background(HardwoodPalette.court)
                     .clipShape(Capsule())
             } else {
                 // The glyph states the outcome: a slot to fill for Pro (the
@@ -525,12 +521,12 @@ struct CompareView: View {
                 // everyone else.
                 Image(systemName: store.isPro ? "plus.circle" : "chevron.right")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
         }
-        .padding(.leading, GridironGeo.padInline)
-        .padding(.trailing, store.isPro ? 6 : GridironGeo.padInline)
-        .frame(height: GridironGeo.rowHeight)
+        .padding(.leading, HardwoodGeo.padInline)
+        .padding(.trailing, store.isPro ? 6 : HardwoodGeo.padInline)
+        .frame(height: HardwoodGeo.rowHeight)
         .contentShape(Rectangle())
     }
 
@@ -540,24 +536,14 @@ struct CompareView: View {
     private func loadIntoSlot(_ player: Player) {
         if playerA == nil || playerA?.playerId == player.playerId {
             playerA = player
-        } else if playerB == nil || playerB?.playerId == player.playerId {
-            if let playerA, !playerA.canCompareHeadToHead(with: player) {
-                self.playerA = player
-                playerB = nil
-                return
-            }
-            playerB = player
         } else {
-            if let playerA, !playerA.canCompareHeadToHead(with: player) {
-                self.playerA = nil
-            }
             playerB = player
         }
     }
 
     private var playerVsPlayerCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "PLAYER VS PLAYER")
+            HardwoodSectionBar(title: "PLAYER VS PLAYER")
 
             VStack(spacing: 12) {
                 HStack(alignment: .top, spacing: 10) {
@@ -571,8 +557,8 @@ struct CompareView: View {
                         onPickPhase: { phaseA = $0 }
                     )
                     Text("vs")
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.smallBold)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .padding(.top, 40)
                     slotColumn(
                         player: playerB,
@@ -587,26 +573,25 @@ struct CompareView: View {
 
                 if let slotWarning {
                     Text(slotWarning)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
                 }
 
                 Button {
-                    if let a = resolvedA, let b = resolvedB,
-                       a.canCompareHeadToHead(with: b) {
+                    if let a = resolvedA, let b = resolvedB {
                         comparisonRoute = ComparisonRoute(playerA: a, playerB: b)
                     }
                 } label: {
                     Text("Compare")
-                        .font(GridironType.bodyBold)
+                        .font(HardwoodType.bodyBold)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 46)
                         .background(canCompareResolvedPlayers
-                                    ? GridironPalette.turf
-                                    : GridironPalette.inkTertiary)
+                                    ? HardwoodPalette.court
+                                    : HardwoodPalette.inkTertiary)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .buttonStyle(.plain)
@@ -614,22 +599,22 @@ struct CompareView: View {
             }
             .padding(16)
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
     private var yearOverYearCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "YEAR OVER YEAR")
+            HardwoodSectionBar(title: "YEAR OVER YEAR")
 
             VStack(spacing: 12) {
                 Text("Pick a player and season type to compare their aggregated stats across years.")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -638,8 +623,8 @@ struct CompareView: View {
                         selected: yearPhase,
                         onSelect: { yearPhase = $0 }
                     ) {
-                        GridironInlinePill(
-                            systemImage: "football.fill",
+                        HardwoodInlinePill(
+                            systemImage: "basketball.fill",
                             title: yearPhase.label
                         )
                     }
@@ -651,12 +636,12 @@ struct CompareView: View {
                             Image(systemName: "calendar.badge.clock")
                                 .font(.system(size: 14, weight: .semibold))
                             Text("Choose a player")
-                                .font(GridironType.bodyBold)
+                                .font(HardwoodType.bodyBold)
                         }
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 46)
-                        .background(GridironPalette.turf)
+                        .background(HardwoodPalette.court)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.plain)
@@ -664,17 +649,17 @@ struct CompareView: View {
             }
             .padding(16)
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
     private var teamVsTeamCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "TEAM VS TEAM")
+            HardwoodSectionBar(title: "TEAM VS TEAM")
 
             VStack(spacing: 12) {
                 HStack(alignment: .top, spacing: 10) {
@@ -688,8 +673,8 @@ struct CompareView: View {
                         onPickPhase: { teamPhaseA = $0 }
                     )
                     Text("vs")
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.smallBold)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .padding(.top, 40)
                     teamSlotColumn(
                         team: teamB,
@@ -704,8 +689,8 @@ struct CompareView: View {
 
                 if let teamWarning {
                     Text(teamWarning)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
                         .fixedSize(horizontal: false, vertical: true)
@@ -723,14 +708,14 @@ struct CompareView: View {
                     )
                 } label: {
                     Text("Compare Teams")
-                        .font(GridironType.bodyBold)
+                        .font(HardwoodType.bodyBold)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 46)
                         .background(
                             canCompareTeams
-                                ? GridironPalette.turf
-                                : GridironPalette.inkTertiary
+                                ? HardwoodPalette.court
+                                : HardwoodPalette.inkTertiary
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
@@ -740,12 +725,20 @@ struct CompareView: View {
             }
             .padding(16)
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
+    }
+
+    /// Each slot is half a phone wide, so "2025-26 · Regular Season" never fit
+    /// and lost its tail. The regular season is the default and is named in the
+    /// menu it opens; only the playoffs, the exception, is spelled out here.
+    private static func slotTitle(season: Int, phase: SeasonPhase) -> String {
+        let label = SeasonLabel.text(season)
+        return phase == .playoffs ? "\(label) · \(phase.label)" : label
     }
 
     private func teamSlotColumn(
@@ -766,7 +759,7 @@ struct CompareView: View {
 
             SeasonPhasePicker(
                 // Team-scoped, so no All Time: a career line carries the
-                // player's last club and would miscredit the franchise.
+                // player's last team and would miscredit the franchise.
                 seasons: viewModel.seasonsExcludingAllTime,
                 selectedSeason: season,
                 selectedPhase: phase,
@@ -780,9 +773,9 @@ struct CompareView: View {
                 },
                 onSelectPhase: onPickPhase
             ) {
-                GridironInlinePill(
+                HardwoodInlinePill(
                     systemImage: nil,
-                    title: "\(SeasonLabel.text(season)) · \(phase.label)",
+                    title: Self.slotTitle(season: season, phase: phase),
                     compressible: true
                 )
                 .frame(maxWidth: .infinity)
@@ -805,22 +798,22 @@ struct CompareView: View {
             VStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(team.map(NFLTeamColor.color) ?? GridironPalette.surfaceAlt)
+                        .fill(team.map(NBATeamColor.color) ?? HardwoodPalette.surfaceAlt)
                         .frame(width: 48, height: 48)
                     Text(team.map(displayTeamAbbr) ?? "+")
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(team == nil ? GridironPalette.inkTertiary : .white)
+                        .font(HardwoodType.smallBold)
+                        .foregroundStyle(team == nil ? HardwoodPalette.inkTertiary : .white)
                 }
                 Text(team.map(teamFullName) ?? placeholder)
-                    .font(GridironType.smallBold)
-                    .foregroundStyle(team == nil ? GridironPalette.inkTertiary : GridironPalette.ink)
+                    .font(HardwoodType.smallBold)
+                    .foregroundStyle(team == nil ? HardwoodPalette.inkTertiary : HardwoodPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(GridironPalette.surfaceAlt)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(HardwoodPalette.surfaceAlt)
+            .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         }
         .buttonStyle(.plain)
     }
@@ -851,9 +844,9 @@ struct CompareView: View {
                 },
                 onSelectPhase: onPickPhase
             ) {
-                GridironInlinePill(
+                HardwoodInlinePill(
                     systemImage: nil,
-                    title: "\(SeasonLabel.text(season)) · \(phase.label)",
+                    title: Self.slotTitle(season: season, phase: phase),
                     compressible: true
                 )
                 .frame(maxWidth: .infinity)
@@ -869,28 +862,28 @@ struct CompareView: View {
                 if let player {
                     PlayerHeadshot(team: player.team, initials: player.initials, size: 44)
                     Text(player.name)
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.smallBold)
+                        .foregroundStyle(HardwoodPalette.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                 } else {
                     ZStack {
                         Circle()
-                            .fill(GridironPalette.surfaceAlt)
+                            .fill(HardwoodPalette.surfaceAlt)
                             .frame(width: 44, height: 44)
                         Image(systemName: "plus")
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
                     }
                     Text(placeholder)
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.small)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(GridironPalette.surfaceAlt)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(HardwoodPalette.surfaceAlt)
+            .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         }
         .buttonStyle(.plain)
     }
@@ -901,11 +894,11 @@ struct CompareView: View {
                 .font(.system(size: 22))
                 .foregroundStyle(Color.yellow)
             Text("Find the Edge")
-                .font(GridironType.cardTitle)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.cardTitle)
+                .foregroundStyle(HardwoodPalette.ink)
             Text("Compare is a StatScout+ feature.")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
 
             VStack(alignment: .leading, spacing: 6) {
@@ -922,33 +915,33 @@ struct CompareView: View {
             } label: {
                 HStack(spacing: 6) {
                     Text(store.paywallBlurCTA)
-                        .font(GridironType.bodyBold)
+                        .font(HardwoodType.bodyBold)
                     Image(systemName: "arrow.right")
                         .font(.system(size: 12, weight: .bold))
                 }
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
-                .background(GridironPalette.turf)
+                .background(HardwoodPalette.court)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
             if let subtext = store.paywallBlurSubtext {
                 Text(subtext)
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .multilineTextAlignment(.center)
             }
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .fill(GridironPalette.surface)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .fill(HardwoodPalette.surface)
                 .shadow(color: .black.opacity(0.1), radius: 16, y: 6)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 28)
     }
@@ -957,11 +950,11 @@ struct CompareView: View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(GridironPalette.turf)
+                .foregroundStyle(HardwoodPalette.court)
                 .frame(width: 16)
             Text(text)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -994,12 +987,12 @@ private struct YearCompareDestination: View {
                         PlayerHeadshot(team: latest.team, initials: latest.initials, size: 34)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(route.playerName)
-                                .font(GridironType.bodyBold)
-                                .foregroundStyle(GridironPalette.ink)
+                                .font(HardwoodType.bodyBold)
+                                .foregroundStyle(HardwoodPalette.ink)
                                 .lineLimit(1)
                             Text("\(displayTeamAbbr(latest.team)) · \(latest.displayPosition)")
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                         }
                     }
                     .contentShape(Rectangle())
@@ -1008,15 +1001,15 @@ private struct YearCompareDestination: View {
                 .accessibilityHint("Opens \(route.playerName)'s page")
             } else {
                 Text(route.playerName)
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
             }
 
             Spacer(minLength: 0)
 
             if let onChangePlayer {
                 Button(action: onChangePlayer) {
-                    GridironInlinePill(
+                    HardwoodInlinePill(
                         systemImage: "arrow.triangle.2.circlepath",
                         title: "Change"
                     )
@@ -1025,13 +1018,13 @@ private struct YearCompareDestination: View {
                 .accessibilityLabel("Compare a different player's seasons")
             }
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, HardwoodGeo.padInline)
         .padding(.vertical, 10)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -1057,7 +1050,7 @@ private struct YearCompareDestination: View {
             }
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .navigationTitle(route.playerName)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -1092,11 +1085,11 @@ struct ComparePlayerPicker: View {
                         PlayerHeadshot(team: player.team, initials: player.initials, size: 36)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(player.name)
-                                .font(GridironType.bodyBold)
-                                .foregroundStyle(GridironPalette.ink)
+                                .font(HardwoodType.bodyBold)
+                                .foregroundStyle(HardwoodPalette.ink)
                             Text("\(player.team) · \(player.displayPosition)")
-                                .font(GridironType.small)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(HardwoodType.small)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                         }
                     }
                     .padding(.vertical, 4)
@@ -1121,7 +1114,7 @@ struct ComparePlayerPicker: View {
                 }
             }
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search players")
-            .navigationTitle(season.map { "Select Player · " + String($0) } ?? "Select Player")
+            .navigationTitle(season.map { "Select Player · " + SeasonLabel.text($0) } ?? "Select Player")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -1157,19 +1150,19 @@ struct CompareTeamPicker: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(NFLTeamColor.color(team))
+                                .fill(NBATeamColor.color(team))
                                 .frame(width: 36, height: 36)
                             Text(displayTeamAbbr(team))
-                                .font(GridironType.micro)
+                                .font(HardwoodType.micro)
                                 .foregroundStyle(.white)
                         }
                         VStack(alignment: .leading, spacing: 2) {
                             Text(teamFullName(team))
-                                .font(GridironType.bodyBold)
-                                .foregroundStyle(GridironPalette.ink)
+                                .font(HardwoodType.bodyBold)
+                                .foregroundStyle(HardwoodPalette.ink)
                             Text(displayTeamAbbr(team))
-                                .font(GridironType.small)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(HardwoodType.small)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                         }
                     }
                     .padding(.vertical, 4)
@@ -1208,11 +1201,6 @@ struct TeamComparisonView: View {
         let bValue: Double?
     }
 
-    /// Roster aggregates that are context rather than a verdict. Both are shares
-    /// of a team's own passing volume, so summing them across a roster measures
-    /// how much of the offence we track, not how good it is.
-    private static let descriptiveOnlyLabels: Set<String> = ["Target Share", "WOPR"]
-
     private var rosterA: [Player] {
         playersA.filter {
             normalizedTeamAbbreviation($0.team)
@@ -1249,7 +1237,7 @@ struct TeamComparisonView: View {
     /// Every advanced metric that either roster has for this category, in the
     /// registry's own display order so the card reads like the player page.
     private func advancedRows(for category: MetricCategory) -> [StatRow] {
-        let labels = FootballMetricRegistry.definitions
+        let labels = BasketballMetricRegistry.definitions
             .filter { $0.category == category && $0.kind == .advanced }
             .sorted { $0.priority < $1.priority }
             .map(\.label)
@@ -1263,26 +1251,19 @@ struct TeamComparisonView: View {
                     player.metrics.first { $0.label == label && $0.category == category }?.value
                 }
             )
-            // Lower-is-better metrics (Sack%, INT%, Fumble%) must not hand the
+            // Lower-is-better metrics (TOV%, Fouls/100) must not hand the
             // trophy to the bigger number. Flipping the sign of both sides is
             // enough: the comparison is only ever "is mine greater than theirs".
-            let higherIsBetter = FootballMetricRegistry
+            let higherIsBetter = BasketballMetricRegistry
                 .definition(for: label, category: category)?.higherIsBetter ?? true
             let sign: Double = higherIsBetter ? 1 : -1
-            // Some aggregates describe a roster without ranking it. A team's
-            // summed Target Share is mostly a count of how many of its receivers
-            // cleared the qualification bar, so awarding a trophy for the bigger
-            // number would be scoring roster shape as if it were quality. Nil
-            // values keep the row (it is genuinely interesting context) and
-            // suppress the marker.
-            let comparable = !Self.descriptiveOnlyLabels.contains(label)
             return StatRow(
                 id: category.rawValue + "-adv-" + label,
                 label: label,
                 aText: a.map(format.string) ?? "-",
                 bText: b.map(format.string) ?? "-",
-                aValue: comparable ? a.map { $0 * sign } : nil,
-                bValue: comparable ? b.map { $0 * sign } : nil
+                aValue: a.map { $0 * sign },
+                bValue: b.map { $0 * sign }
             )
         }
     }
@@ -1293,64 +1274,48 @@ struct TeamComparisonView: View {
         category: MetricCategory,
         roster: [Player]
     ) -> Double? {
-        let values = roster.compactMap { player -> (value: Double, weight: Double)? in
-            guard let metric = player.metrics.first(where: {
-                $0.label == label && $0.category == category
-            }), let value = DashboardViewModel.rawNumeric(metric.value) else { return nil }
-
-            switch FootballMetricRegistry.aggregation(for: label, category: category) {
-            case .sum:
-                return (value, 1)
-            case .weighted(let weight):
-                // No volume means no rate to trust: drop the player rather than
-                // let an unweighted value slide in as if it were weight 1.
-                guard let w = weight.value(for: player) else { return nil }
-                return (value, w)
-            }
-        }
-        guard !values.isEmpty else { return nil }
-
-        switch FootballMetricRegistry.aggregation(for: label, category: category) {
-        case .sum:
-            return values.reduce(0) { $0 + $1.value }
-        case .weighted:
-            let totalWeight = values.reduce(0) { $0 + $1.weight }
-            guard totalWeight > 0 else { return nil }
-            return values.reduce(0) { $0 + $1.value * $1.weight } / totalWeight
-        }
+        TeamAggregation.value(label: label, category: category, roster: roster)
     }
 
     private func standardRows(for category: MetricCategory) -> [StatRow] {
         switch category {
-        case .passing:
+        case .scoring:
             return [
-                pairedRow(label: "Cmp/Att", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Pass Yds", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Pass TD", rosterA: rosterA, rosterB: rosterB),
+                totalRow(label: "PPG", rosterA: rosterA, rosterB: rosterB),
+                pairedRow(label: "FG", rosterA: rosterA, rosterB: rosterB),
+                pairedRow(label: "3P", rosterA: rosterA, rosterB: rosterB),
+                pairedRow(label: "FT", rosterA: rosterA, rosterB: rosterB),
+            ]
+        case .shooting:
+            return []
+        case .playmaking:
+            return [
+                totalRow(label: "APG", rosterA: rosterA, rosterB: rosterB),
                 totalRow(
-                    label: "INT",
+                    label: "TOV",
                     rosterA: rosterA,
                     rosterB: rosterB,
                     higherIsBetter: false
                 ),
             ]
-        case .rushing:
+        case .rebounding:
             return [
-                totalRow(label: "Car", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Rush Yds", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Rush TD", rosterA: rosterA, rosterB: rosterB),
-            ]
-        case .receiving:
-            return [
-                pairedRow(label: "Rec/Tgt", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Rec Yds", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Rec TD", rosterA: rosterA, rosterB: rosterB),
+                totalRow(label: "RPG", rosterA: rosterA, rosterB: rosterB),
             ]
         case .defense:
             return [
-                totalRow(label: "Tackles", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Sacks", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Def INT", rosterA: rosterA, rosterB: rosterB),
+                totalRow(label: "SPG", rosterA: rosterA, rosterB: rosterB),
+                totalRow(label: "BPG", rosterA: rosterA, rosterB: rosterB),
+                totalRow(
+                    label: "PF",
+                    rosterA: rosterA,
+                    rosterB: rosterB,
+                    higherIsBetter: false
+                ),
+            ]
+        case .impact:
+            return [
+                totalRow(label: "+/-", rosterA: rosterA, rosterB: rosterB),
             ]
         }
     }
@@ -1367,7 +1332,7 @@ struct TeamComparisonView: View {
                     )
                     Image(systemName: "arrow.left.arrow.right")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                     teamHeader(
                         route.teamB,
                         rosterCount: rosterB.count,
@@ -1384,34 +1349,34 @@ struct TeamComparisonView: View {
                     }
                     .padding(.vertical, 32)
                     .frame(maxWidth: .infinity)
-                    .background(GridironPalette.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                    .background(HardwoodPalette.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
                 } else {
                     ForEach(statGroups, id: \.title) { group in
                         VStack(spacing: 0) {
-                            GridironSectionBar(title: group.title)
+                            HardwoodSectionBar(title: group.title)
                             ForEach(Array(group.rows.enumerated()), id: \.element.id) { index, row in
                                 statRow(row, index: index)
                             }
                         }
-                        .background(GridironPalette.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                        .background(HardwoodPalette.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
                         .overlay(
-                            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
                         )
                     }
                 }
 
-                Text("Totals sum the selected roster's player season lines. Traded players bring their full-season line, so these are roster aggregates rather than official team totals.")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                Text("Totals sum the selected roster's player season lines, and rates are weighted by minutes. Traded players bring their full-season line, so these are roster aggregates rather than official team totals.")
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(12)
             Color.clear.frame(height: 88)
         }
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .navigationTitle("Team Comparison")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -1425,15 +1390,15 @@ struct TeamComparisonView: View {
         VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(NFLTeamColor.color(team))
+                    .fill(NBATeamColor.color(team))
                     .frame(width: 58, height: 58)
                 Text(displayTeamAbbr(team))
-                    .font(GridironType.smallBold)
+                    .font(HardwoodType.smallBold)
                     .foregroundStyle(.white)
             }
             Text(teamFullName(team))
-                .font(GridironType.bodyBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.bodyBold)
+                .foregroundStyle(HardwoodPalette.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(
@@ -1443,16 +1408,16 @@ struct TeamComparisonView: View {
                     + " "
                     + phase.label
             )
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -1464,8 +1429,8 @@ struct TeamComparisonView: View {
                 other: row.bValue
             )
             Text(row.label)
-                .font(GridironType.smallBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.smallBold)
+                .foregroundStyle(HardwoodPalette.ink)
                 .frame(width: 88)
             statValue(
                 row.bText,
@@ -1474,12 +1439,12 @@ struct TeamComparisonView: View {
             )
         }
         .frame(height: 56)
-        .padding(.horizontal, GridironGeo.padInline)
-        .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
         .overlay(
             Rectangle()
-                .fill(GridironPalette.divider)
-                .frame(height: GridironGeo.hairline),
+                .fill(HardwoodPalette.divider)
+                .frame(height: HardwoodGeo.hairline),
             alignment: .bottom
         )
     }
@@ -1496,17 +1461,17 @@ struct TeamComparisonView: View {
                     .foregroundStyle(Color.yellow)
             }
             Text(text)
-                .font(GridironType.statMed)
-                .foregroundStyle(text == "-" ? GridironPalette.inkTertiary : GridironPalette.turf)
+                .font(HardwoodType.statMed)
+                .foregroundStyle(text == "-" ? HardwoodPalette.inkTertiary : HardwoodPalette.court)
                 .monospacedDigit()
         }
         .frame(maxWidth: .infinity)
     }
 
-    /// `higherIsBetter: false` flips which side gets the trophy. Interceptions
-    /// thrown was the row that needed it: as a plain total it handed the marker
-    /// to whichever offence turned the ball over *more*, which is backwards, and
-    /// on the one screen whose whole job is saying which team is better.
+    /// `higherIsBetter: false` flips which side gets the trophy. Turnovers was
+    /// the row that needed it: as a plain total it handed the marker to
+    /// whichever team gave the ball away *more*, which is backwards, and on the
+    /// one screen whose whole job is saying which team is better.
     private func totalRow(
         label: String,
         rosterA: [Player],
@@ -1531,14 +1496,26 @@ struct TeamComparisonView: View {
         rosterA: [Player],
         rosterB: [Player]
     ) -> StatRow {
+        // Made over attempted, ranked by the percentage it works out to.
         StatRow(
             id: label,
             label: label,
             aText: pairedTotal(label: label, roster: rosterA),
             bText: pairedTotal(label: label, roster: rosterB),
-            aValue: nil,
-            bValue: nil
+            aValue: pairedPercentage(label: label, roster: rosterA),
+            bValue: pairedPercentage(label: label, roster: rosterB)
         )
+    }
+
+    private func pairedPercentage(label: String, roster: [Player]) -> Double? {
+        let texts = roster.compactMap { $0.standardStats?.first(where: { $0.label == label })?.value }
+        let pairs = texts.compactMap { text -> (Double, Double)? in
+            let parts = text.split(separator: "/", maxSplits: 1).compactMap { DashboardViewModel.rawNumeric(String($0)) }
+            return parts.count == 2 ? (parts[0], parts[1]) : nil
+        }
+        let attempts = pairs.reduce(0) { $0 + $1.1 }
+        guard attempts > 0 else { return nil }
+        return pairs.reduce(0) { $0 + $1.0 } / attempts
     }
 
     private func total(label: String, roster: [Player]) -> Double? {
@@ -1571,19 +1548,23 @@ struct TeamComparisonView: View {
 
     private func format(_ value: Double?, label: String) -> String {
         guard let value else { return "-" }
-        if label == "Sacks", value.rounded() != value {
+        if ["PPG", "RPG", "APG", "SPG", "BPG"].contains(label) {
             return String(format: "%.1f", value)
+        }
+        if label == "+/-" {
+            let whole = Int(value.rounded())
+            return whole > 0 ? "+\(whole)" : "\(whole)"
         }
         return Int(value.rounded()).formatted(.number.grouping(.automatic))
     }
 }
 
-/// Public mirror of RootTabView's private GridironNavBar so destinations pushed
+/// Public mirror of RootTabView's private HardwoodNavBar so destinations pushed
 /// from this file keep the same midnight bar treatment.
-struct GridironNavBarPublic: ViewModifier {
+struct HardwoodNavBarPublic: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .toolbarBackground(GridironPalette.midnight, for: .navigationBar)
+            .toolbarBackground(HardwoodPalette.midnight, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
     }

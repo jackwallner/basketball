@@ -28,61 +28,134 @@ struct RatedValue: Decodable, Hashable, Sendable {
     }
 }
 
-/// Play-by-play breakdown for one game, from `public.game_details`.
+/// The advanced breakdown for one game, from `public.game_details`: the team
+/// four factors and ratings, the score margin through the game, the plays that
+/// decided it, and a line for every player with percentiles against the season.
 struct GameDetail: Decodable, Sendable {
     struct PlayerLine: Decodable, Identifiable, Hashable, Sendable {
-        enum Role: String, Decodable, Sendable {
-            case passer, rusher, receiver
-        }
-
-        let role: Role
         let playerId: Int
         let name: String?
         let team: String
-        let dropbacks: Int?
-        let carries: Int?
-        let targets: Int?
-        let epa: Double?
-        let epaPerDropback: RatedValue?
-        let epaPerCarry: RatedValue?
-        let epaPerTarget: RatedValue?
-        let successRate: RatedValue?
-        let cpoe: RatedValue?
-        let adot: RatedValue?
+        let starter: Bool
+        /// Minutes played. A plain count, never ranked.
+        let minutes: Int?
+        let points: RatedValue?
+        let rebounds: RatedValue?
+        let assists: RatedValue?
+        let trueShooting: RatedValue?
+        let usage: RatedValue?
+        let plusMinus: RatedValue?
 
-        var id: String { "\(role.rawValue)-\(playerId)" }
+        var id: Int { playerId }
 
         enum CodingKeys: String, CodingKey {
-            case role
             case playerId = "player_id"
-            case name, team, dropbacks, carries, targets, epa
-            case epaPerDropback = "epa_per_dropback"
-            case epaPerCarry = "epa_per_carry"
-            case epaPerTarget = "epa_per_target"
-            case successRate = "success_rate"
-            case cpoe, adot
+            case name, team, starter
+            case minutes = "min"
+            case points = "pts"
+            case rebounds = "reb"
+            case assists = "ast"
+            case trueShooting = "ts_pct"
+            case usage = "usg_pct"
+            case plusMinus = "plus_minus"
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            playerId = try c.decode(Int.self, forKey: .playerId)
+            name = try c.decodeIfPresent(String.self, forKey: .name)
+            team = try c.decode(String.self, forKey: .team)
+            starter = try c.decodeIfPresent(Bool.self, forKey: .starter) ?? false
+            minutes = try c.decodeIfPresent(Int.self, forKey: .minutes)
+            // Each stat is rated independently: one malformed cell must not
+            // drop the line.
+            points = try? c.decodeIfPresent(RatedValue.self, forKey: .points)
+            rebounds = try? c.decodeIfPresent(RatedValue.self, forKey: .rebounds)
+            assists = try? c.decodeIfPresent(RatedValue.self, forKey: .assists)
+            trueShooting = try? c.decodeIfPresent(RatedValue.self, forKey: .trueShooting)
+            usage = try? c.decodeIfPresent(RatedValue.self, forKey: .usage)
+            plusMinus = try? c.decodeIfPresent(RatedValue.self, forKey: .plusMinus)
+        }
+
+        init(
+            playerId: Int,
+            name: String? = nil,
+            team: String,
+            starter: Bool = false,
+            minutes: Int? = nil,
+            points: RatedValue? = nil,
+            rebounds: RatedValue? = nil,
+            assists: RatedValue? = nil,
+            trueShooting: RatedValue? = nil,
+            usage: RatedValue? = nil,
+            plusMinus: RatedValue? = nil
+        ) {
+            self.playerId = playerId
+            self.name = name
+            self.team = team
+            self.starter = starter
+            self.minutes = minutes
+            self.points = points
+            self.rebounds = rebounds
+            self.assists = assists
+            self.trueShooting = trueShooting
+            self.usage = usage
+            self.plusMinus = plusMinus
         }
     }
 
     struct BigPlay: Decodable, Identifiable, Hashable, Sendable {
+        enum Kind: String, Decodable, Sendable {
+            /// A scoring play in the last five minutes of the fourth quarter or
+            /// overtime with the margin inside five afterwards.
+            case lateScore = "late_score"
+            /// The play worth the most points that changed the lead.
+            case leadChange = "lead_change"
+        }
+
         let qtr: Int
         let clock: String
         let team: String
         let description: String
-        let epa: Double?
-        let homeWPA: Double
+        let points: Int
+        /// Home score minus away score after the play.
+        let homeMargin: Int
+        let kind: Kind?
 
         var id: String { "\(qtr)-\(clock)-\(description.prefix(24))" }
 
         enum CodingKeys: String, CodingKey {
-            case qtr, clock, team, description, epa
-            case homeWPA = "home_wpa"
+            case qtr, clock, team, description, points, kind
+            case homeMargin = "home_margin"
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            qtr = try c.decode(Int.self, forKey: .qtr)
+            clock = try c.decode(String.self, forKey: .clock)
+            team = try c.decode(String.self, forKey: .team)
+            description = try c.decode(String.self, forKey: .description)
+            points = try c.decodeIfPresent(Int.self, forKey: .points) ?? 0
+            homeMargin = try c.decodeIfPresent(Int.self, forKey: .homeMargin) ?? 0
+            kind = try? c.decodeIfPresent(Kind.self, forKey: .kind)
+        }
+
+        init(qtr: Int, clock: String, team: String, description: String, points: Int, homeMargin: Int, kind: Kind?) {
+            self.qtr = qtr
+            self.clock = clock
+            self.team = team
+            self.description = description
+            self.points = points
+            self.homeMargin = homeMargin
+            self.kind = kind
         }
     }
 
-    struct WinProbabilityPoint: Hashable, Sendable, Identifiable {
+    /// One step of the score margin: seconds elapsed in the game and home score
+    /// minus away score. Positive is the home team ahead.
+    struct MarginPoint: Hashable, Sendable, Identifiable {
         let elapsed: Double
-        let homeWinProbability: Double
+        let homeMargin: Double
         var id: Double { elapsed }
     }
 
@@ -92,7 +165,7 @@ struct GameDetail: Decodable, Sendable {
     let away: [String: RatedValue]
     let home: [String: RatedValue]
     let players: [PlayerLine]
-    let winProbability: [WinProbabilityPoint]
+    let margin: [MarginPoint]
     let bigPlays: [BigPlay]
 
     enum CodingKeys: String, CodingKey {
@@ -101,7 +174,8 @@ struct GameDetail: Decodable, Sendable {
         case homeTeam = "home_team"
         case teamStats = "team_stats"
         case players
-        case winProbability = "win_probability"
+        // The column keeps the name it had before the NBA; it holds the margin series.
+        case margin = "win_probability"
         case bigPlays = "big_plays"
     }
 
@@ -114,19 +188,52 @@ struct GameDetail: Decodable, Sendable {
         away = sides?.away ?? [:]
         home = sides?.home ?? [:]
         players = (try? c.decodeIfPresent([Lossy<PlayerLine>].self, forKey: .players))?.compactMap(\.value) ?? []
-        let raw = (try? c.decodeIfPresent([[Double]].self, forKey: .winProbability)) ?? []
-        winProbability = raw.compactMap { pair in
-            pair.count == 2 ? WinProbabilityPoint(elapsed: pair[0], homeWinProbability: pair[1]) : nil
+        let raw = (try? c.decodeIfPresent([[Double]].self, forKey: .margin)) ?? []
+        margin = raw.compactMap { pair in
+            pair.count == 2 ? MarginPoint(elapsed: pair[0], homeMargin: pair[1]) : nil
         }
         bigPlays = (try? c.decodeIfPresent([Lossy<BigPlay>].self, forKey: .bigPlays))?.compactMap(\.value) ?? []
+    }
+
+    init(
+        gameId: String,
+        awayTeam: String,
+        homeTeam: String,
+        away: [String: RatedValue] = [:],
+        home: [String: RatedValue] = [:],
+        players: [PlayerLine] = [],
+        margin: [MarginPoint] = [],
+        bigPlays: [BigPlay] = []
+    ) {
+        self.gameId = gameId
+        self.awayTeam = awayTeam
+        self.homeTeam = homeTeam
+        self.away = away
+        self.home = home
+        self.players = players
+        self.margin = margin
+        self.bigPlays = bigPlays
     }
 
     func stats(for team: String) -> [String: RatedValue] {
         normalizedTeamAbbreviation(team) == normalizedTeamAbbreviation(homeTeam) ? home : away
     }
 
-    func players(_ role: PlayerLine.Role) -> [PlayerLine] {
-        players.filter { $0.role == role }.sorted { ($0.epa ?? -.infinity) > ($1.epa ?? -.infinity) }
+    /// A team's player lines, starters first and then by minutes.
+    func players(for team: String) -> [PlayerLine] {
+        let abbr = normalizedTeamAbbreviation(team)
+        return players
+            .filter { normalizedTeamAbbreviation($0.team) == abbr }
+            .sorted {
+                if $0.starter != $1.starter { return $0.starter }
+                return ($0.minutes ?? 0) > ($1.minutes ?? 0)
+            }
+    }
+
+    /// The largest lead either side held, in points, from the margin series.
+    var largestLeads: (away: Int, home: Int) {
+        let margins = margin.map(\.homeMargin)
+        return (Int(max(0, -(margins.min() ?? 0))), Int(max(0, margins.max() ?? 0)))
     }
 }
 

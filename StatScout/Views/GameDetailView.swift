@@ -1,8 +1,8 @@
 import Charts
 import SwiftUI
 
-/// One game: the score first, then the box score, then the few advanced numbers
-/// the per-player feed can total honestly.
+/// One game: the score first, then how the margin moved, the four factors, the
+/// plays that decided it and the box score.
 struct GameDetailView: View {
     @EnvironmentObject private var store: StoreService
     @Bindable var viewModel: DashboardViewModel
@@ -36,7 +36,7 @@ struct GameDetailView: View {
             }
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .navigationTitle(game.map { "\(displayTeamAbbr($0.awayTeam)) at \(displayTeamAbbr($0.homeTeam))" } ?? "Game")
         .navigationBarTitleDisplayMode(.inline)
         .refreshable {
@@ -103,36 +103,41 @@ struct GameDetailView: View {
                         HStack(spacing: 10) {
                             scoreText(game.awayScore, winner: game.result(for: game.awayTeam) != "L")
                             Text("-")
-                                .font(GridironType.statLarge)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(HardwoodType.statLarge)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                             scoreText(game.homeScore, winner: game.result(for: game.homeTeam) != "L")
                         }
                     } else {
-                        Text(status == .upcoming ? game.kickoffLabel : "In progress")
-                            .font(GridironType.cardTitle)
-                            .foregroundStyle(status == .upcoming ? GridironPalette.ink : GridironPalette.performanceLow)
+                        Text(status == .upcoming ? game.tipoffLabel : "In progress")
+                            .font(HardwoodType.cardTitle)
+                            .foregroundStyle(status == .upcoming ? HardwoodPalette.ink : HardwoodPalette.performanceLow)
                     }
                     Text(statusLine(game, status: status))
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                 }
                 .frame(minWidth: 110)
                 teamColumn(game.homeTeam, game: game, label: "Home")
             }
 
-            Text([game.roundLabel, game.dayLabel, game.stadium].compactMap { $0 }.joined(separator: " · "))
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+            Text([
+                game.seasonPhase == .playoffs ? "Playoffs" : nil,
+                SeasonLabel.text(game.season),
+                game.dayLabel,
+                game.stadium,
+            ].compactMap { $0 }.joined(separator: " · "))
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 12)
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -142,22 +147,22 @@ struct GameDetailView: View {
         NavigationLink(value: TeamDestination(abbr: normalizedTeamAbbreviation(team))) {
             VStack(spacing: 6) {
                 ZStack {
-                    Circle().fill(NFLTeamColor.color(team))
+                    Circle().fill(NBATeamColor.color(team))
                     Text(displayTeamAbbr(team))
-                        .font(GridironType.smallBold)
+                        .font(HardwoodType.smallBold)
                         .foregroundStyle(.white)
                         .minimumScaleFactor(0.7)
                 }
                 .frame(width: 48, height: 48)
                 Text(teamFullName(team))
-                    .font(GridironType.smallBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.smallBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.85)
                 Text(([label] + [game.seasonPhase == .regular ? viewModel.record(forTeam: team, through: game) : nil].compactMap { $0 }).joined(separator: " · "))
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
             .frame(maxWidth: .infinity)
         }
@@ -167,8 +172,8 @@ struct GameDetailView: View {
 
     private func scoreText(_ score: Int?, winner: Bool) -> some View {
         Text(score.map(String.init) ?? "-")
-            .font(GridironType.statHero)
-            .foregroundStyle(winner ? GridironPalette.ink : GridironPalette.inkTertiary)
+            .font(HardwoodType.statHero)
+            .foregroundStyle(winner ? HardwoodPalette.ink : HardwoodPalette.inkTertiary)
             .monospacedDigit()
     }
 
@@ -176,44 +181,44 @@ struct GameDetailView: View {
         switch status {
         case .final: return game.overtime ? "Final/OT" : "Final"
         case .inProgress, .awaitingScore: return "Score posts at the final"
-        case .upcoming: return game.kickoff.map { $0.formatted(.dateTime.month(.abbreviated).day()) } ?? ""
+        case .upcoming: return game.tipoff.map { $0.formatted(.dateTime.month(.abbreviated).day()) } ?? ""
         }
     }
 
     // MARK: - Body
 
     /// Advanced first, the way analytics box scores read: how the game swung,
-    /// how efficiently each offense played, the plays that decided it, who
-    /// drove it. The traditional box score follows for the counts.
+    /// how each team played, the plays that decided it, who drove it. The
+    /// traditional box score follows for the counts.
     @ViewBuilder
     private func detail(for game: Game) -> some View {
         if detail != nil || !logs.isEmpty {
             if let detail {
-                if detail.winProbability.count > 2 {
-                    winProbabilityCard(detail, game: game)
+                if detail.margin.count > 2 {
+                    marginCard(detail, game: game)
                 }
-                efficiencyCard(detail, game: game)
+                factorsCard(detail, game: game)
                 if !detail.bigPlays.isEmpty {
                     bigPlaysCard(detail, game: game)
                 }
-                playerEfficiencyCards(detail)
+                playerLinesCards(detail, game: game)
             } else if isDetailLoading {
                 ProgressView("Loading advanced breakdown")
-                    .font(GridironType.small)
+                    .font(HardwoodType.small)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 40)
             } else if detailFailed {
                 notice(
                     icon: "wifi.exclamationmark",
                     title: "Couldn't load the advanced breakdown",
-                    text: "Win probability, EPA and success rate didn't load. Check your connection and try again.",
+                    text: "The score margin and four factors didn't load. Check your connection and try again.",
                     action: ("Try again", { Task { await loadDetail() } })
                 )
             } else {
                 notice(
                     icon: "chart.xyaxis.line",
                     title: "Advanced breakdown on the way",
-                    text: "Win probability, EPA and success rate post once play-by-play is published, usually within a few hours of the final."
+                    text: "The score margin, four factors and player ratings post once play-by-play is published, usually within a few hours of the final."
                 )
             }
 
@@ -224,7 +229,7 @@ struct GameDetailView: View {
                 boxScoreCard(game)
             }
 
-            footnote("Percentiles rank each number against every team game (or every player game with enough volume) this season, and update as new games arrive. EPA is expected points added; success rate is the share of plays with positive EPA.")
+            footnote("Percentiles rank each number against every team game (or every player game of ten minutes or more) this season, and update as new games arrive. The four factors are eFG%, turnover rate, offensive rebound rate and free throw rate.")
             StatGlossaryLink()
                 .padding(.horizontal, 12)
                 .padding(.top, 12)
@@ -240,11 +245,11 @@ struct GameDetailView: View {
                 notice(
                     icon: "clock",
                     title: "Stats arriving",
-                    text: "The final score is in. Player stats usually post within a few hours of the final whistle."
+                    text: "The final score is in. Player stats usually post within a few hours of the final buzzer."
                 )
             case .inProgress, .awaitingScore:
                 notice(
-                    icon: "football",
+                    icon: "basketball",
                     title: "Game in progress",
                     text: "The score and box score post when the game goes final."
                 )
@@ -256,8 +261,8 @@ struct GameDetailView: View {
 
     private func sectionHeading(_ title: String) -> some View {
         Text(title.uppercased())
-            .font(GridironType.sectionTitle)
-            .foregroundStyle(GridironPalette.inkSecondary)
+            .font(HardwoodType.sectionTitle)
+            .foregroundStyle(HardwoodPalette.inkSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
             .padding(.top, 24)
@@ -271,13 +276,13 @@ struct GameDetailView: View {
                         HStack(spacing: 4) {
                             TeamColorDot(abbr: leader.line.team, size: 6)
                             Text("\(leader.title.uppercased()) · \(displayTeamAbbr(leader.line.team))")
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                         }
                         nameText(leader.line)
                         Text(leader.summary)
-                            .font(GridironType.small)
-                            .foregroundStyle(GridironPalette.inkSecondary)
+                            .font(HardwoodType.small)
+                            .foregroundStyle(HardwoodPalette.inkSecondary)
                             .monospacedDigit()
                     }
                 }
@@ -288,23 +293,28 @@ struct GameDetailView: View {
     private func teamStatsCard(_ game: Game) -> some View {
         let away = boxScore.totals(for: game.awayTeam)
         let home = boxScore.totals(for: game.homeTeam)
+        func percent(_ value: Double?) -> Double { value ?? 0 }
         return card(title: "Team stats") {
             HStack {
                 Text(displayTeamAbbr(game.awayTeam)).frame(width: 64, alignment: .leading)
                 Spacer()
                 Text(displayTeamAbbr(game.homeTeam)).frame(width: 64, alignment: .trailing)
             }
-            .font(GridironType.smallBold)
-            .foregroundStyle(GridironPalette.inkSecondary)
-            .padding(.horizontal, GridironGeo.padCard)
+            .font(HardwoodType.smallBold)
+            .foregroundStyle(HardwoodPalette.inkSecondary)
+            .padding(.horizontal, HardwoodGeo.padCard)
             .frame(height: 30)
-            .background(GridironPalette.surfaceAlt)
+            .background(HardwoodPalette.surfaceAlt)
 
-            comparisonRow("Total yards", away.totalYards, home.totalYards, higherIsBetter: true)
-            comparisonRow("Passing yards", away.passingYards - away.sackYardsLost, home.passingYards - home.sackYardsLost, higherIsBetter: true)
-            comparisonRow("Rushing yards", away.rushingYards, home.rushingYards, higherIsBetter: true)
-            comparisonRow("First downs", away.firstDowns, home.firstDowns, higherIsBetter: true)
-            comparisonRow("Sacks taken", away.sacksTaken, home.sacksTaken, higherIsBetter: false)
+            comparisonRow("Field goals", percent(away.fieldGoalPercentage), percent(home.fieldGoalPercentage), higherIsBetter: true) { String(format: "%.1f%%", $0) }
+            comparisonRow("Threes", percent(away.threePointPercentage), percent(home.threePointPercentage), higherIsBetter: true) { String(format: "%.1f%%", $0) }
+            comparisonRow("Free throws", percent(away.freeThrowPercentage), percent(home.freeThrowPercentage), higherIsBetter: true) { String(format: "%.1f%%", $0) }
+            comparisonRow("Rebounds", away.rebounds, home.rebounds, higherIsBetter: true)
+            comparisonRow("Assists", away.assists, home.assists, higherIsBetter: true)
+            comparisonRow("Steals", away.steals, home.steals, higherIsBetter: true)
+            comparisonRow("Blocks", away.blocks, home.blocks, higherIsBetter: true)
+            comparisonRow("Turnovers", away.turnovers, home.turnovers, higherIsBetter: false)
+            comparisonRow("Fouls", away.fouls, home.fouls, higherIsBetter: false)
             footnoteRow("Totals add up each team's player lines.")
         }
     }
@@ -322,151 +332,192 @@ struct GameDetailView: View {
         let homeBetter = higherIsBetter ? home > away : home < away
         return HStack {
             Text(format(away))
-                .font(GridironType.statMed)
+                .font(HardwoodType.statMed)
                 .fontWeight(awayBetter ? .bold : .regular)
-                .foregroundStyle(awayBetter ? GridironPalette.ink : GridironPalette.inkSecondary)
+                .foregroundStyle(awayBetter ? HardwoodPalette.ink : HardwoodPalette.inkSecondary)
                 .frame(width: 64, alignment: .leading)
             Spacer()
             Text(label)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
             Spacer()
             Text(format(home))
-                .font(GridironType.statMed)
+                .font(HardwoodType.statMed)
                 .fontWeight(homeBetter ? .bold : .regular)
-                .foregroundStyle(homeBetter ? GridironPalette.ink : GridironPalette.inkSecondary)
+                .foregroundStyle(homeBetter ? HardwoodPalette.ink : HardwoodPalette.inkSecondary)
                 .frame(width: 64, alignment: .trailing)
         }
         .monospacedDigit()
-        .padding(.horizontal, GridironGeo.padCard)
+        .padding(.horizontal, HardwoodGeo.padCard)
         .frame(height: 36)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .overlay(Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline), alignment: .bottom)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(label): \(teamFullName(game?.awayTeam ?? "")) \(format(away)), \(teamFullName(game?.homeTeam ?? "")) \(format(home))")
     }
 
     // MARK: - Advanced
 
-    private func winProbabilityCard(_ detail: GameDetail, game: Game) -> some View {
-        let points = detail.winProbability
-        let end = max(3600, points.last?.elapsed ?? 3600)
-        let homeColor = NFLTeamColor.color(game.homeTeam)
-        return card(title: "Win probability") {
+    /// How the score margin moved through the game: home ahead above the line,
+    /// away ahead below it. A step line, because the margin only changes when
+    /// someone scores.
+    private func marginCard(_ detail: GameDetail, game: Game) -> some View {
+        let points = detail.margin
+        // Regulation is 48 minutes; each overtime adds five.
+        let end = max(2880, points.last?.elapsed ?? 2880)
+        let reach = max(6, (points.map { abs($0.homeMargin) }.max() ?? 6).rounded(.up))
+        let homeColor = NBATeamColor.color(game.homeTeam)
+        let awayColor = NBATeamColor.color(game.awayTeam)
+        let periodStarts: [Double] = [0, 720, 1440, 2160]
+            + (end > 2880 ? stride(from: 2880.0, to: end, by: 300).map { $0 } : [])
+        return card(title: "Margin") {
             VStack(alignment: .leading, spacing: 6) {
                 Chart {
-                    RuleMark(y: .value("Even", 50))
-                        .foregroundStyle(GridironPalette.divider)
+                    ForEach(points) { point in
+                        AreaMark(
+                            x: .value("Time", point.elapsed),
+                            yStart: .value("Even", 0),
+                            yEnd: .value("Home lead", max(point.homeMargin, 0)),
+                            series: .value("Side", "home")
+                        )
+                        .interpolationMethod(.stepEnd)
+                        .foregroundStyle(homeColor.opacity(0.28))
+                        AreaMark(
+                            x: .value("Time", point.elapsed),
+                            yStart: .value("Even", 0),
+                            yEnd: .value("Away lead", min(point.homeMargin, 0)),
+                            series: .value("Side", "away")
+                        )
+                        .interpolationMethod(.stepEnd)
+                        .foregroundStyle(awayColor.opacity(0.28))
+                    }
+                    RuleMark(y: .value("Even", 0))
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                     ForEach(points) { point in
                         LineMark(
                             x: .value("Time", point.elapsed),
-                            y: .value("Home win probability", point.homeWinProbability * 100)
+                            y: .value("Margin", point.homeMargin)
                         )
                         .interpolationMethod(.stepEnd)
-                        .foregroundStyle(homeColor)
-                        .lineStyle(StrokeStyle(lineWidth: 2))
+                        .foregroundStyle(HardwoodPalette.ink)
+                        .lineStyle(StrokeStyle(lineWidth: 1.5))
                     }
                 }
-                .chartYScale(domain: 0...100)
+                .chartYScale(domain: -reach...reach)
                 .chartXScale(domain: 0...end)
                 .chartXAxis {
-                    AxisMarks(values: [0, 900, 1800, 2700] + (end > 3600 ? [3600] : [])) { value in
-                        AxisGridLine().foregroundStyle(GridironPalette.divider)
+                    AxisMarks(values: periodStarts) { value in
+                        AxisGridLine().foregroundStyle(HardwoodPalette.divider)
                         AxisValueLabel(anchor: .topLeading) {
                             let seconds = value.as(Double.self) ?? 0
-                            Text(seconds >= 3600 ? "OT" : "Q\(Int(seconds / 900) + 1)")
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                            Text(Self.periodLabel(startingAt: seconds))
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                         }
                     }
                 }
                 .chartYAxis {
-                    AxisMarks(position: .leading, values: [0, 50, 100]) { value in
+                    AxisMarks(position: .leading, values: [-reach, 0, reach]) { value in
                         AxisValueLabel {
-                            let wp = value.as(Double.self) ?? 50
-                            Text(wp == 100 ? displayTeamAbbr(game.homeTeam) : wp == 0 ? displayTeamAbbr(game.awayTeam) : "50%")
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                            let margin = value.as(Double.self) ?? 0
+                            Text(margin > 0 ? displayTeamAbbr(game.homeTeam) : margin < 0 ? displayTeamAbbr(game.awayTeam) : "Even")
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                         }
                     }
                 }
                 .frame(height: 160)
-                .accessibilityLabel("Win probability chart for \(teamFullName(game.homeTeam))")
+                .accessibilityLabel("Score margin chart, \(teamFullName(game.homeTeam)) against \(teamFullName(game.awayTeam))")
 
-                Text("\(teamFullName(game.homeTeam)) chance to win, play by play. Up is \(displayTeamAbbr(game.homeTeam)), down is \(displayTeamAbbr(game.awayTeam)).")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                Text("Score margin, play by play. Up is \(displayTeamAbbr(game.homeTeam)) ahead, down is \(displayTeamAbbr(game.awayTeam)) ahead.\(leadsText(detail, game: game))")
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(GridironGeo.padCard)
+            .padding(HardwoodGeo.padCard)
         }
     }
 
+    /// "Q1", "Q2", "Q3", "Q4", then "OT", "2OT"... for the overtime periods.
+    nonisolated static func periodLabel(startingAt seconds: Double) -> String {
+        guard seconds >= 2880 else { return "Q\(Int(seconds / 720) + 1)" }
+        return quarterLabel(Int((seconds - 2880) / 300) + 5)
+    }
+
+    /// The period number a play carries (5 is the first overtime).
+    nonisolated static func quarterLabel(_ period: Int) -> String {
+        switch period {
+        case ...4: return "Q\(period)"
+        case 5: return "OT"
+        default: return "\(period - 4)OT"
+        }
+    }
+
+    /// " Biggest leads: BOS 12, NYK 7."
+    private func leadsText(_ detail: GameDetail, game: Game) -> String {
+        let leads = detail.largestLeads
+        return " Biggest leads: \(displayTeamAbbr(game.homeTeam)) \(leads.home), \(displayTeamAbbr(game.awayTeam)) \(leads.away)."
+    }
+
     enum RateStyle {
-        case epa
-        case percent
         case decimal
-        case signedDecimal
+        case percent
+        case ratio
         case count
 
         func format(_ value: Double) -> String {
             switch self {
-            case .epa: return value.formatted(.number.precision(.fractionLength(2)).sign(strategy: .always(includingZero: false)))
-            case .percent: return (value * 100).formatted(.number.precision(.fractionLength(0))) + "%"
             case .decimal: return value.formatted(.number.precision(.fractionLength(1)))
-            case .signedDecimal: return value.formatted(.number.precision(.fractionLength(1)).sign(strategy: .always(includingZero: false)))
+            case .percent: return value.formatted(.number.precision(.fractionLength(1))) + "%"
+            case .ratio: return value.formatted(.number.precision(.fractionLength(2)))
             case .count: return Int(value.rounded()).formatted()
             }
         }
     }
 
-    private struct EfficiencyMetric {
+    private struct FactorMetric {
         let label: String
         let key: String
         let style: RateStyle
-        /// Shown instead of the rate when present, e.g. "3/9" on third down.
-        var fraction: (String, String)? = nil
     }
 
-    private static let efficiencyMetrics: [EfficiencyMetric] = [
-        .init(label: "EPA per play", key: "epa_per_play", style: .epa),
-        .init(label: "Success rate", key: "success_rate", style: .percent),
-        .init(label: "Dropback EPA", key: "pass_epa_per_dropback", style: .epa),
-        .init(label: "Dropback success", key: "pass_success_rate", style: .percent),
-        .init(label: "Rush EPA", key: "rush_epa_per_carry", style: .epa),
-        .init(label: "Rush success", key: "rush_success_rate", style: .percent),
-        .init(label: "Explosive plays", key: "explosive_play_rate", style: .percent),
-        .init(label: "Early-down pass rate", key: "early_down_pass_rate", style: .percent),
-        .init(label: "Pass rate over expected", key: "pass_rate_over_expected", style: .percent),
-        .init(label: "Yards per play", key: "yards_per_play", style: .decimal),
-        .init(label: "Third down", key: "third_down_rate", style: .percent, fraction: ("third_down_conversions", "third_down_attempts")),
-        .init(label: "Red zone TDs", key: "red_zone_td_rate", style: .percent, fraction: ("red_zone_tds", "red_zone_trips")),
-        .init(label: "CPOE", key: "cpoe", style: .signedDecimal),
-        .init(label: "Avg depth of target", key: "adot", style: .decimal),
-        .init(label: "Sack rate", key: "sack_rate", style: .percent),
-        .init(label: "Turnovers", key: "turnovers", style: .count),
+    /// The four factors first (eFG%, turnovers, offensive rebounds, free throws),
+    /// then the ratings and the points that explain them.
+    private static let factorMetrics: [FactorMetric] = [
+        .init(label: "Points", key: "pts", style: .count),
+        .init(label: "Off. rating", key: "ortg", style: .decimal),
+        .init(label: "Def. rating", key: "drtg", style: .decimal),
+        .init(label: "Pace", key: "pace", style: .decimal),
+        .init(label: "eFG%", key: "efg_pct", style: .percent),
+        .init(label: "TOV%", key: "tov_pct", style: .percent),
+        .init(label: "OREB%", key: "oreb_pct", style: .percent),
+        .init(label: "FT rate", key: "ft_rate", style: .ratio),
+        .init(label: "Points in paint", key: "points_in_paint", style: .count),
+        .init(label: "Fast-break points", key: "fast_break_points", style: .count),
+        .init(label: "Bench points", key: "bench_points", style: .count),
+        .init(label: "Biggest lead", key: "largest_lead", style: .count),
     ]
 
-    private func efficiencyCard(_ detail: GameDetail, game: Game) -> some View {
+    private func factorsCard(_ detail: GameDetail, game: Game) -> some View {
         let away = detail.stats(for: game.awayTeam)
         let home = detail.stats(for: game.homeTeam)
-        return card(title: "Team efficiency") {
+        return card(title: "Four factors & ratings") {
             HStack {
                 teamLabel(game.awayTeam)
                 Spacer()
                 Text("Bars: percentile vs all team games")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                 Spacer()
                 teamLabel(game.homeTeam)
             }
-            .padding(.horizontal, GridironGeo.padCard)
+            .padding(.horizontal, HardwoodGeo.padCard)
             .frame(height: 30)
-            .background(GridironPalette.surfaceAlt)
+            .background(HardwoodPalette.surfaceAlt)
 
-            ForEach(Array(Self.efficiencyMetrics.enumerated()), id: \.element.key) { index, metric in
+            ForEach(Array(Self.factorMetrics.enumerated()), id: \.element.key) { index, metric in
                 if away[metric.key] != nil || home[metric.key] != nil {
-                    efficiencyRow(metric, away: away, home: home, index: index, game: game)
+                    factorRow(metric, away: away, home: home, index: index, game: game)
                 }
             }
         }
@@ -476,32 +527,28 @@ struct GameDetailView: View {
         HStack(spacing: 4) {
             TeamColorDot(abbr: team, size: 8)
             Text(displayTeamAbbr(team))
-                .font(GridironType.smallBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.smallBold)
+                .foregroundStyle(HardwoodPalette.ink)
         }
     }
 
-    private func efficiencyRow(_ metric: EfficiencyMetric, away: [String: RatedValue], home: [String: RatedValue], index: Int, game: Game) -> some View {
+    private func factorRow(_ metric: FactorMetric, away: [String: RatedValue], home: [String: RatedValue], index: Int, game: Game) -> some View {
         func text(_ side: [String: RatedValue]) -> String {
-            if let fraction = metric.fraction,
-               let made = side[fraction.0], let tries = side[fraction.1], tries.value > 0 {
-                return "\(Int(made.value))/\(Int(tries.value))"
-            }
-            return side[metric.key].map { metric.style.format($0.value) } ?? "-"
+            side[metric.key].map { metric.style.format($0.value) } ?? "-"
         }
         return HStack(spacing: 8) {
             ratedCell(text(away), percentile: away[metric.key]?.percentile, alignment: .leading)
             Text(metric.label)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .frame(maxWidth: .infinity)
             ratedCell(text(home), percentile: home[metric.key]?.percentile, alignment: .trailing)
         }
-        .padding(.horizontal, GridironGeo.padCard)
+        .padding(.horizontal, HardwoodGeo.padCard)
         .frame(height: 40)
-        .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             "\(metric.label): \(teamFullName(game.awayTeam)) \(text(away))\(away[metric.key]?.percentile.map { ", \($0.ordinalString) percentile" } ?? ""), "
@@ -513,8 +560,8 @@ struct GameDetailView: View {
     private func ratedCell(_ text: String, percentile: Int?, alignment: HorizontalAlignment) -> some View {
         VStack(alignment: alignment, spacing: 3) {
             Text(text)
-                .font(GridironType.statMed)
-                .foregroundStyle(percentile.map { GridironPalette.textColor(forPercentile: $0) } ?? GridironPalette.ink)
+                .font(HardwoodType.statMed)
+                .foregroundStyle(percentile.map { HardwoodPalette.textColor(forPercentile: $0) } ?? HardwoodPalette.ink)
             if let percentile {
                 PercentileBarMini(percentile: percentile, height: 4)
                     .frame(width: 44)
@@ -527,97 +574,70 @@ struct GameDetailView: View {
     }
 
     private func bigPlaysCard(_ detail: GameDetail, game: Game) -> some View {
-        card(title: "Plays that swung it") {
+        card(title: "Plays that decided it") {
             ForEach(Array(detail.bigPlays.enumerated()), id: \.element.id) { index, play in
-                let home = normalizedTeamAbbreviation(play.team) == normalizedTeamAbbreviation(game.homeTeam)
-                let swing = home ? play.homeWPA : -play.homeWPA
                 HStack(alignment: .top, spacing: 10) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Q\(play.qtr) \(play.clock.hasPrefix("0") ? String(play.clock.dropFirst()) : play.clock)")
+                        Text("\(Self.quarterLabel(play.qtr)) \(play.clock)")
                             .lineLimit(1)
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
                         HStack(spacing: 4) {
                             TeamColorDot(abbr: play.team, size: 6)
                             Text(displayTeamAbbr(play.team))
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkSecondary)
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkSecondary)
                         }
                     }
-                    .frame(width: 58, alignment: .leading)
-                    Text(Self.cleanDescription(play.description))
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.ink)
-                        .lineLimit(3)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text((swing * 100).formatted(.number.precision(.fractionLength(0)).sign(strategy: .always())) + "%")
-                        .font(GridironType.statMed)
-                        .foregroundStyle(swing >= 0 ? GridironPalette.performanceHigh : GridironPalette.performanceLow)
-                        .frame(width: 48, alignment: .trailing)
+                    .frame(width: 66, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 2) {
+                        if let kind = play.kind {
+                            Text(kind == .leadChange ? "LEAD CHANGE" : "LATE SCORE")
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
+                        }
+                        Text(play.description)
+                            .font(HardwoodType.small)
+                            .foregroundStyle(HardwoodPalette.ink)
+                            .lineLimit(3)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Text(marginText(play.homeMargin, game: game))
+                        .font(HardwoodType.statSmall)
+                        .foregroundStyle(HardwoodPalette.ink)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 54, alignment: .trailing)
                 }
-                .padding(.horizontal, GridironGeo.padInline)
+                .padding(.horizontal, HardwoodGeo.padInline)
                 .padding(.vertical, 10)
-                .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                 .accessibilityElement(children: .combine)
             }
-            footnoteRow("Change in the offense's win probability on the play.")
+            footnoteRow("The right-hand figure is the score margin after the play. Late scores are baskets in the last five minutes of the fourth quarter or overtime with the game inside five points.")
         }
     }
 
-    /// Play-by-play text starts with the clock and formation tags the row
-    /// already shows: "(1:41) (Shotgun) 17-J.Allen pass deep middle...".
-    static func cleanDescription(_ text: String) -> String {
-        var result = text
-        while result.hasPrefix("(") , let close = result.firstIndex(of: ")") {
-            result = String(result[result.index(after: close)...]).trimmingCharacters(in: .whitespaces)
-        }
-        return result.replacingOccurrences(of: #"\b\d{1,2}-(?=[A-Z])"#, with: "", options: .regularExpression)
+    /// "BOS +4", "Tied": the margin after a play, named for the side ahead.
+    private func marginText(_ homeMargin: Int, game: Game) -> String {
+        guard homeMargin != 0 else { return "Tied" }
+        let ahead = homeMargin > 0 ? game.homeTeam : game.awayTeam
+        return "\(displayTeamAbbr(ahead)) +\(abs(homeMargin))"
     }
 
     @ViewBuilder
-    private func playerEfficiencyCards(_ detail: GameDetail) -> some View {
+    private func playerLinesCards(_ detail: GameDetail, game: Game) -> some View {
         if store.isPro {
-            let passers = detail.players(.passer)
-            if !passers.isEmpty {
-                card(title: "Passing efficiency") {
-                    efficiencyHeader(["DB", "EPA", "EPA/DB", "SUCC", "CPOE"])
-                    ForEach(Array(passers.enumerated()), id: \.element.id) { index, line in
-                        efficiencyPlayerRow(line, index: index, cells: [
-                            (line.dropbacks.map(String.init) ?? "-", nil),
-                            (line.epa.map { RateStyle.epa.format($0) } ?? "-", nil),
-                            rated(line.epaPerDropback, .epa),
-                            rated(line.successRate, .percent),
-                            rated(line.cpoe, .signedDecimal),
-                        ])
-                    }
-                }
-            }
-            let rushers = detail.players(.rusher)
-            if !rushers.isEmpty {
-                card(title: "Rushing efficiency") {
-                    efficiencyHeader(["CAR", "EPA", "EPA/C", "SUCC"])
-                    ForEach(Array(rushers.enumerated()), id: \.element.id) { index, line in
-                        efficiencyPlayerRow(line, index: index, cells: [
-                            (line.carries.map(String.init) ?? "-", nil),
-                            (line.epa.map { RateStyle.epa.format($0) } ?? "-", nil),
-                            rated(line.epaPerCarry, .epa),
-                            rated(line.successRate, .percent),
-                        ])
-                    }
-                }
-            }
-            let receivers = detail.players(.receiver)
-            if !receivers.isEmpty {
-                card(title: "Receiving efficiency") {
-                    efficiencyHeader(["TGT", "EPA", "EPA/T", "SUCC", "ADOT"])
-                    ForEach(Array(receivers.enumerated()), id: \.element.id) { index, line in
-                        efficiencyPlayerRow(line, index: index, cells: [
-                            (line.targets.map(String.init) ?? "-", nil),
-                            (line.epa.map { RateStyle.epa.format($0) } ?? "-", nil),
-                            rated(line.epaPerTarget, .epa),
-                            rated(line.successRate, .percent),
-                            rated(line.adot, .decimal),
-                        ])
+            let team = boxTeam.isEmpty ? game.awayTeam : boxTeam
+            let lines = detail.players(for: team)
+            if !lines.isEmpty {
+                VStack(spacing: 0) {
+                    teamPicker(game, team: team)
+                    card(title: "Player ratings") {
+                        tableHeader(["MIN", "PTS", "REB", "AST", "TS%", "USG%", "+/-"], width: 40)
+                        ForEach(Array(lines.enumerated()), id: \.element.id) { index, line in
+                            ratingRow(line, index: index, game: game)
+                        }
+                        footnoteRow("Bars rank each night against every player game of ten minutes or more this season.")
                     }
                 }
             }
@@ -625,64 +645,70 @@ struct GameDetailView: View {
             VStack(spacing: 10) {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(GridironPalette.inkTertiary)
-                Text("Every player's efficiency")
-                    .font(GridironType.cardTitle)
-                    .foregroundStyle(GridironPalette.ink)
-                Text("EPA per dropback, success rate, CPOE and depth of target for every passer, rusher and receiver, ranked against the season.")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
+                Text("Every player's night, ranked")
+                    .font(HardwoodType.cardTitle)
+                    .foregroundStyle(HardwoodPalette.ink)
+                Text("Points, rebounds, assists, TS%, usage and plus/minus for every player, each ranked against the season.")
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                 PlusDirectCTA(trigger: .advancedBoxScore, style: .capsule)
             }
             .padding(20)
             .frame(maxWidth: .infinity)
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(HardwoodPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                    .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
             )
             .padding(.horizontal, 12)
             .padding(.top, 12)
         }
     }
 
-    private func rated(_ value: RatedValue?, _ style: RateStyle) -> (String, Int?) {
-        guard let value else { return ("-", nil) }
-        return (style.format(value.value), value.percentile)
-    }
-
-    private func efficiencyHeader(_ columns: [String]) -> some View {
-        tableHeader(columns, width: 44)
-    }
-
-    private func efficiencyPlayerRow(_ line: GameDetail.PlayerLine, index: Int, cells: [(String, Int?)]) -> some View {
-        let player = game.flatMap { viewModel.player(id: line.playerId, season: $0.season, phase: $0.seasonPhase) }
+    private func ratingRow(_ line: GameDetail.PlayerLine, index: Int, game: Game) -> some View {
+        let player = viewModel.player(id: line.playerId, season: game.season, phase: game.seasonPhase)
+        func rated(_ value: RatedValue?, _ style: RateStyle, signed: Bool = false) -> (String, Int?) {
+            guard let value else { return ("-", nil) }
+            var text = style.format(value.value)
+            if signed, value.value > 0 { text = "+" + text }
+            return (text, value.percentile)
+        }
+        let cells: [(String, Int?)] = [
+            (line.minutes.map(String.init) ?? "-", nil),
+            rated(line.points, .count),
+            rated(line.rebounds, .count),
+            rated(line.assists, .count),
+            rated(line.trueShooting, .decimal),
+            rated(line.usage, .decimal),
+            rated(line.plusMinus, .count, signed: true),
+        ]
         let row = HStack(spacing: 0) {
             HStack(spacing: 6) {
                 TeamColorDot(abbr: line.team, size: 7)
-                Text(player?.name ?? line.name ?? "Player")
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                Text(Self.shortName(player?.name ?? line.name ?? "Player"))
+                    .font(HardwoodType.smallBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
                 Text(cell.0)
-                    .font(GridironType.statSmall)
+                    .font(HardwoodType.statSmall)
                     .fontWeight(cell.1 == nil ? .regular : .semibold)
-                    .foregroundStyle(cell.1.map { GridironPalette.textColor(forPercentile: $0) } ?? GridironPalette.ink)
+                    .foregroundStyle(cell.1.map { HardwoodPalette.textColor(forPercentile: $0) } ?? HardwoodPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                    .frame(width: 44, alignment: .trailing)
+                    .frame(width: 40, alignment: .trailing)
             }
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, HardwoodGeo.padInline)
         .frame(minHeight: 40)
-        .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
         .contentShape(Rectangle())
         return Group {
             if let player {
@@ -694,8 +720,16 @@ struct GameDetailView: View {
         }
     }
 
+    /// "S. Gilgeous-Alexander" from "Shai Gilgeous-Alexander": a box score row
+    /// has no room for a full first name.
+    nonisolated static func shortName(_ name: String) -> String {
+        let parts = name.split(separator: " ").map(String.init)
+        guard parts.count > 1, let first = parts.first?.first else { return name }
+        return "\(first). " + parts.dropFirst().joined(separator: " ")
+    }
+
     private func teamPicker(_ game: Game, team: String) -> some View {
-        GridironSegmented(
+        HardwoodSegmented(
             segments: [
                 .init(value: game.awayTeam, label: teamFullName(game.awayTeam)),
                 .init(value: game.homeTeam, label: teamFullName(game.homeTeam)),
@@ -709,46 +743,21 @@ struct GameDetailView: View {
     private func boxScoreCard(_ game: Game) -> some View {
         let team = boxTeam.isEmpty ? game.awayTeam : boxTeam
         return VStack(spacing: 0) {
-            teamPicker(game, team: team)
+            // The advanced player ratings carry their own picker for Pro; the
+            // traditional box score always needs one.
+            if !store.isPro || detail == nil {
+                teamPicker(game, team: team)
+            }
 
-            card(title: "Passing") {
-                tableHeader(["C/ATT", "YDS", "TD", "INT"])
-                ForEach(Array(boxScore.passers(for: team).enumerated()), id: \.element.id) { index, line in
-                    tableRow(line, index: index, values: [
-                        "\(line.int("completions"))/\(line.int("attempts"))",
-                        "\(line.int("passing_yards"))", "\(line.int("passing_tds"))", "\(line.int("interceptions"))",
-                    ])
+            card(title: "\(teamFullName(team)) box score") {
+                tableHeader(["MIN", "PTS", "REB", "AST", "FG", "3P", "+/-"], width: 40, fgWidth: 52)
+                ForEach(Array(boxScore.rotation(for: team).enumerated()), id: \.element.id) { index, line in
+                    tableRow(line, index: index, width: 40, values: [
+                        "\(line.minutes)", "\(line.int("pts"))", "\(line.int("reb"))", "\(line.int("ast"))",
+                        line.made("fgm", of: "fga"), line.made("fg3m", of: "fg3a"), line.plusMinusText,
+                    ], wideColumn: 4)
                 }
-            }
-            card(title: "Rushing") {
-                tableHeader(["CAR", "YDS", "AVG", "TD"])
-                ForEach(Array(boxScore.rushers(for: team).enumerated()), id: \.element.id) { index, line in
-                    let carries = line.value("carries")
-                    tableRow(line, index: index, values: [
-                        "\(line.int("carries"))", "\(line.int("rushing_yards"))",
-                        carries > 0 ? (line.value("rushing_yards") / carries).formatted(.number.precision(.fractionLength(1))) : "-",
-                        "\(line.int("rushing_tds"))",
-                    ])
-                }
-            }
-            card(title: "Receiving") {
-                tableHeader(["REC", "TGT", "YDS", "TD"])
-                ForEach(Array(boxScore.receivers(for: team).enumerated()), id: \.element.id) { index, line in
-                    tableRow(line, index: index, values: [
-                        "\(line.int("receptions"))", "\(line.int("targets"))",
-                        "\(line.int("receiving_yards"))", "\(line.int("receiving_tds"))",
-                    ])
-                }
-            }
-            card(title: "Defense") {
-                tableHeader(["TKL", "SCK", "INT", "PD"])
-                ForEach(Array(boxScore.defenders(for: team).prefix(12).enumerated()), id: \.element.id) { index, line in
-                    tableRow(line, index: index, values: [
-                        "\(Int(line.tackles.rounded()))",
-                        line.value("def_sacks").formatted(.number.precision(.fractionLength(0...1))),
-                        "\(line.int("def_interceptions"))", "\(line.int("def_pass_defended"))",
-                    ])
-                }
+                footnoteRow("Starters first, then the bench by minutes. Plus/minus is missing in seasons before 2008-09.")
             }
         }
     }
@@ -765,47 +774,47 @@ struct GameDetailView: View {
 
     private func card<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: title)
+            HardwoodSectionBar(title: title)
             content()
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
     }
 
-    private func tableHeader(_ columns: [String], width: CGFloat = 46) -> some View {
+    private func tableHeader(_ columns: [String], width: CGFloat = 46, fgWidth: CGFloat? = nil) -> some View {
         HStack(spacing: 0) {
             Text("PLAYER")
                 .frame(maxWidth: .infinity, alignment: .leading)
-            ForEach(columns, id: \.self) { column in
+            ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
                 Text(column)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                    .frame(width: width, alignment: .trailing)
+                    .frame(width: index == 4 ? (fgWidth ?? width) : width, alignment: .trailing)
             }
         }
-        .font(GridironType.micro)
-        .foregroundStyle(GridironPalette.inkTertiary)
-        .padding(.horizontal, GridironGeo.padInline)
+        .font(HardwoodType.micro)
+        .foregroundStyle(HardwoodPalette.inkTertiary)
+        .padding(.horizontal, HardwoodGeo.padInline)
         .frame(height: 26)
-        .background(GridironPalette.surfaceAlt)
+        .background(HardwoodPalette.surfaceAlt)
     }
 
-    private func tableRow(_ line: GameBoxScore.PlayerLine, index: Int, width: CGFloat = 46, values: [String]) -> some View {
+    private func tableRow(_ line: GameBoxScore.PlayerLine, index: Int, width: CGFloat = 46, values: [String], wideColumn: Int? = nil) -> some View {
         playerRow(line: line, index: index) {
             HStack(spacing: 0) {
                 nameText(line)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                ForEach(Array(values.enumerated()), id: \.offset) { _, value in
+                ForEach(Array(values.enumerated()), id: \.offset) { offset, value in
                     Text(value)
-                        .font(GridironType.statSmall)
-                        .foregroundStyle(GridironPalette.ink)
-                        .frame(width: width, alignment: .trailing)
+                        .font(HardwoodType.statSmall)
+                        .foregroundStyle(HardwoodPalette.ink)
+                        .frame(width: offset == wideColumn ? 52 : width, alignment: .trailing)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
@@ -818,10 +827,10 @@ struct GameDetailView: View {
     private func playerRow<Content: View>(line: GameBoxScore.PlayerLine, index: Int, @ViewBuilder content: () -> Content) -> some View {
         let row = content()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, GridironGeo.padInline)
+            .padding(.horizontal, HardwoodGeo.padInline)
             .padding(.vertical, 8)
             .frame(minHeight: 40)
-            .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+            .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
             .contentShape(Rectangle())
         if let player = player(for: line) {
             NavigationLink(value: player) { row }
@@ -832,9 +841,9 @@ struct GameDetailView: View {
     }
 
     private func nameText(_ line: GameBoxScore.PlayerLine) -> some View {
-        Text(player(for: line)?.name ?? "Player \(line.playerId)")
-            .font(GridironType.bodyBold)
-            .foregroundStyle(GridironPalette.ink)
+        Text(player(for: line).map { Self.shortName($0.name) } ?? "Player \(line.playerId)")
+            .font(HardwoodType.smallBold)
+            .foregroundStyle(HardwoodPalette.ink)
             .lineLimit(1)
             .minimumScaleFactor(0.85)
     }
@@ -853,29 +862,29 @@ struct GameDetailView: View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 22))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
             Text(title)
-                .font(GridironType.cardTitle)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.cardTitle)
+                .foregroundStyle(HardwoodPalette.ink)
             Text(text)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             if let action {
                 Button(action.label, action: action.perform)
-                    .font(GridironType.smallBold)
+                    .font(HardwoodType.smallBold)
                     .buttonStyle(.bordered)
                     .padding(.top, 4)
             }
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -883,8 +892,8 @@ struct GameDetailView: View {
 
     private func footnote(_ text: String) -> some View {
         Text(text)
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
+            .font(HardwoodType.micro)
+            .foregroundStyle(HardwoodPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 16)
@@ -893,11 +902,11 @@ struct GameDetailView: View {
 
     private func footnoteRow(_ text: String) -> some View {
         Text(text)
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
+            .font(HardwoodType.micro)
+            .foregroundStyle(HardwoodPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, GridironGeo.padCard)
+            .padding(.horizontal, HardwoodGeo.padCard)
             .padding(.vertical, 10)
     }
 }

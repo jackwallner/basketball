@@ -29,8 +29,6 @@ enum PaywallTrigger: Identifiable, Hashable {
     case bestWorst
     /// Player-level advanced tables on a game's box score.
     case advancedBoxScore
-    /// The Contract Value board: production against pay, league-wide.
-    case contractValue
 
     var icon: String {
         switch self {
@@ -48,14 +46,13 @@ enum PaywallTrigger: Identifiable, Hashable {
         case .recentForm:        return "flame.fill"
         case .bestWorst:         return "arrow.up.arrow.down"
         case .advancedBoxScore:  return "sportscourt.fill"
-        case .contractValue:     return "dollarsign.circle.fill"
         }
     }
 
     var title: String {
         switch self {
         case .pastSeason:        return "Unlock Past Seasons"
-        case .lockedSeason(let year): return "Unlock \(year)"
+        case .lockedSeason(let year): return "Unlock \(SeasonLabel.text(year))"
         case .yearCompare:       return "Year-over-Year Comparison"
         case .playerComparison:  return "Player Comparison"
         case .onboarding:        return "Scout Like a GM"
@@ -68,42 +65,39 @@ enum PaywallTrigger: Identifiable, Hashable {
         case .recentForm:        return "Recent Form"
         case .bestWorst:         return "Best & Worst"
         case .advancedBoxScore:  return "Advanced Box Scores"
-        case .contractValue:     return "Contract Value"
         }
     }
 
     var subtitle: String {
         switch self {
         case .pastSeason:
-            return "Track how every player ranked since 2000, plus the year-over-year trends behind today's leaders."
+            return "Track how every player ranked since 2002-03, plus the year-over-year trends behind today's leaders."
         case .lockedSeason(let year):
-            return "See every player's \(year) percentile rankings, and how they stack up against any other season."
+            return "See every player's \(SeasonLabel.text(year)) percentile rankings, and how they stack up against any other season."
         case .yearCompare:
             return "Compare any player's percentile rankings across any two seasons. See what changed, what held, and where they're headed."
         case .playerComparison:
-            return "Stack any two players head-to-head across every NFL metric: EPA, CPOE, YAC, RYOE, and more."
+            return "Stack any two players head-to-head across every metric: scoring efficiency, shooting zones, playmaking, rebounding, defense and impact."
         case .onboarding:
-            return "The Trends board, recent form, head-to-head matchups, and every season back to 2000. The full NFL picture on every player."
+            return "The Trends board, recent form, head-to-head matchups, and every season back to 2002-03. The full NBA picture on every player."
         case .activation:
-            return "The Trends board, recent form, head-to-head matchups, and every season back to 2000. The full NFL picture on every player."
+            return "The Trends board, recent form, head-to-head matchups, and every season back to 2002-03. The full NBA picture on every player."
         case .upgrade:
-            return "The Trends board, recent form, head-to-head matchups, and every season back to 2000. The full NFL picture on every player."
+            return "The Trends board, recent form, head-to-head matchups, and every season back to 2002-03. The full NBA picture on every player."
         case .pastSeasonsLoad:
             return "Load historical data to explore past seasons, year-over-year trends, and more."
         case .teamView:
-            return "Advanced and standard stats for every club, a roster you can rank by any metric over any window, and side-by-side comparisons for every squad."
+            return "Advanced and standard stats for all 30 teams, a roster you can rank by any metric over any window, and side-by-side comparisons for every team."
         case .winback:
             return "Your StatScout+ access has lapsed. Pick it back up to get the Trends board, recent form, head-to-head matchups, and every past season."
         case .playerScouting:
-            return "Last 3 / 5 / 8 game form, head-to-head matchups, every roster. The full picture, not just season totals."
+            return "Last week, 2 week and 4 week form, head-to-head matchups, every roster. The full picture, not just season totals."
         case .recentForm:
-            return "Every player's last 3 / 5 / 8 game form. Catch hot streaks and slumps before the season totals catch up."
+            return "Every player's last week, 2 week and 4 week form. Catch hot streaks and slumps before the season totals catch up."
         case .bestWorst:
-            return "The league leader and the league trailer on every NFL metric, side by side, in one board."
+            return "The league leader and the league trailer on every NBA metric, side by side, in one board."
         case .advancedBoxScore:
-            return "Every player in every game: EPA, success rate, CPOE and depth of target, beside the box score."
-        case .contractValue:
-            return "Every qualified player's production ranked against his pay. The bargains and the overpays at every position, updated every week."
+            return "Every player in every game: points, rebounds, assists, TS%, usage and plus/minus, each ranked against the season, beside the box score."
         }
     }
 
@@ -124,7 +118,6 @@ enum PaywallTrigger: Identifiable, Hashable {
         case .recentForm:        return "statscout_paywall_recent_form"
         case .bestWorst:         return "statscout_paywall_best_worst"
         case .advancedBoxScore:  return "statscout_paywall_advanced_box_score"
-        case .contractValue:     return "statscout_paywall_contract_value"
         }
     }
 
@@ -134,12 +127,11 @@ enum PaywallTrigger: Identifiable, Hashable {
     /// than the product does.
     private static let proFeatures: [(icon: String, title: String)] = [
         ("flame.fill", "The Trends board: who's heating up and cooling off, league-wide"),
-        ("chart.bar.fill", "Last 3 / 5 / 8 game form on any player, team or leaderboard"),
+        ("chart.bar.fill", "Recent form (1 / 2 / 4 weeks) on any player, team or leaderboard"),
         ("person.2.fill", "Head-to-head: any two players, every metric"),
-        ("shield.lefthalf.filled", "Team scouting: advanced and standard, season or recent"),
-        ("sportscourt.fill", "Advanced box scores: EPA, success rate and CPOE for every player, every game"),
-        ("dollarsign.circle.fill", "Contract Value: the bargains and overpays at every position"),
-        ("calendar.badge.clock", "Every season back to 2000 + year-over-year trends")
+        ("shield.lefthalf.filled", "Team scouting for all 30 teams: advanced and standard, season or recent"),
+        ("sportscourt.fill", "Advanced box scores: TS%, usage and plus/minus for every player, every game"),
+        ("calendar.badge.clock", "Every season back to 2002-03 + year-over-year trends")
     ]
 
     var features: [(icon: String, title: String)] {
@@ -168,7 +160,7 @@ struct PaywallView: View {
 
     var body: some View {
         ZStack {
-            GridironPalette.canvas.ignoresSafeArea()
+            HardwoodPalette.canvas.ignoresSafeArea()
 
             if store.isLoadingProducts && store.products.isEmpty {
                 loadingState
@@ -197,10 +189,10 @@ struct PaywallView: View {
     private var loadingState: some View {
         VStack(spacing: 14) {
             ProgressView()
-                .tint(GridironPalette.turf)
+                .tint(HardwoodPalette.court)
             Text("Loading plans…")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
         }
     }
 
@@ -208,13 +200,13 @@ struct PaywallView: View {
         VStack(spacing: 12) {
             Image(systemName: "wifi.exclamationmark")
                 .font(.system(size: 40))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
             Text("Couldn't Load Plans")
-                .font(GridironType.cardTitle)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.cardTitle)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
             Text(store.lastError ?? "Check your connection and try again.")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
             Button("Try Again") {
@@ -223,8 +215,8 @@ struct PaywallView: View {
                     selectDefaultPackageIfNeeded()
                 }
             }
-            .font(GridironType.bodyBold)
-            .foregroundStyle(GridironPalette.turf)
+            .font(HardwoodType.bodyBold)
+            .foregroundStyle(HardwoodPalette.court)
         }
     }
 
@@ -258,7 +250,7 @@ struct PaywallView: View {
     private var heroHeader: some View {
         ZStack {
             LinearGradient(
-                colors: [GridironPalette.midnight, GridironPalette.midnight.opacity(0.88)],
+                colors: [HardwoodPalette.midnight, HardwoodPalette.midnight.opacity(0.88)],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -280,18 +272,18 @@ struct PaywallView: View {
                 }
 
                 Text("STATSCOUT+")
-                    .font(GridironType.micro)
+                    .font(HardwoodType.micro)
                     .foregroundStyle(.white.opacity(0.65))
 
                 Text(trigger.title)
-                    .font(GridironType.playerName)
+                    .font(HardwoodType.playerName)
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.9)
 
                 Text(trigger.subtitle)
-                    .font(GridironType.small)
+                    .font(HardwoodType.small)
                     .foregroundStyle(.white.opacity(0.85))
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
@@ -311,11 +303,11 @@ struct PaywallView: View {
                 HStack(spacing: 12) {
                     Image(systemName: feature.icon)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(GridironPalette.turf)
+                        .foregroundStyle(HardwoodPalette.court)
                         .frame(width: 26)
                     Text(feature.title)
-                        .font(GridironType.body)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.body)
+                        .foregroundStyle(HardwoodPalette.ink)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                 }
@@ -324,27 +316,27 @@ struct PaywallView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // Reassurance + real credibility, public NFL Next Gen Stats are the source of truth
-    // for these percentiles, which is the actual moat. No fabricated ratings
-    // or user counts.
+    // Reassurance + real credibility: ESPN box scores, play-by-play and shot
+    // charts are the source of truth for these percentiles, which is the actual
+    // moat. No fabricated ratings or user counts.
     private var trustRow: some View {
         HStack(spacing: 14) {
             HStack(spacing: 5) {
                 Image(systemName: "bolt.fill")
                     .font(.system(size: 11, weight: .semibold))
-                Text("Next Gen-grade data")
-                    .font(GridironType.smallBold)
+                Text("Play-by-play data")
+                    .font(HardwoodType.smallBold)
             }
             Text("·")
-                .font(GridironType.smallBold)
+                .font(HardwoodType.smallBold)
             HStack(spacing: 5) {
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 11, weight: .semibold))
                 Text("Cancel anytime")
-                    .font(GridironType.smallBold)
+                    .font(HardwoodType.smallBold)
             }
         }
-        .foregroundStyle(GridironPalette.inkTertiary)
+        .foregroundStyle(HardwoodPalette.inkTertiary)
         .frame(maxWidth: .infinity)
     }
 
@@ -377,7 +369,7 @@ struct PaywallView: View {
             Button(action: startPurchase) {
                 ZStack {
                     Text(ctaTitle)
-                        .font(GridironType.bodyBold)
+                        .font(HardwoodType.bodyBold)
                         .foregroundStyle(.white)
                         .opacity(isPurchasing ? 0 : 1)
                     if isPurchasing {
@@ -386,7 +378,7 @@ struct PaywallView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 54)
-                .background(GridironPalette.turf)
+                .background(HardwoodPalette.court)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
@@ -394,29 +386,29 @@ struct PaywallView: View {
 
             if let disclosure = disclosureText {
                 Text(disclosure)
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if let errorMessage {
                 Text(errorMessage)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.court)
                     .multilineTextAlignment(.center)
             }
             if let restoreMessage {
                 Text(restoreMessage)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                     .multilineTextAlignment(.center)
             }
 
             Button(action: startRestore) {
                 Text(isRestoring ? "Restoring…" : "Restore Purchases")
-                    .font(GridironType.smallBold)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.smallBold)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
             }
             .buttonStyle(.plain)
             .disabled(isRestoring || isPurchasing)
@@ -425,8 +417,8 @@ struct PaywallView: View {
                 Link("Terms", destination: StatScoutLegal.termsURL)
                 Link("Privacy", destination: StatScoutLegal.privacyURL)
             }
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
+            .font(HardwoodType.micro)
+            .foregroundStyle(HardwoodPalette.inkTertiary)
         }
     }
 
@@ -561,11 +553,11 @@ private struct PaywallPlanCard: View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? GridironPalette.turf : GridironPalette.hairline, lineWidth: 2)
+                        .stroke(isSelected ? HardwoodPalette.court : HardwoodPalette.hairline, lineWidth: 2)
                         .frame(width: 22, height: 22)
                     if isSelected {
                         Circle()
-                            .fill(GridironPalette.turf)
+                            .fill(HardwoodPalette.court)
                             .frame(width: 12, height: 12)
                     }
                 }
@@ -573,21 +565,21 @@ private struct PaywallPlanCard: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(package.displayName)
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(HardwoodType.bodyBold)
+                            .foregroundStyle(HardwoodPalette.ink)
                         if let savingsPercent {
                             Text("SAVE \(savingsPercent)%")
-                                .font(GridironType.micro)
+                                .font(HardwoodType.micro)
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(GridironPalette.turf, in: Capsule())
+                                .background(HardwoodPalette.court, in: Capsule())
                         }
                     }
                     if isMostPopular {
                         Text("Best value")
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
                     }
                 }
 
@@ -595,35 +587,35 @@ private struct PaywallPlanCard: View {
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(package.priceLabel)
-                        .font(GridironType.cardTitle)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.cardTitle)
+                        .foregroundStyle(HardwoodPalette.ink)
                     if let perMonthLabel {
                         HStack(spacing: 5) {
                             if let monthlyAnchorLabel, savingsPercent != nil {
                                 Text(monthlyAnchorLabel)
-                                    .font(GridironType.micro)
-                                    .foregroundStyle(GridironPalette.inkTertiary)
-                                    .strikethrough(true, color: GridironPalette.inkTertiary)
+                                    .font(HardwoodType.micro)
+                                    .foregroundStyle(HardwoodPalette.inkTertiary)
+                                    .strikethrough(true, color: HardwoodPalette.inkTertiary)
                             }
                             Text("\(perMonthLabel)/mo")
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                         }
                     }
                     if showsTrialBadge, let trial = package.introOfferLabel {
                         Text(trial.capitalized)
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
                     }
                 }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(HardwoodPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
             .overlay {
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(isSelected ? GridironPalette.turf : GridironPalette.hairline, lineWidth: isSelected ? 2 : 0.5)
+                RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                    .stroke(isSelected ? HardwoodPalette.court : HardwoodPalette.hairline, lineWidth: isSelected ? 2 : 0.5)
             }
         }
         .buttonStyle(.plain)

@@ -9,8 +9,8 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         // Stats board selection persists on the user's device. This suite
-        // exercises the main player leaderboard, so do not inherit Contract
-        // Value or Best & Worst from an earlier simulator run.
+        // exercises the main player leaderboard, so do not inherit Best & Worst
+        // from an earlier simulator run.
         app.launchArguments += ["-stats.board", "advanced"]
         app.launchArguments += ["-stats.qualifier", "All Players"]
         app.launchArguments += ["-ResetUITestState"]
@@ -32,13 +32,13 @@ final class StatScoutComprehensiveUITests: XCTestCase {
     // with `guard ... else { return }` - made whole tests pass while never
     // exercising anything:
     //
-    //  * `app.searchFields["Search players or teams"]` - the football board has
+    //  * `app.searchFields["Search players or teams"]` - the board has
     //    no persistent search field. Search is a chip button by that label which
     //    reveals a plain TextField.
     //  * searching "Judge" and tapping "Aaron Judge" - a baseball player.
     //    What these tests actually need is *any* player profile, so they now open
     //    the first row of the live leaderboard.
-    //  * `app.staticTexts["RANK"]` - a section title the football redesign
+    //  * `app.staticTexts["RANK"]` - a section title the redesign
     //    removed. The table header "RANK" is the stable anchor.
 
     /// Generous by design: a debug build decodes the 33k-row bundled snapshot
@@ -123,7 +123,7 @@ final class StatScoutComprehensiveUITests: XCTestCase {
 
             // Both the Pro comparison and the free preview lead with season totals.
             XCTAssertTrue(
-                app.staticTexts["SEASON TOTALS"].waitForExistence(timeout: 15),
+                app.staticTexts["STANDARD STATS"].waitForExistence(timeout: 15),
                 "Year Compare should show season totals"
             )
         }
@@ -199,7 +199,7 @@ final class StatScoutComprehensiveUITests: XCTestCase {
 
         // The comparison names two seasons; the free preview shows the same table.
         XCTAssertTrue(
-            app.staticTexts["SEASON TOTALS"].waitForExistence(timeout: 15),
+            app.staticTexts["STANDARD STATS"].waitForExistence(timeout: 15),
             "Year Compare should load its season totals"
         )
     }
@@ -219,7 +219,7 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         // Verify comparison grid shows metrics
         app.swipeUp()
         XCTAssertTrue(
-            app.staticTexts["SEASON TOTALS"].waitForExistence(timeout: 15),
+            app.staticTexts["STANDARD STATS"].waitForExistence(timeout: 15),
             "Comparison grid should show"
         )
     }
@@ -236,7 +236,7 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         yearCompareTab.tap()
 
         // Test category tabs within Year Compare
-        let categories = ["QB", "RB", "WR", "TE", "DEF"]
+        let categories = ["Scoring", "Playmaking", "Rebounding", "Defense"]
         for category in categories {
             let tab = app.buttons[category].firstMatch
             if tab.waitForExistence(timeout: 2) {
@@ -269,7 +269,7 @@ final class StatScoutComprehensiveUITests: XCTestCase {
             XCTAssertTrue(noMetricsDescription.exists, "Should show explanation text")
         } else {
             // If no message, then comparison grid should be showing
-            XCTAssertTrue(app.staticTexts["SEASON TOTALS"].waitForExistence(timeout: 15),
+            XCTAssertTrue(app.staticTexts["STANDARD STATS"].waitForExistence(timeout: 15),
                           "Should show either no-metrics message or comparison grid")
         }
     }
@@ -313,9 +313,9 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         }
         metricCell.tap()
 
-        // Verify season indicator is displayed (e.g., "2026")
-        let currentYear = Calendar.current.component(.year, from: Date())
-        let seasonText = app.staticTexts["\(currentYear)"]
+        // Verify season indicator is displayed (e.g., "2025-26")
+        let currentYear = "2025-26"
+        let seasonText = app.staticTexts[currentYear]
         // Season indicator should exist as a static text in the header
         let headerElements = app.staticTexts.allElementsBoundByIndex
         let hasSeasonIndicator = headerElements.contains { element in
@@ -326,7 +326,7 @@ final class StatScoutComprehensiveUITests: XCTestCase {
 
     func testMetricLeadersViewCategoryGrouping() throws {
         // Test MetricLeadersView with different categories
-        let categories = ["QB", "RB", "WR", "TE", "DEF"]
+        let categories = ["Scoring", "Shooting", "Playmaking", "Rebounding", "Defense", "Impact"]
 
         for category in categories {
             // `firstMatch`: every mounted tab carries its own position
@@ -385,11 +385,11 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         // The position selector labels itself for VoiceOver.
         XCTAssertTrue(
             app.otherElements["Position"].firstMatch.exists
-                || app.buttons["QB"].firstMatch.exists,
+                || app.buttons["G"].firstMatch.exists,
             "Position selector should be exposed to VoiceOver"
         )
 
-        let categories = ["QB", "RB", "WR", "TE", "DEF"]
+        let categories = ["Scoring", "Playmaking", "Rebounding", "Defense"]
         for category in categories {
             let tab = app.buttons[category].firstMatch
             if tab.exists {
@@ -505,12 +505,12 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         }
         teamsTab.tap()
 
-        // Search is part of Clubs. Standings and Power are separate saved views.
-        let clubsButton = app.buttons["Clubs"]
-        guard clubsButton.waitForExistence(timeout: 5) else {
-            return XCTFail("Teams Clubs view should exist")
+        // Search is part of Teams. Standings and Power are separate saved views.
+        let teamsButton = app.buttons["Teams"]
+        guard teamsButton.waitForExistence(timeout: 5) else {
+            return XCTFail("Teams view should exist")
         }
-        clubsButton.tap()
+        teamsButton.tap()
 
         // The Teams grid owns a SearchField (a TextField in the a11y tree, not
         // a UISearchBar).

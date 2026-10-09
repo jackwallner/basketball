@@ -6,35 +6,24 @@ import Observation
 final class DashboardViewModel {
     private let provider: StatcastProviding
     private let cache: PlayerCaching?
+    /// Where the resolved live season is remembered between launches.
+    private let defaults: UserDefaults
 
     var players: [Player] = []
     var playerHistories: [Int: [Player]] = [:]
     var searchText = ""
-    var selectedConference: NFLConference = .all
-    var selectedPosition: PlayerPositionGroup = .qb {
+    var selectedConference: NBAConference = .all
+    var selectedPosition: PlayerPositionGroup = .all {
         didSet {
             guard oldValue != selectedPosition else { return }
             userSortMetric = nil
             applyDefaultSortDirection()
         }
     }
-    // Compatibility bridge for callers that still speak in wire-format categories.
-    var selectedCategory: MetricCategory? {
-        get { selectedPosition.primaryCategory }
-        set {
-            switch newValue {
-            case .passing: selectedPosition = .qb
-            case .rushing: selectedPosition = .rb
-            case .receiving: selectedPosition = .wr
-            case .defense: selectedPosition = .defense
-            case nil: break
-            }
-        }
-    }
 
     private var userSortMetric: String?
     var sortDescending = true
-    var selectedSeason: Int = StatScoutSeason.free
+    var selectedSeason: Int
     var selectedPhase: SeasonPhase = .regular
 
     var sortLabel: String { currentSortMetric ?? "Top Metric" }
@@ -48,7 +37,7 @@ final class DashboardViewModel {
 
     var availableSortMetrics: [String] {
         var seen = Set<String>()
-        return FootballMetricRegistry.sorted(eligibleMetrics)
+        return BasketballMetricRegistry.sorted(eligibleMetrics)
             .filter { seen.insert($0.label).inserted }
             .map(\.label)
     }
@@ -57,7 +46,7 @@ final class DashboardViewModel {
         availableSortMetrics.filter { label in
             eligibleMetrics.contains { metric in
                 metric.label == label
-                    && FootballMetricRegistry.definition(
+                    && BasketballMetricRegistry.definition(
                         for: metric.label,
                         category: metric.category
                     )?.kind == .advanced
@@ -86,15 +75,51 @@ final class DashboardViewModel {
             sortDescending = true
             return
         }
-        sortDescending = FootballMetricRegistry.definition(for: label, category: metric.category)?.higherIsBetter ?? true
+        sortDescending = BasketballMetricRegistry.definition(for: label, category: metric.category)?.higherIsBetter ?? true
     }
     // Mirrors StoreService.isPro. Set by the view layer so season gating and
     // selectedSeason clamping stay consistent without the VM depending on the store.
     var isPro: Bool = false
 
-    /// The season a free user gets: the live season, whatever has loaded.
-    /// See `StatScoutSeason.free`.
-    var freeSeason: Int { StatScoutSeason.free }
+    /// The newest season with published data, resolved from the publisher's
+    /// status (`StatScoutSeason.resolveLive`). Between October 1 and opening
+    /// night this is still the finished season; when the status flips to the new
+    /// one every screen follows, with no release.
+    private(set) var live: StatScoutSeason.Live
+
+    /// The season a free user gets: the live season, whatever has loaded. The
+    /// moment a season is live it is the free, default year, and every season
+    /// before it is StatScout+.
+    var freeSeason: Int { live.season }
+
+    /// A scheduled season with no games played yet (the 2026-27 slate in
+    /// October 2026), or nil once it has data or when nothing is pending.
+    var upcomingSeason: Int? { live.upcoming }
+
+    /// Whether the live season is over and the next has not started: the cue
+    /// for "2025-26 · final" captions and the "starts Oct 20" line.
+    var isSeasonPending: Bool { live.isPending }
+
+    /// "2025-26 · final" while the next season is pending, "2025-26" otherwise.
+    func liveSeasonCaption() -> String {
+        isSeasonPending
+            ? "\(SeasonLabel.text(freeSeason)) · final"
+            : SeasonLabel.text(freeSeason)
+    }
+
+    /// When the pending season's first game is played, "Oct 20", or nil.
+    var upcomingSeasonStart: String? {
+        guard isSeasonPending,
+              let first = upcomingGames.filter({ $0.seasonPhase == .regular }).map(\.gameDate).min()
+        else { return nil }
+        return first.formatted(DataCoverage.gameDayStyle)
+    }
+
+    /// "2026-27 starts Oct 20", the line that sits beside a final season.
+    var upcomingSeasonStartsText: String? {
+        guard let upcomingSeason, let start = upcomingSeasonStart else { return nil }
+        return "\(SeasonLabel.text(upcomingSeason)) starts \(start)"
+    }
 
     func isSeasonLocked(_ season: Int) -> Bool {
         !isPro && season != freeSeason
@@ -105,19 +130,21 @@ final class DashboardViewModel {
 
     /// The seasons Recent form is offered for: the live one and the one before it.
     ///
-    /// Recent is a rolling last-N-games window read off `player_recent_form`,
-    /// and that rollup is not kept for all time: a "last 3 games" board for 2017
-    /// is a historical curiosity nobody opened, and the game logs behind it were
-    /// the single biggest thing in the database, so everything older was purged.
-    /// Last season survives the cut deliberately. A season does not stop being
-    /// worth a form board the moment the next one kicks off, and pinning this to
-    /// the live season alone left a hole every September: Trends would go blank
-    /// for the year you were actually still reading about.
+    /// Recent is a rolling last-N-weeks window read off `player_recent_form`,
+    /// and that rollup is not kept for all time: a "last 2 weeks" board for
+    /// 2011-12 is a historical curiosity nobody opened, and the game logs behind
+    /// it were the single biggest thing in the database, so everything older was
+    /// purged. Last season survives the cut deliberately. A season does not stop
+    /// being worth a form board the moment the next one tips off, and pinning
+    /// this to the live season alone left a hole every October: Trends would go
+    /// blank for the year you were actually still reading about.
     ///
     /// Newest first, so a menu built from this needs no further sorting. Floored
-    /// at `earliestRecentForm`, the oldest season the rollup table still holds -
-    /// without that, "the one before" resolves to a year that was purged and the
-    /// menu offers a board that can only come back empty.
+    /// at `earliestRecentForm`, the oldest season the rollup table has ever
+    /// held - without that, while 2025-26 is live "the one before" is a year with
+    /// no rows and the menu offers a board that can only come back empty. The
+    /// live season here is the one with published rows, so a pending 2026-27 is
+    /// never offered before it has any.
     var recentFormSeasons: [Int] {
         [recentFormSeason, recentFormSeason - 1]
             .filter { $0 >= StatScoutSeason.earliestRecentForm }
@@ -134,7 +161,7 @@ final class DashboardViewModel {
     /// season, because decoding thirty-three thousand historical rows is the
     /// slowest thing the app does and most sessions never leave the current
     /// year. Nothing was triggering that load from the nav bar, though, so
-    /// picking any past season (and All since 2000 most visibly, since it is the
+    /// picking any past season (and All Time most visibly, since it is the
     /// first row of the menu) dropped you on an empty board with no spinner and
     /// no explanation. Whether it recovered came down to whether you had
     /// happened to open the Compare tab earlier in the session, which is the
@@ -288,12 +315,11 @@ final class DashboardViewModel {
         return "Updated \(formatter.string(from: lastUpdated))"
     }
 
-    /// Fetch per-game logs for a single player. Powers the Recent Form card.
-    /// The VM is a passthrough so the card stays UI-only and we do not
-    /// have to thread the provider through every PlayerProfileView caller.
+    /// Fetch per-game logs for a single player. Powers the Last game and Game log
+    /// cards on the profile.
     ///
     /// The phase is a parameter rather than read off `selectedPhase` because a
-    /// player page carries its own: opening a 2025 playoff profile from a
+    /// player page carries its own: opening a 2025-26 playoff profile from a
     /// regular-season board has to fetch that player's playoff games, not the
     /// tab's.
     func fetchGameLogs(
@@ -308,26 +334,18 @@ final class DashboardViewModel {
         )
     }
 
-    /// Team-scoped game logs since `sinceDate`. The TeamRankingsCard caps at 30
-    /// days so we don't pull the whole season for an aggregate we only ever
-    /// slice into 7/15/30 day windows.
-    func fetchTeamGameLogs(
-        team: String,
-        season: Int,
-        seasonPhase: SeasonPhase,
-        sinceDate: Date
-    ) async throws -> [PlayerGameLog] {
-        try await provider.fetchTeamGameLogs(
-            team: team,
-            season: season,
-            seasonPhase: seasonPhase,
-            sinceDate: sinceDate
-        )
-    }
-
-    init(provider: StatcastProviding, cache: PlayerCaching? = nil) {
+    init(
+        provider: StatcastProviding,
+        cache: PlayerCaching? = nil,
+        defaults: UserDefaults = .standard,
+        calendarSeason: Int = StatScoutSeason.calendarSeason()
+    ) {
         self.provider = provider
         self.cache = cache
+        self.defaults = defaults
+        let initial = StatScoutSeason.initialLive(defaults: defaults, calendarSeason: calendarSeason)
+        self.live = initial
+        self.selectedSeason = initial.season
         if cache != nil, let cachedFreshness = DataFreshnessCache.load() {
             self.dataFreshness = cachedFreshness.replacing(isCached: .some(true))
             self.dataCoverage = cachedFreshness.coverage
@@ -347,11 +365,11 @@ final class DashboardViewModel {
     // part of StatScout+, rather than seeing a misleading single-year picker.
     var availableSeasons: [Int] {
         // Runs through the live season, which is always offered (and is the
-        // default) from the day the calendar names it.
+        // default) from the day it has published data.
         var seasons = Set(StatScoutSeason.earliest...max(freeSeason, StatScoutSeason.earliest))
         seasons.formUnion(playerHistories.values.flatMap { $0 }.compactMap(\.season))
         // The career rollup sits under season 0, so a plain descending sort would
-        // bury "All Time" underneath 2000. It belongs at the top of the menu, as
+        // bury "All Time" underneath 2002-03. It belongs at the top of the menu, as
         // the widest possible frame rather than the narrowest.
         let years = seasons.subtracting([StatScoutSeason.allTime]).sorted(by: >)
         return [StatScoutSeason.allTime] + years
@@ -361,20 +379,20 @@ final class DashboardViewModel {
     ///
     /// Two screens are excluded, for different reasons.
     ///
-    /// **Trends** ranks the last 3/5/8 *weeks* against the span before them,
+    /// **Trends** ranks the last 1/2/4 *weeks* against the span before them,
     /// which is a question about one season in progress. There is no such thing
-    /// as the last five weeks of all time, and the rolling-window table has no
+    /// as the last four weeks of all time, and the rolling-window table has no
     /// rows under the sentinel, so offering it there would only ever produce an
     /// empty board.
     ///
     /// **Teams** is the subtler one. A career row carries whichever team the
     /// player *last* played for, because that is what a career aggregate can
-    /// know - the rollup has no per-franchise split. So "Kansas City, All Time"
+    /// know - the rollup has no per-franchise split. So "Boston, All Time"
     /// would list players who happened to finish there, crediting them with
-    /// production earned elsewhere, and would file Joe Montana under the Chiefs
-    /// rather than the 49ers. That is not franchise all-time leaders; it just
-    /// looks enough like it to be believed. Until the pipeline stores a
-    /// per-team career split, not offering it is the honest answer.
+    /// production earned elsewhere, and would file LeBron James's whole career
+    /// under whichever team he played for last. That is not franchise all-time
+    /// leaders; it just looks enough like it to be believed. Until the pipeline
+    /// stores a per-team career split, not offering it is the honest answer.
     var seasonsExcludingAllTime: [Int] {
         availableSeasons.filter { !StatScoutSeason.isAllTime($0) }
     }
@@ -394,24 +412,39 @@ final class DashboardViewModel {
 
     /// The live season's schedule and posted finals, from `public.games`.
     private(set) var games: [Game] = []
-    /// Games whose player stats are published, so a final can say whether its
-    /// box score is in yet.
+    /// The next season's schedule while it is pending: scheduled games with no
+    /// scores, loaded beside the live season so the Games tab has a front door
+    /// in October.
+    private(set) var upcomingGames: [Game] = []
+    /// Games whose advanced breakdown is published, so a final can say whether
+    /// its box score is in yet.
     private(set) var gameIdsWithStats: Set<String> = []
     private(set) var isGamesLoading = false
     private(set) var gamesError: String?
     private(set) var gamesLoadedAt: Date?
     private var gamesTask: Task<Void, Never>?
 
-    var currentGameWeek: GameWeek? { GameWeek.current(in: games) }
+    /// What the Games tab strip is drawn from: the upcoming slate while the next
+    /// season is pending, the live season otherwise.
+    var slateGames: [Game] { isSeasonPending && !upcomingGames.isEmpty ? upcomingGames : games }
+
+    var currentGameDay: GameDay? { GameDay.current(in: slateGames) }
+
+    /// The last day of games the live season played, for the "how it ended" card
+    /// under the upcoming slate. Empty unless the next season is pending.
+    var lastPlayedGames: [Game] {
+        guard isSeasonPending else { return [] }
+        let finals = games.filter(\.isFinal)
+        guard let day = finals.map(\.gameDate).max() else { return [] }
+        return Game.slateOrder(finals.filter { $0.gameDate == day })
+    }
 
     // MARK: - Enrichment
 
-    /// Bio, contract, snaps and injury for the live season, keyed by player.
-    /// Optional context: empty until `player_profiles` answers, and every
-    /// screen that reads it leaves the line out rather than waiting.
-    private(set) var profiles: [Int: PlayerProfile] = [:] {
-        didSet { contractValueCache = nil }
-    }
+    /// Bio and draft history for the live season, keyed by player. Optional
+    /// context: empty until `player_profiles` answers, and every screen that
+    /// reads it leaves the line out rather than waiting.
+    private(set) var profiles: [Int: PlayerProfile] = [:]
     /// Power ratings for the live season, keyed by normalized team.
     private(set) var teamRatings: [String: TeamRating] = [:]
     /// Projected margins for unplayed games, keyed by game id.
@@ -436,72 +469,9 @@ final class DashboardViewModel {
         profiles = Dictionary(loaded.map { ($0.playerId, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
-    /// Division and league standings from posted finals, every club present.
+    /// League standings from posted finals, every team present.
     var standings: [String: StandingsRow] {
-        StandingsRow.build(from: games, teams: nflTeamAbbreviations)
-    }
-
-    /// The first regular-season week a club has not finished yet, which is the
-    /// week its injury report is about.
-    func upcomingWeek(forTeam team: String) -> Int? {
-        games.filter { $0.seasonPhase == .regular && !$0.isFinal && $0.involves(team) }
-            .map(\.week)
-            .min()
-    }
-
-    /// The player's game status for his club's next game, or nil when he is
-    /// not on the report or the report is about a game already played.
-    func injuryReport(for player: Player) -> InjuryReport? {
-        guard player.season == freeSeason, player.seasonPhase == .regular else { return nil }
-        return InjuryReport.current(
-            from: profile(for: player),
-            upcomingWeek: upcomingWeek(forTeam: player.team)
-        )
-    }
-
-    // MARK: - Contract value
-
-    @ObservationIgnored private var contractValueCache: (key: String, values: [Int: ContractValue])?
-
-    /// Production against pay for the selected season's offensive players.
-    /// Only the live season has contracts: a deal signed in 2026 says nothing
-    /// about what a player cost in 2019.
-    var contractValues: [Int: ContractValue] {
-        guard selectedSeason == freeSeason, selectedPhase == .regular, !profiles.isEmpty else { return [:] }
-        let key = "\(selectedSeason)-\(displayedDataRevision ?? "none")-\(seasonPlayers.count)"
-        if let cache = contractValueCache, cache.key == key { return cache.values }
-        let values = ContractValue.compute(
-            players: seasonPlayers,
-            profiles: profiles,
-            isQualified: { [unowned self] player in
-                self.isPlayerQualified(player, in: player.positionGroup.primaryCategory)
-            }
-        )
-        contractValueCache = (key, values)
-        return values
-    }
-
-    func contractValue(for player: Player) -> ContractValue? {
-        guard player.season == freeSeason, player.seasonPhase == .regular else { return nil }
-        if player.season == selectedSeason, selectedPhase == .regular {
-            return contractValues[player.playerId]
-        }
-        return nil
-    }
-
-    /// Players on the Value board: the selected position, qualified, with a
-    /// contract, best value first (or worst, with the direction flipped).
-    func contractValueBoard(descending: Bool) -> [(player: Player, value: ContractValue)] {
-        let values = contractValues
-        return seasonPlayers
-            .filter { $0.positionGroup == selectedPosition && matchesSelectedConference($0) }
-            .compactMap { player in values[player.playerId].map { (player, $0) } }
-            .sorted {
-                if $0.value.score != $1.value.score {
-                    return descending ? $0.value.score > $1.value.score : $0.value.score < $1.value.score
-                }
-                return $0.player.name < $1.player.name
-            }
+        StandingsRow.build(from: games, teams: nbaTeamAbbreviations)
     }
 
     /// Loads the schedule, at most once a minute unless forced. Failures keep
@@ -524,8 +494,9 @@ final class DashboardViewModel {
 
     private func performGamesLoad() async {
         defer { gamesTask = nil }
-        isGamesLoading = games.isEmpty
+        isGamesLoading = games.isEmpty && upcomingGames.isEmpty
         let season = freeSeason
+        let upcoming = upcomingSeason
         do {
             async let schedule = provider.fetchGames(season: season)
             async let withStats = provider.fetchGameIdsWithStats(season: season)
@@ -533,13 +504,19 @@ final class DashboardViewModel {
             if !loadedGames.isEmpty || games.isEmpty {
                 games = loadedGames
             }
+            if let upcoming {
+                upcomingGames = (try? await provider.fetchGames(season: upcoming)) ?? upcomingGames
+            } else {
+                upcomingGames = []
+            }
             gameIdsWithStats = loadedIds
             gamesError = nil
             gamesLoadedAt = Date()
             // Ratings and projections ride along with the schedule they
-            // describe. Optional: a failure keeps whatever was there.
+            // describe. Optional: a failure keeps whatever was there. The
+            // projections belong to the season whose games are still to come.
             async let ratings = try? provider.fetchTeamRatings(season: season)
-            async let projected = try? provider.fetchGameProjections(season: season)
+            async let projected = try? provider.fetchGameProjections(season: upcoming ?? season)
             if let loadedRatings = await ratings, !loadedRatings.isEmpty {
                 teamRatings = Dictionary(
                     loadedRatings.map { (normalizedTeamAbbreviation($0.team), $0) },
@@ -561,35 +538,38 @@ final class DashboardViewModel {
     }
 
     func game(id: String) -> Game? {
-        games.first { $0.id == id }
+        games.first { $0.id == id } ?? upcomingGames.first { $0.id == id }
     }
 
-    /// A team's game in the week the Games tab calls current, or nil on a bye.
+    /// A team's game on the day the Games tab calls current, or nil on an off
+    /// night.
     func currentGame(forTeam team: String) -> Game? {
-        guard let week = currentGameWeek else { return nil }
-        return week.games(from: games).first { $0.involves(team) }
+        guard let day = currentGameDay else { return nil }
+        return day.games(from: slateGames).first { $0.involves(team) }
     }
 
-    /// Regular-season record from posted finals, "2-1" or "2-1-1". When
-    /// `through` is given, only games kicked off up to and including it count.
+    /// Regular-season record from posted finals, "52-30". When `through` is
+    /// given, only games tipped off up to and including it count. A game from
+    /// another season has no record in the live one.
     func record(forTeam team: String, through game: Game? = nil) -> String? {
-        let cutoff = game?.kickoff ?? .distantFuture
+        if let game, game.season != freeSeason { return nil }
+        let cutoff = game?.tipoff ?? .distantFuture
         let finals = games.filter {
             $0.seasonPhase == .regular && $0.isFinal && $0.involves(team)
-                && ($0.kickoff ?? $0.gameDate) <= cutoff
+                && ($0.tipoff ?? $0.gameDate) <= cutoff
         }
         guard !finals.isEmpty else { return nil }
         let results = finals.compactMap { $0.result(for: team) }
         let wins = results.filter { $0 == "W" }.count
         let losses = results.filter { $0 == "L" }.count
-        let ties = results.filter { $0 == "T" }.count
-        return ties > 0 ? "\(wins)-\(losses)-\(ties)" : "\(wins)-\(losses)"
+        return "\(wins)-\(losses)"
     }
 
-    /// Every game on a club's schedule this season, in kickoff order.
+    /// Every game on a team's schedule, in tip-off order: the live season, then
+    /// the upcoming one while it is pending.
     func schedule(forTeam team: String) -> [Game] {
-        games.filter { $0.involves(team) }
-            .sorted { ($0.kickoff ?? $0.gameDate) < ($1.kickoff ?? $1.gameDate) }
+        (games + upcomingGames).filter { $0.involves(team) }
+            .sorted { ($0.tipoff ?? $0.gameDate) < ($1.tipoff ?? $1.gameDate) }
     }
 
     func hasStats(_ game: Game) -> Bool {
@@ -613,7 +593,7 @@ final class DashboardViewModel {
     // MARK: - Recent form
 
     /// Rolling windows keyed by length, cached per season so flipping between
-    /// 3 / 5 / 8 doesn't refetch what's already in hand.
+    /// 1 / 2 / 4 weeks doesn't refetch what's already in hand.
     var recentFormByWindow: [Int: [Int: RecentForm]] = [:]
     var recentFormLoadingWindows: Set<Int> = []
     var recentFormError: String?
@@ -622,10 +602,10 @@ final class DashboardViewModel {
 
     /// The window the Trends board and the trend arrows read from.
     ///
-    /// Three weeks, so movement exists from Week 4. Five left the paid board
-    /// with nothing to rank through the first five weeks of every season,
-    /// which is when the installs happen.
-    var recentWindow: TrendWindow = .three
+    /// Two weeks (about seven games), so movement exists from the fifth week of
+    /// the season. Four left the paid board with nothing to rank through the
+    /// first month, which is when the installs happen.
+    var recentWindow: TrendWindow = .twoWeeks
 
     /// True while a board is showing recent form rather than season totals.
     /// Pro-gated at the call site, free users get a blurred teaser.
@@ -640,20 +620,6 @@ final class DashboardViewModel {
         let targetSeason = season ?? selectedSeason
         let targetPhase = phase ?? selectedPhase
         return recentFormByWindow[(window ?? recentWindow).rawValue]?[playerId]
-            .flatMap {
-                $0.season == targetSeason && $0.seasonPhase == targetPhase ? $0 : nil
-            }
-    }
-
-    func recentForm(
-        for playerId: Int,
-        window: RecentWindow,
-        season: Int? = nil,
-        phase: SeasonPhase? = nil
-    ) -> RecentForm? {
-        let targetSeason = season ?? selectedSeason
-        let targetPhase = phase ?? selectedPhase
-        return recentFormByWindow[window.rawValue]?[playerId]
             .flatMap {
                 $0.season == targetSeason && $0.seasonPhase == targetPhase ? $0 : nil
             }
@@ -675,22 +641,10 @@ final class DashboardViewModel {
             .max()
     }
 
-    /// The latest week any loaded row reaches, so a board can say "through
-    /// Week 18" without every row carrying its own caption.
-    func recentFormThroughWeek(
-        window: TrendWindow,
-        season: Int,
-        phase: SeasonPhase
-    ) -> Int? {
-        recentFormRowsByWindow[window.rawValue]?
-            .filter { $0.season == season && $0.seasonPhase == phase }
-            .compactMap(\.endWeek)
-            .max()
-    }
-
-    /// Every row for a window, keyed by side of the ball. The Trends board
-    /// ranks within one position group, so it needs the rows a per-player
-    /// dictionary throws away: a two-way player has one row per player_type.
+    /// Every row for a window in one position cohort. The Trends board ranks
+    /// within one cohort, so it needs the rows a per-player dictionary throws
+    /// away: a player traded between cohorts' worth of minutes can have a row
+    /// per `player_type`.
     func recentFormRows(
         window: TrendWindow,
         playerType: String,
@@ -703,6 +657,35 @@ final class DashboardViewModel {
                     && $0.season == season
                     && $0.seasonPhase == phase
             }
+    }
+
+    /// The whole league's rows for a window, loading them first if they are not
+    /// in hand. The team page's Recent mode needs every team's rows, not just
+    /// its own: a team's recent form is ranked against the other teams'.
+    func leagueRecentForm(
+        window: TrendWindow,
+        season: Int,
+        phase: SeasonPhase
+    ) async -> [RecentForm] {
+        await loadRecentFormIfNeeded(window: window, season: season, phase: phase)
+        return (recentFormRowsByWindow[window.rawValue] ?? []).filter {
+            $0.season == season && $0.seasonPhase == phase
+        }
+    }
+
+    /// One player's rolling windows (1, 2 and 4 weeks) for the profile's Recent
+    /// card. A passthrough for the same reason `fetchGameLogs` is: the card stays
+    /// UI-only.
+    func fetchPlayerRecentForm(
+        playerId: Int,
+        season: Int,
+        seasonPhase: SeasonPhase
+    ) async throws -> [RecentForm] {
+        try await provider.fetchPlayerRecentForm(
+            playerId: playerId,
+            season: season,
+            seasonPhase: seasonPhase
+        )
     }
 
     private var recentFormRowsByWindow: [Int: [RecentForm]] = [:]
@@ -795,19 +778,6 @@ final class DashboardViewModel {
         await task.value
     }
 
-    func loadRecentFormIfNeeded(
-        window: RecentWindow,
-        season: Int? = nil,
-        phase: SeasonPhase? = nil
-    ) async {
-        guard let trendWindow = TrendWindow(rawValue: window.rawValue) else { return }
-        await loadRecentFormIfNeeded(
-            window: trendWindow,
-            season: season,
-            phase: phase
-        )
-    }
-
     /// Unique players for an arbitrary season, not just the selected one.
     /// Drill-down leaderboards opened from a player profile need the season
     /// that profile is showing, which can differ from `selectedSeason`.
@@ -820,12 +790,12 @@ final class DashboardViewModel {
         return all.filter { seen.insert($0.playerId).inserted }
     }
 
-    /// Clubs whose name or abbreviation matches the current search.
+    /// Teams whose name or abbreviation matches the current search.
     ///
     /// Searching used to only ever narrow the list of players. Someone typing
-    /// "chiefs" is usually after Kansas City, so the club itself is now a
-    /// result: one tap to the team page, with the roster still filtered
-    /// underneath if that's what they wanted.
+    /// "knicks" is usually after New York, so the team itself is now a result:
+    /// one tap to the team page, with the roster still filtered underneath if
+    /// that's what they wanted.
     var searchedTeams: [String] {
         let query = searchText.trimmingCharacters(in: .whitespaces)
         guard !query.isEmpty else { return [] }
@@ -842,9 +812,9 @@ final class DashboardViewModel {
 
     private var eligibleMetrics: [Metric] {
         seasonPlayers
-            .filter { $0.positionGroup == selectedPosition }
+            .filter { selectedPosition.includes($0) }
             .flatMap(\.metrics)
-            .filter { FootballMetricRegistry.isSupported($0, by: selectedPosition) }
+            .filter { BasketballMetricRegistry.isSupported($0, by: selectedPosition) }
     }
 
     var filteredPlayers: [Player] {
@@ -855,10 +825,10 @@ final class DashboardViewModel {
                 || player.name.localizedCaseInsensitiveContains(searchText)
                 || player.team.localizedCaseInsensitiveContains(searchText)
                 || teamFullName(player.team).localizedCaseInsensitiveContains(searchText)
-            let matchesPosition = player.positionGroup == selectedPosition
+            let matchesPosition = selectedPosition.includes(player)
             let matchesConference = matchesSelectedConference(player)
             let matchingMetrics = player.metrics.filter {
-                FootballMetricRegistry.isSupported($0, by: selectedPosition)
+                BasketballMetricRegistry.isSupported($0, by: selectedPosition)
             }
             let qualifies = isQualifiedForBoard(player, metrics: matchingMetrics, sortLabel: gateLabel)
             return matchesSearch
@@ -909,33 +879,16 @@ final class DashboardViewModel {
         }
     }
 
-    /// Whether a player clears the bar, whatever the filter says. Defenders
-    /// with snap counts qualify on snap share; everyone else on the feed's own
-    /// prorated flag.
+    /// Whether a player clears the bar, whatever the filter says: the feed's own
+    /// prorated minutes flag.
     func isPlayerQualified(_ player: Player, in category: MetricCategory?) -> Bool {
-        if let snapQualified = defensiveSnapQualification(player) { return snapQualified }
-        return Self.hasQualifyingMetric(player, in: category)
+        Self.hasQualifyingMetric(player, in: category)
     }
 
-    /// Per metric: a receiver over the target bar for Catch% is not thereby
-    /// qualified for a Separation board he has no Next Gen sample on.
+    /// Per metric: a shooter over the minutes bar is not thereby qualified for a
+    /// Corner 3% board he has not taken 30 corner threes for.
     func isQualified(_ player: Player, metric: Metric) -> Bool {
-        if let snapQualified = defensiveSnapQualification(player) { return snapQualified }
-        return metric.qualified != false
-    }
-
-    /// A defender has to play a quarter of his club's defensive snaps.
-    ///
-    /// The feed's defensive bar is games played, which admits every
-    /// special-teamer who stepped on the field. Nil when there is no snap line
-    /// (a past season, or before the first snap-count publish), which falls
-    /// back to the feed's flag.
-    static let defensiveSnapShareMinimum = 0.25
-
-    private func defensiveSnapQualification(_ player: Player) -> Bool? {
-        guard player.isDefensivePlayer,
-              let share = profile(for: player)?.defenseSnapShare else { return nil }
-        return share >= Self.defensiveSnapShareMinimum
+        metric.qualified != false
     }
 
     /// The board's gate: qualified for the metric it is ranked by, or for any
@@ -972,7 +925,8 @@ final class DashboardViewModel {
             by: Self.metricComparator(
                 label: label,
                 category: referenceMetric.category,
-                descending: sortDescending
+                descending: sortDescending,
+                acrossCohorts: selectedPosition == .all
             )
         )
         // Small samples go below the rest, in the same order, so the top of a
@@ -987,23 +941,23 @@ final class DashboardViewModel {
         return sorted.filter { !isSmall($0) } + sorted.filter(isSmall)
     }
 
-    /// Board subtitle volume: "16 att", "23 tgt", "142 snaps".
+    /// Board subtitle volume: "1,820 min".
     func volumeCaption(for player: Player, category: MetricCategory?) -> String? {
-        let category = category ?? player.primaryCategory
-        if category == .defense,
-           let snaps = profile(for: player)?.defenseSnaps, snaps > 0 {
-            return "\(snaps) snaps"
-        }
-        return player.volumeCaption(for: category)
+        player.volumeCaption(for: category ?? player.primaryCategory)
     }
 
     /// Rank by the backend's direction-correct percentile, then use the raw
     /// number only to break a tied percentile bucket. Percentile-only metrics
     /// remain rankable instead of being swept below every printable value.
+    ///
+    /// `acrossCohorts` is for the All board, which mixes guards, forwards and
+    /// centers: a percentile is only meaningful against the player's own
+    /// cohort, so there the raw number leads and the percentile breaks ties.
     static func metricComparator(
         label: String,
         category: MetricCategory,
-        descending: Bool
+        descending: Bool,
+        acrossCohorts: Bool = false
     ) -> (Player, Player) -> Bool {
         let percentileDescending = descending != lowerIsBetter(
             label: label,
@@ -1029,6 +983,12 @@ final class DashboardViewModel {
             }
 
             guard let firstMetric, let secondMetric else { return false }
+            if acrossCohorts,
+               let firstValue = rawNumeric(firstMetric.value),
+               let secondValue = rawNumeric(secondMetric.value),
+               firstValue != secondValue {
+                return descending ? firstValue > secondValue : firstValue < secondValue
+            }
             if firstMetric.percentile != secondMetric.percentile {
                 return percentileDescending
                     ? firstMetric.percentile > secondMetric.percentile
@@ -1055,7 +1015,7 @@ final class DashboardViewModel {
     }
 
     static func lowerIsBetter(label: String, category: MetricCategory) -> Bool {
-        guard let definition = FootballMetricRegistry.definition(for: label, category: category) else { return false }
+        guard let definition = BasketballMetricRegistry.definition(for: label, category: category) else { return false }
         return !definition.higherIsBetter
     }
 
@@ -1123,12 +1083,12 @@ final class DashboardViewModel {
         }
         return metricMap.compactMap { (key, data) -> MetricLeaderEntry? in
             let label = key.split(separator: "|").first.map(String.init) ?? key
-            // Rank Best/Worst by Gridiron percentile, NOT by parsing the value
+            // Rank Best/Worst by Hardwood percentile, NOT by parsing the value
             // string. Roughly half of xISO / xOBP / Hard-Hit% (and 100% of
             // Arm Strength / Squared-Up%) ship a valid percentile but a blank
             // value; rawNumeric("") collapsed them all to 0, every player tied,
             // and the sort returned the same player (e.g. Ohtani) for both
-            // ends with empty cells. Percentile is Gridiron's normalized
+            // ends with empty cells. Percentile is Hardwood's normalized
             // goodness - already direction-correct (it inverts for pitchers),
             // so highest = best, lowest = worst with no per-metric polarity
             // table needed.
@@ -1209,19 +1169,29 @@ final class DashboardViewModel {
         localLastCheckedAt = now
 
         do {
-            guard let remote = try await provider.fetchDataFreshness(season: freeSeason) else {
+            guard let remote = try await provider.fetchDataFreshness() else {
                 // The endpoint is optional while the backend rolls out. The
                 // player load remains the source of truth in that case.
                 return .unavailable
             }
 
+            // The season rollover rides on this one row: it names the season the
+            // published revision covers, which is the live season, however far
+            // ahead the calendar is.
+            applyLive(StatScoutSeason.resolveLive(from: remote, fallback: live.season))
+
+            // A pending next season is not a problem with the data on screen:
+            // the published revision is complete and final, so it reads as
+            // ready, and the new season shows up as a schedule instead.
+            let status: DataFreshnessStatus = remote.isSeasonPending ? .ready : remote.status
             dataFreshness = remote.replacing(
+                status: status == remote.status ? nil : .some(status),
                 checkedAt: .some(remote.checkedAt ?? now),
                 isCached: .some(false)
             )
             persistFreshness()
 
-            switch remote.status {
+            switch status {
             case .ready:
                 if let revision = remote.revision,
                    revision != displayedDataRevision {
@@ -1250,6 +1220,22 @@ final class DashboardViewModel {
             }
             return .failed
         }
+    }
+
+    /// Adopts a newly resolved live season. The selected season follows it when
+    /// the user was sitting on the old live one, so a rollover moves the app on
+    /// by itself; a user browsing history stays where they are.
+    private func applyLive(_ resolved: StatScoutSeason.Live) {
+        guard resolved != live else { return }
+        let old = live
+        live = resolved
+        StatScoutSeason.remember(resolved, defaults: defaults)
+        if selectedSeason == old.season {
+            selectedSeason = resolved.season
+        }
+        clampSelectedSeason()
+        // The recent-form windows and team caches describe the old season.
+        invalidateRecentFormCache()
     }
 
     private func performLoad() async {
@@ -1285,10 +1271,11 @@ final class DashboardViewModel {
         var playersToIngest: [Player] = []
 
         do {
-            let current = try await provider.fetchCurrentPlayers()
+            let liveSeason = live.season
+            let current = try await provider.fetchCurrentPlayers(season: liveSeason)
             let fallbackPlayers = cached.isEmpty ? playerHistories.values.flatMap { $0 } : cached
-            let hasCompleteFallback = PlayerSnapshotValidator.isCompleteCurrent(fallbackPlayers)
-            let passesCompleteness = PlayerSnapshotValidator.isCompleteCurrent(current)
+            let hasCompleteFallback = PlayerSnapshotValidator.isCompleteCurrent(fallbackPlayers, season: liveSeason)
+            let passesCompleteness = PlayerSnapshotValidator.isCompleteCurrent(current, season: liveSeason)
             acceptedCurrent = passesCompleteness || !hasCompleteFallback
                 ? current
                 : []
@@ -1379,7 +1366,7 @@ final class DashboardViewModel {
         }
         if loadedCurrentData {
             dataCoverage = dataFreshness?.coverage ?? candidateCoverage
-            try? cache?.savePlayers(acceptedCurrent)
+            try? cache?.savePlayers(acceptedCurrent, liveSeason: live.season)
             adoptLoadedRevision(
                 players: acceptedCurrent,
                 useServerRevision: canUseServerRevision(freshnessResult, endingResult)
@@ -1455,7 +1442,7 @@ final class DashboardViewModel {
         _ candidate: [Player],
         against fallback: [Player]
     ) -> Bool {
-        let currentSeason = StatScoutSeason.current
+        let currentSeason = live.season
         let fallbackCurrent = fallback.filter {
             $0.season == currentSeason && $0.seasonPhase == .regular
         }
@@ -1492,21 +1479,29 @@ final class DashboardViewModel {
             if let cache = cache as? TwoTierPlayerCache {
                 return cache.loadHistoricalPlayers()
             }
-            return ((try? cache?.loadPlayers()) ?? []).filter { ($0.season ?? 0) < StatScoutSeason.current }
+            return (try? cache?.loadPlayers()) ?? []
         }.value
 
         // The screenshot fixture and lightweight providers may intentionally
         // disable the disk cache. Fetch their historical tier directly rather
         // than leaving a Pro season menu with no data.
         if historical.isEmpty {
-            historical = (try? await provider.fetchHistoricalPlayers()) ?? []
+            historical = (try? await provider.fetchHistoricalPlayers(before: live.season)) ?? []
         }
 
         loadingMessage = "Preparing season history…"
         loadingProgress = 0.78
 
         if !historical.isEmpty {
-            ingestPlayers(mergePlayers(replacing: historical))
+            // The archive carries the live season too (2025-26 is both bundled
+            // and live until 2026-27 publishes). Server rows already loaded win:
+            // archive rows from the live season only fill in what is absent.
+            let loadedIDs = Set(playerHistories.values.flatMap { $0 }.map(\.id))
+            let liveSeason = live.season
+            let archive = historical.filter {
+                ($0.season ?? 0) < liveSeason || !loadedIDs.contains($0.id)
+            }
+            ingestPlayers(mergePlayers(replacing: archive))
             hasLoadedHistorical = true
         }
 

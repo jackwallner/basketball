@@ -1,7 +1,7 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Hardwood_StatScout
 
-/// Regressions for the three context bugs found in the 1.2.1 audit: an
+/// Regressions for three context bugs: an
 /// unprovenanced current-season cache surviving an upgrade, a team page whose
 /// roster ignored its own season picker, and drill-down routes that dropped the
 /// phase they were opened from.
@@ -9,22 +9,22 @@ final class UpgradeContextTests: XCTestCase {
 
     // MARK: - Current-season cache provenance
 
-    /// The exact shape of the artifact 1.2 shipped and wrote to this path: a
+    /// The exact shape of the artifact an early build could write to this path: a
     /// real server export, but only the teams that had played by then. It
     /// passes `isCompleteCurrent`, by design, so the validator can never be
     /// what separates it from a full snapshot.
-    func testPre122CacheWithoutProvenanceIsDiscardedOnUpgrade() throws {
+    func testCacheWithoutProvenanceIsDiscardedOnUpgrade() throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
-        let openingWeek = players(teams: ["LA", "NE", "SEA", "SF"], count: 110)
+        let openingWeek = players(teams: ["LAL", "BOS", "SAS", "GSW"], count: 110)
         XCTAssertTrue(
             PlayerSnapshotValidator.isCompleteCurrent(openingWeek),
-            "The 1.2 artifact has to clear the opening-week rule, or this test isn't reproducing the bug"
+            "The artifact has to clear the opening-night rule, or this test isn't reproducing the bug"
         )
 
-        // Written the way 1.2 wrote it: rows only, no marker beside them.
+        // Written without a marker: rows only, nothing beside them.
         let file = directory.appending(path: "players-current.json")
         try JSONEncoder.statScout.encode(openingWeek).write(to: file)
 
@@ -44,7 +44,7 @@ final class UpgradeContextTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
 
         let cache = TwoTierPlayerCache(directory: directory)
-        try cache.savePlayers(players(teams: ["SEA", "NE"], count: 30))
+        try cache.savePlayers(players(teams: ["SAS", "BOS"], count: 30), liveSeason: testLiveSeason)
 
         XCTAssertEqual(try cache.loadCurrentPlayers().count, 30)
         XCTAssertTrue(
@@ -59,13 +59,13 @@ final class UpgradeContextTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try JSONEncoder.statScout
-            .encode(players(teams: ["LA", "NE", "SEA", "SF"], count: 110))
+            .encode(players(teams: ["LAL", "BOS", "SAS", "GSW"], count: 110))
             .write(to: directory.appending(path: "players-current.json"))
 
         let cache = TwoTierPlayerCache(directory: directory)
         XCTAssertTrue(try cache.loadCurrentPlayers().isEmpty)
 
-        try cache.savePlayers(players(teams: ["SEA", "NE", "KC", "BUF"], count: 40))
+        try cache.savePlayers(players(teams: ["SAS", "BOS", "DEN", "MIL"], count: 40), liveSeason: testLiveSeason)
         XCTAssertEqual(try cache.loadCurrentPlayers().count, 40)
     }
 
@@ -73,61 +73,61 @@ final class UpgradeContextTests: XCTestCase {
 
     @MainActor
     func testTeamRosterFollowsSelectedSeasonAndPhase() async {
-        let seaThisYear = players(teams: ["SEA"], count: 5, season: StatScoutSeason.current)
-        let seaLastYear = players(teams: ["SEA"], count: 3, season: StatScoutSeason.current - 1, idOffset: 100)
+        let seaThisYear = players(teams: ["SAS"], count: 5, season: testLiveSeason)
+        let seaLastYear = players(teams: ["SAS"], count: 3, season: testLiveSeason - 1, idOffset: 100)
         let seaPlayoffs = players(
-            teams: ["SEA"], count: 2, season: StatScoutSeason.current - 1,
+            teams: ["SAS"], count: 2, season: testLiveSeason - 1,
             phase: .playoffs, idOffset: 200
         )
-        let vm = DashboardViewModel(provider: MockProvider(players: seaThisYear + seaLastYear + seaPlayoffs))
+        let vm = makeViewModel(provider: MockProvider(players: seaThisYear + seaLastYear + seaPlayoffs))
         await vm.load()
 
-        vm.selectedSeason = StatScoutSeason.current
+        vm.selectedSeason = testLiveSeason
         vm.selectedPhase = .regular
-        XCTAssertEqual(vm.players(forTeam: "SEA").count, 5)
+        XCTAssertEqual(vm.players(forTeam: "SAS").count, 5)
 
         // TeamView derives its roster from exactly this call, so moving the
         // page's picker has to move the rows underneath it.
-        vm.selectedSeason = StatScoutSeason.current - 1
-        XCTAssertEqual(vm.players(forTeam: "SEA").count, 3)
+        vm.selectedSeason = testLiveSeason - 1
+        XCTAssertEqual(vm.players(forTeam: "SAS").count, 3)
 
         vm.selectedPhase = .playoffs
-        XCTAssertEqual(vm.players(forTeam: "SEA").count, 2)
+        XCTAssertEqual(vm.players(forTeam: "SAS").count, 2)
     }
 
     // MARK: - Drill-down routes carry their phase
 
     @MainActor
     func testPlayersForSeasonHonoursAnExplicitPhase() async {
-        let regular = players(teams: ["SEA", "NE"], count: 6, season: StatScoutSeason.current - 1)
+        let regular = players(teams: ["SAS", "BOS"], count: 6, season: testLiveSeason - 1)
         let playoffs = players(
-            teams: ["SEA", "NE"], count: 2, season: StatScoutSeason.current - 1,
+            teams: ["SAS", "BOS"], count: 2, season: testLiveSeason - 1,
             phase: .playoffs, idOffset: 50
         )
-        let vm = DashboardViewModel(provider: MockProvider(players: regular + playoffs))
+        let vm = makeViewModel(provider: MockProvider(players: regular + playoffs))
         await vm.load()
         vm.selectedPhase = .regular
 
         // A route opened from a playoff profile resolves against its own phase,
         // not whichever one the tab happens to be sitting on.
-        XCTAssertEqual(vm.players(forSeason: StatScoutSeason.current - 1, phase: .playoffs).count, 2)
-        XCTAssertEqual(vm.players(forSeason: StatScoutSeason.current - 1, phase: .regular).count, 6)
+        XCTAssertEqual(vm.players(forSeason: testLiveSeason - 1, phase: .playoffs).count, 2)
+        XCTAssertEqual(vm.players(forSeason: testLiveSeason - 1, phase: .regular).count, 6)
     }
 
     func testRoutesCarrySeasonAndPhase() {
-        let metric = MetricRoute(label: "EPA/Play", category: .passing, season: 2024, phase: .playoffs)
-        XCTAssertEqual(metric.season, 2024)
+        let metric = MetricRoute(label: "TS%", category: .scoring, season: 2025, phase: .playoffs)
+        XCTAssertEqual(metric.season, 2025)
         XCTAssertEqual(metric.phase, .playoffs)
 
-        let standard = StandardStatRoute(stat: "Pass Yds", category: .passing, season: 2024, phase: .playoffs)
-        XCTAssertEqual(standard.season, 2024)
+        let standard = StandardStatRoute(stat: "PPG", season: 2025, phase: .playoffs)
+        XCTAssertEqual(standard.season, 2025)
         XCTAssertEqual(standard.phase, .playoffs)
 
         // Two routes to the same stat in the same year but different halves of
         // it are different destinations, or the stack coalesces them.
         XCTAssertNotEqual(
             metric,
-            MetricRoute(label: "EPA/Play", category: .passing, season: 2024, phase: .regular)
+            MetricRoute(label: "TS%", category: .scoring, season: 2025, phase: .regular)
         )
     }
 
@@ -136,21 +136,21 @@ final class UpgradeContextTests: XCTestCase {
     private func players(
         teams: [String],
         count: Int,
-        season: Int = StatScoutSeason.current,
+        season: Int = testLiveSeason,
         phase: SeasonPhase = .regular,
         idOffset: Int = 0
     ) -> [Player] {
         (0..<count).map { index in
             Player(
                 playerId: idOffset + index, name: "Player \(idOffset + index)",
-                team: teams[index % teams.count], position: "QB",
+                team: teams[index % teams.count], position: "G",
                 handedness: "", updatedAt: Date(timeIntervalSince1970: 0), season: season,
                 seasonPhase: phase,
-                playerType: ["qb", "rb", "wr", "te", "def"][index % 5],
+                playerType: ["g", "f", "c"][index % 3],
                 metrics: [
-                    Metric(id: "pass", label: "EPA/Play", value: "0.1", percentile: 50, category: .passing),
-                    Metric(id: "rush", label: "EPA/Rush", value: "0.1", percentile: 50, category: .rushing),
-                    Metric(id: "rec", label: "EPA/Tgt", value: "0.1", percentile: 50, category: .receiving),
+                    Metric(id: "pts", label: "Pts/100", value: "25.0", percentile: 50, category: .scoring),
+                    Metric(id: "ast", label: "AST%", value: "15.0%", percentile: 50, category: .playmaking),
+                    Metric(id: "reb", label: "REB%", value: "10.0%", percentile: 50, category: .rebounding),
                 ],
                 standardStats: [], games: []
             )

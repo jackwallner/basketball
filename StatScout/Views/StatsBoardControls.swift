@@ -5,27 +5,29 @@ enum StatsBoard: String, Hashable {
     case advanced
     case standard
     case bestWorst
-    case contractValue
 }
 
-/// Traditional production stats offered for each NFL position group.
+/// The traditional line offered for each position cohort: the same fifteen
+/// counting stats for everyone, led by what that cohort is read on.
 enum StandardStatCatalog {
+    private static let everyone = [
+        "PPG", "RPG", "APG", "SPG", "BPG", "FG", "3P", "FT", "TOV", "PF", "+/-", "MPG", "MIN", "G", "GS",
+    ]
+
     static func stats(for position: PlayerPositionGroup) -> [String] {
+        let lead: String
         switch position {
-        case .qb:
-            return ["Pass Yds", "Pass TD", "INT", "Rush Yds", "Rush TD", "Car", "G"]
-        case .rb:
-            return ["Rush Yds", "Rush TD", "Car", "Rec Yds", "Rec TD", "G"]
-        case .wr, .te:
-            return ["Rec Yds", "Rec TD", "Rush Yds", "Rush TD", "Car", "G"]
-        case .defense:
-            return ["Tackles", "Sacks", "Def INT", "G"]
+        case .all, .forward: lead = "PPG"
+        case .guard: lead = "APG"
+        case .center: lead = "RPG"
         }
+        return [lead] + everyone.filter { $0 != lead }
     }
 
+    /// Best first: turnovers and fouls read better low, so their boards open
+    /// lowest-first.
     static func defaultDescending(for stat: String, position: PlayerPositionGroup) -> Bool {
-        if stat == "INT", position == .qb { return false }
-        return true
+        StandardStatSemantics.higherIsBetter(label: stat)
     }
 
     static func defaultStat(for position: PlayerPositionGroup) -> String {
@@ -36,8 +38,8 @@ enum StandardStatCatalog {
     ///
     /// A stat the user picked on purpose follows them to any position that
     /// offers it. The previous position's own default does not: it is not a
-    /// choice, and carrying it over ranked receivers by Rush Yds after a
-    /// QB, RB, WR walk through the tabs.
+    /// choice, and carrying it over ranked centers by APG after a
+    /// G, F, C walk through the tabs.
     static func stat(
         keeping current: String,
         from old: PlayerPositionGroup,
@@ -77,10 +79,10 @@ struct StatPickerMenu: View {
                 }
             }
         } label: {
-            GridironInlinePill(systemImage: "chart.bar.fill", title: activeLabel)
+            HardwoodInlinePill(systemImage: "chart.bar.fill", title: activeLabel)
         }
         .menuOrder(.fixed)
-        .gridironMenuAppearance()
+        .hardwoodMenuAppearance()
         .accessibilityLabel("Stat")
         .accessibilityValue(activeLabel)
     }
@@ -115,7 +117,7 @@ struct SortDirectionButton: View {
             action()
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         } label: {
-            GridironChip(trailing: .sortArrow(descending: descending))
+            HardwoodChip(trailing: .sortArrow(descending: descending))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Sort direction")
@@ -146,8 +148,6 @@ struct StatsBoardStatPicker: View {
             return bindings.standardStat
         case .bestWorst:
             return "Best & Worst"
-        case .contractValue:
-            return "Contract Value"
         }
     }
 
@@ -197,7 +197,6 @@ struct StatsViewMenu: View {
         viewModel.qualifierLevel != .all
             || viewModel.selectedConference != .all
             || board == .bestWorst
-            || board == .contractValue
     }
 
     var body: some View {
@@ -206,7 +205,7 @@ struct StatsViewMenu: View {
             qualifierSection
             boardSection
         } label: {
-            GridironChip(
+            HardwoodChip(
                 title: "View",
                 systemImage: "slider.horizontal.3",
                 trailing: .chevron,
@@ -219,7 +218,7 @@ struct StatsViewMenu: View {
 
     private var conferenceSection: some View {
         Section("Conference") {
-            ForEach(NFLConference.allCases) { conference in
+            ForEach(NBAConference.allCases) { conference in
                 Button {
                     viewModel.selectedConference = conference
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -255,10 +254,10 @@ struct StatsViewMenu: View {
     private var boardSection: some View {
         Section("Show") {
             Button {
-                if board == .bestWorst || board == .contractValue { board = .advanced }
+                if board == .bestWorst { board = .advanced }
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
-                if board != .bestWorst && board != .contractValue {
+                if board != .bestWorst {
                     Label("Leaderboard", systemImage: "checkmark")
                 } else {
                     Text("Leaderboard")
@@ -275,19 +274,6 @@ struct StatsViewMenu: View {
                     Text("Best & Worst")
                 } else {
                     Label("Best & Worst (StatScout+)", systemImage: "crown.fill")
-                }
-            }
-
-            Button {
-                board = .contractValue
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            } label: {
-                if board == .contractValue {
-                    Label("Contract Value", systemImage: "checkmark")
-                } else if store.isPro {
-                    Text("Contract Value")
-                } else {
-                    Label("Contract Value (StatScout+)", systemImage: "crown.fill")
                 }
             }
         }

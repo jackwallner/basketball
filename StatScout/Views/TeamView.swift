@@ -10,21 +10,18 @@ struct TeamView: View {
     /// model. See `displaySeason`.
     var seedSeason: Int? = nil
     var viewModel: DashboardViewModel? = nil
-    /// (team, season, phase, since).
-    var fetchTeamGameLogs: ((String, Int, SeasonPhase, Date) async throws -> [PlayerGameLog])? = nil
     @State private var selectedTab: TeamTab = .advanced
     @State private var searchText = ""
     @State private var isSearching = false
-    // Default to Passing so the roster always shows a meaningful sort metric.
-    @State private var selectedCategory: MetricCategory? = .passing
+    // Default to Scoring so the roster always shows a meaningful sort metric.
+    @State private var selectedCategory: MetricCategory? = .scoring
     @State private var sortDescending = true
     @State private var lastDefaultedSortKey: String? = nil
     @State private var showingTrial = false
     @State private var trialTrigger: PaywallTrigger?
-    @State private var rosterSide: RosterSide = .offense
     @State private var qualifierLevel: DashboardViewModel.QualifierLevel = .all
     @State private var rosterMode: RosterMode = .season
-    @State private var rosterWindow: RecentWindow = .five
+    @State private var rosterWindow: RecentWindow = .twoWeeks
     @State private var userSortLabel: String?
 
     enum TeamTab: String, CaseIterable {
@@ -38,27 +35,6 @@ struct TeamView: View {
         case recent = "Recent"
 
         var id: String { rawValue }
-    }
-
-    enum RosterSide: String, CaseIterable, Identifiable {
-        case offense = "Offense"
-        case defense = "Defense"
-
-        var id: String { rawValue }
-
-        var categories: [MetricCategory] {
-            switch self {
-            case .offense: return [.passing, .rushing, .receiving]
-            case .defense: return [.defense]
-            }
-        }
-
-        func matches(_ player: Player) -> Bool {
-            switch player.positionGroup {
-            case .defense: return self == .defense
-            default: return self == .offense
-            }
-        }
     }
 
     /// The roster for the season and phase that are selected *right now*.
@@ -78,7 +54,7 @@ struct TeamView: View {
         viewModel?.selectedSeason
             ?? seedSeason
             ?? seedPlayers.compactMap(\.season).max()
-            ?? Calendar.current.component(.year, from: Date())
+            ?? StatScoutSeason.bundledNewest
     }
 
     private var leaguePlayers: [Player] {
@@ -87,7 +63,7 @@ struct TeamView: View {
 
     /// The phase the whole page is reading. Every roster number already comes
     /// from `seasonPlayers`, which is filtered by it; the cards need it too so
-    /// their game-log windows come from the same half of the year.
+    /// their rolling windows come from the same half of the year.
     private var displayPhase: SeasonPhase {
         viewModel?.selectedPhase ?? .regular
     }
@@ -121,11 +97,9 @@ struct TeamView: View {
 
     private var rowDisplayMetric: (label: String?, category: MetricCategory?) {
         if let m = sortMetric { return (m.label, m.category) }
-        // "All" is the whole roster at once, offence and defence together, so
-        // there is no one metric that means the same thing down the column. It
-        // used to force Pass Yds, which printed a zero beside every player who
-        // isn't a quarterback. Each row shows its own overall percentile
-        // instead.
+        // "All" is the whole roster at once, every category together, so there
+        // is no one metric that means the same thing down the column. Each row
+        // shows its own overall percentile instead.
         return (nil, nil)
     }
 
@@ -175,14 +149,13 @@ struct TeamView: View {
         rosterMode == .recent && store.isPro && supportsRecent
     }
 
-    /// Recent form exists for the live season only: the rolling windows and the
-    /// per-game logs behind them are no longer kept for finished seasons, so
-    /// every Recent control on this screen is hidden (not locked) on a
-    /// historical one. Falls back to the calendar when there is no view model,
-    /// which is the previews-and-tests path.
+    /// Recent form exists for the newest two seasons only: the rolling windows
+    /// are no longer kept for older ones, so every Recent control on this screen
+    /// is hidden (not locked) on a historical one. Falls back to the bundled
+    /// season when there is no view model, which is the previews-and-tests path.
     private var supportsRecent: Bool {
         viewModel.map { $0.supportsRecentForm(displaySeason) }
-            ?? (displaySeason == StatScoutSeason.current)
+            ?? (displaySeason == StatScoutSeason.bundledNewest)
     }
 
     private var filteredPlayers: [Player] {
@@ -190,8 +163,7 @@ struct TeamView: View {
             $0.name.localizedCaseInsensitiveContains(searchText)
                 || $0.displayPosition.localizedCaseInsensitiveContains(searchText)
         }
-        let bySide = bySearch.filter { rosterSide.matches($0) }
-        let byCategory = bySide.filter { player in
+        let byCategory = bySearch.filter { player in
             guard let selectedCategory else { return true }
             return player.metrics.contains { $0.category == selectedCategory }
         }
@@ -236,7 +208,7 @@ struct TeamView: View {
                         .padding(.horizontal, 12)
                         .padding(.top, 10)
                     if displaySeason == viewModel.freeSeason {
-                        TeamWeekGameCard(viewModel: viewModel, team: team)
+                        TeamGameCard(viewModel: viewModel, team: team)
                             .padding(.horizontal, 12)
                             .padding(.top, 10)
                     }
@@ -265,7 +237,7 @@ struct TeamView: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .scrollDismissesKeyboard(.interactively)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .refreshable {
             await viewModel?.load()
         }
@@ -315,7 +287,7 @@ struct TeamView: View {
 
     // MARK: - Tabs
 
-    /// Mirrors the player profile's tab selector with equal-width turf controls
+    /// Mirrors the player profile's tab selector with equal-width court controls
     /// that swap the card content below. Two tabs: the team's percentile profile and
     /// its sortable roster.
     private var tabSelector: some View {
@@ -327,14 +299,14 @@ struct TeamView: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 } label: {
                     Text(tab.rawValue)
-                        .font(GridironType.smallBold)
+                        .font(HardwoodType.smallBold)
                         .minimumScaleFactor(0.85)
                         .lineLimit(1)
-                        .foregroundStyle(isSelected ? .white : GridironPalette.ink)
+                        .foregroundStyle(isSelected ? .white : HardwoodPalette.ink)
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
-                        .background(isSelected ? GridironPalette.turf : GridironPalette.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                        .background(isSelected ? HardwoodPalette.court : HardwoodPalette.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
                 }
                 .buttonStyle(.plain)
             }
@@ -349,9 +321,10 @@ struct TeamView: View {
                 seasonPhase: displayPhase,
                 players: players,
                 leaguePlayers: leaguePlayers,
-                fetchTeamGameLogs: fetchTeamGameLogs,
+                loadRecent: loadRecent,
                 freshnessRevision: viewModel?.freshnessRevision,
                 freshnessStatus: viewModel?.freshnessStatus,
+                supportsRecent: supportsRecent,
                 onUpgradeTap: {
                     // Explicit tap, always answer it; the gate only caps
                     // automatic pop-ups.
@@ -364,6 +337,16 @@ struct TeamView: View {
         .padding(.top, 12)
     }
 
+    /// The league's rows for one window, for the team cards' Recent modes.
+    private var loadRecent: ((RecentWindow) async -> [RecentForm])? {
+        guard let viewModel else { return nil }
+        let season = displaySeason
+        let phase = displayPhase
+        return { window in
+            await viewModel.leagueRecentForm(window: window, season: season, phase: phase)
+        }
+    }
+
     private var standardContent: some View {
         TeamStandardCard(
             team: team,
@@ -371,7 +354,7 @@ struct TeamView: View {
             seasonPhase: displayPhase,
             players: players,
             leaguePlayers: leaguePlayers,
-            fetchTeamGameLogs: fetchTeamGameLogs,
+            loadRecent: loadRecent,
             supportsRecent: supportsRecent,
             onUpgradeTap: { showingTrial = true }
         )
@@ -381,15 +364,12 @@ struct TeamView: View {
 
     private var rosterContent: some View {
         VStack(spacing: 0) {
-            GridironPickerRow {
-                sidePicker.segmentCount(RosterSide.allCases.count)
-                rosterModePicker.segmentCount(RosterMode.allCases.count)
-            }
+            rosterModePicker
                 .padding(.horizontal, 12)
                 .padding(.top, 12)
 
             if isRosterRecent {
-                GridironSegmented(
+                HardwoodSegmented(
                     segments: RecentWindow.allCases.map {
                         .init(value: $0, label: $0.segmentLabel)
                     },
@@ -399,21 +379,19 @@ struct TeamView: View {
                 .padding(.top, 8)
             }
 
-            if rosterSide.categories.count > 1 {
-                GridironTabs(
-                    tabs: rosterSide.categories.map(\.rawValue),
-                    selected: Binding(
-                        get: { (selectedCategory ?? rosterSide.categories[0]).rawValue },
-                        set: { rawValue in
-                            selectedCategory = MetricCategory.allCases.first {
-                                $0.rawValue == rawValue
-                            }
+            HardwoodTabs(
+                tabs: MetricCategory.allCases.map(\.rawValue),
+                selected: Binding(
+                    get: { (selectedCategory ?? .scoring).rawValue },
+                    set: { rawValue in
+                        selectedCategory = MetricCategory.allCases.first {
+                            $0.rawValue == rawValue
                         }
-                    )
+                    }
                 )
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-            }
+            )
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
 
             if !players.isEmpty {
                 sortControlsRow
@@ -447,17 +425,17 @@ struct TeamView: View {
             } label: {
                 HStack(spacing: 6) {
                     Text(sortLabel)
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.smallBold)
+                        .foregroundStyle(HardwoodPalette.ink)
                     Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(GridironPalette.turf)
+                        .foregroundStyle(HardwoodPalette.court)
                 }
                 .padding(.horizontal, 12)
                 .frame(height: 30)
-                .background(GridironPalette.surface)
+                .background(HardwoodPalette.surface)
                 .clipShape(Capsule())
-                .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+                .overlay(Capsule().stroke(HardwoodPalette.hairline, lineWidth: 0.5))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Sorted by \(sortLabel), \(sortDescending ? "highest first" : "lowest first")")
@@ -473,11 +451,11 @@ struct TeamView: View {
                 let active = isSearching || !searchText.isEmpty
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(active ? .white : GridironPalette.inkSecondary)
+                    .foregroundStyle(active ? .white : HardwoodPalette.inkSecondary)
                     .frame(width: 30, height: 30)
-                    .background(active ? GridironPalette.turf : GridironPalette.surface)
+                    .background(active ? HardwoodPalette.court : HardwoodPalette.surface)
                     .clipShape(Capsule())
-                    .overlay(Capsule().stroke(active ? Color.clear : GridironPalette.hairline, lineWidth: 0.5))
+                    .overlay(Capsule().stroke(active ? Color.clear : HardwoodPalette.hairline, lineWidth: 0.5))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Search")
@@ -488,21 +466,10 @@ struct TeamView: View {
         .padding(.top, 12)
     }
 
-    private var sidePicker: some View {
-        GridironSegmented(
-            segments: RosterSide.allCases.map { .init(value: $0, label: $0.rawValue) },
-            selection: $rosterSide
-        )
-        .onChange(of: rosterSide) { _, side in
-            selectedCategory = side.categories[0]
-            userSortLabel = nil
-        }
-    }
-
     @ViewBuilder
     private var rosterModePicker: some View {
         if supportsRecent {
-            GridironSegmented(
+            HardwoodSegmented(
                 segments: RosterMode.allCases.map {
                     .init(value: $0, label: $0.rawValue, isLocked: !store.isPro && $0 == .recent)
                 },
@@ -565,7 +532,7 @@ struct TeamView: View {
                 }
             }
         } label: {
-            GridironChip(
+            HardwoodChip(
                 title: "Filters",
                 systemImage: "line.3.horizontal.decrease.circle",
                 trailing: .chevron,
@@ -585,8 +552,8 @@ struct TeamView: View {
                     searchText = ""
                 }
             }
-            .font(GridironType.small)
-            .foregroundStyle(GridironPalette.turf)
+            .font(HardwoodType.small)
+            .foregroundStyle(HardwoodPalette.court)
         }
         .padding(.horizontal, 12)
         .padding(.top, 8)
@@ -599,7 +566,7 @@ struct TeamView: View {
                 emptyStateView(
                     icon: "person.2.slash",
                     title: "No players tracked",
-                    description: "No players are tracked for \(teamFullName(team)) in the \(String(displaySeason)) season."
+                    description: "No players are tracked for \(teamFullName(team)) in the \(SeasonLabel.text(displaySeason)) season."
                 )
             } else if filteredPlayers.isEmpty {
                 let noCategoryMatch = searchText.isEmpty && selectedCategory != nil
@@ -613,9 +580,9 @@ struct TeamView: View {
             } else if isRosterRecent && !hasRecentData {
                 HStack(spacing: 10) {
                     ProgressView().scaleEffect(0.75)
-                    Text("Loading the last \(rosterWindow.rawValue) games…")
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                    Text("Loading the \(rosterWindow.prose)…")
+                        .font(HardwoodType.small)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
@@ -627,7 +594,7 @@ struct TeamView: View {
                     LeaderboardTableHeader(
                         sortDescending: sortDescending,
                         sortLabel: isRosterRecent
-                            ? "\(sortLabel) · \(rosterWindow.rawValue)G"
+                            ? "\(sortLabel) · \(rosterWindow.segmentLabel)"
                             : sortLabel
                     )
                 }
@@ -651,11 +618,11 @@ struct TeamView: View {
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -687,7 +654,7 @@ struct TeamView: View {
         } label: {
             HStack(spacing: 4) {
                 Text(teamFullName(team))
-                    .font(GridironType.bodyBold)
+                    .font(HardwoodType.bodyBold)
                     .foregroundStyle(.white)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 11, weight: .bold))
@@ -700,7 +667,7 @@ struct TeamView: View {
         .accessibilityHint("Switch to another team")
     }
 
-    private static let allTeamAbbrs: [String] = nflTeamAbbreviations
+    private static let allTeamAbbrs: [String] = nbaTeamAbbreviations
 
     private var allTeams: [String] {
         Self.allTeamAbbrs.sorted { teamFullName($0).localizedCompare(teamFullName($1)) == .orderedAscending }
@@ -710,7 +677,7 @@ struct TeamView: View {
     /// bars carry. This was a season-only menu, which left the playoffs
     /// unreachable from the one Teams screen most sessions actually see: every
     /// number on this page is filtered by `selectedPhase`, and the Teams tab
-    /// pushes straight into your favorite club on first visit, so the phase
+    /// pushes straight into your favorite team on first visit, so the phase
     /// control back on the list was never passed through.
     private func navSeasonMenu(viewModel: DashboardViewModel) -> some View {
         SeasonPhasePicker(
@@ -731,11 +698,11 @@ struct TeamView: View {
             onSelectPhase: { viewModel.selectedPhase = $0 }
         ) {
             // No glyph and the short year alone: the team name in the principal
-            // slot is long ("Jacksonville Jaguars"), and spelling the phase out
+            // slot is long ("Portland Trail Blazers"), and spelling the phase out
             // here as well tipped the bar into sweeping the trailing item into a
             // "..." overflow. The pill still says which phase it is, just in the
             // shortest form that reads as a season type.
-            GridironNavPill(
+            HardwoodNavPill(
                 title: SeasonLabel.text(viewModel.selectedSeason)
                     + (viewModel.selectedPhase == .playoffs ? " · Playoffs" : "")
             )
@@ -744,10 +711,12 @@ struct TeamView: View {
 
     private func priorityMetrics(for category: MetricCategory) -> [String] {
         switch category {
-        case .passing: return ["Pass Yds", "Pass TD", "Rating", "EPA/Play"]
-        case .rushing: return ["Rush Yds", "Rush TD", "Y/C", "Rush EPA"]
-        case .receiving: return ["Rec Yds", "Rec", "Rec TD", "YAC"]
-        case .defense: return ["Tackles", "Sacks", "INT"]
+        case .scoring: return ["Pts/100", "TS%", "USG%", "PPG"]
+        case .shooting: return ["Rim FG%", "Rim Freq", "Non-Corner 3%", "Corner 3%"]
+        case .playmaking: return ["AST%", "AST/100", "APG", "AST:TO"]
+        case .rebounding: return ["REB%", "DREB%", "OREB%", "RPG"]
+        case .defense: return ["STL%", "BLK%", "Stocks/100", "SPG"]
+        case .impact: return ["On-Off", "On-Court +/-", "Min%", "MPG"]
         }
     }
 }
@@ -756,9 +725,9 @@ struct TeamView: View {
 #Preview {
     NavigationStack {
         TeamView(
-            team: "KC",
-            seedPlayers: SampleData.players.filter { $0.team == "KC" },
-            seedSeason: 2025
+            team: "BOS",
+            seedPlayers: SampleData.players.filter { $0.team == "BOS" },
+            seedSeason: 2026
         )
     }
 }

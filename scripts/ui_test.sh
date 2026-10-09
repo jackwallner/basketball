@@ -3,9 +3,10 @@
 
 set -e
 
-DEVICE_ID="5A80E4BE-5F97-49AF-B93D-E9E512E00196"
-APP_BUNDLE="/Users/jackwallner/Library/Developer/Xcode/DerivedData/StatScout-bccpdbdlzemicsdkjsqzlnhwrlak/Build/Products/Debug-iphonesimulator/Baseball Savvy StatScout.app"
-BUNDLE_ID="com.jackwallner.baseball"
+# Leased from the shared pool: agent-sim checkout basketball
+DEVICE_ID="$(agent-sim udid basketball)"
+APP_BUNDLE="$(dirname "$0")/../build/DerivedData/Build/Products/Debug-iphonesimulator/Hardwood StatScout.app"
+BUNDLE_ID="com.jackwallner.basketball"
 TEST_DIR="/tmp/statscout_ui_test"
 REPORT_FILE="$TEST_DIR/test_report.txt"
 

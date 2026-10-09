@@ -6,48 +6,33 @@ struct GameRoute: Hashable {
     let gameId: String
 }
 
-/// The week's slate: who played whom, the finals, what is on next.
+/// The night's slate: who played whom, the finals, what is on next.
 ///
-/// This is the football-first front door. Scores, schedule and box scores are
-/// free for everyone; the analysis layers stay where they were.
+/// This is the front door. Scores, schedule and box scores are free for
+/// everyone; the analysis layers stay where they were.
 struct GamesView: View {
     @Bindable var viewModel: DashboardViewModel
     let isActive: Bool
     @State private var favorites = FavoritesStore.shared
-    @State private var selectedWeekID: String?
+    @State private var selectedDayID: String?
 
-    private var weeks: [GameWeek] { GameWeek.weeks(in: viewModel.games) }
+    private var days: [GameDay] { GameDay.days(in: viewModel.slateGames) }
 
-    private var selectedWeek: GameWeek? {
-        weeks.first { $0.id == selectedWeekID } ?? viewModel.currentGameWeek
+    private var selectedDay: GameDay? {
+        days.first { $0.id == selectedDayID } ?? viewModel.currentGameDay
     }
 
     private var slate: [Game] {
-        guard let selectedWeek else { return [] }
-        return Game.slateOrder(selectedWeek.games(from: viewModel.games))
+        guard let selectedDay else { return [] }
+        return Game.slateOrder(selectedDay.games(from: viewModel.slateGames))
     }
 
-    /// Clubs on this week's schedule, for the bye line.
-    private var byeTeams: [String] {
-        guard selectedWeek?.phase == .regular, !slate.isEmpty else { return [] }
-        let playing = Set(slate.flatMap { [normalizedTeamAbbreviation($0.awayTeam), normalizedTeamAbbreviation($0.homeTeam)] })
-        return nflTeamAbbreviations.filter { !playing.contains($0) }
-    }
-
-    /// "Week 3 · Sep 24 - 28", so the slate and the Stats caption ("Through
-    /// Week 3") are plainly two different things.
-    private var weekDateRange: String? {
-        guard let selectedWeek else { return nil }
-        let days = slate.compactMap(\.kickoff)
-        guard let first = days.min(), let last = days.max() else { return nil }
-        let style = Date.FormatStyle().month(.abbreviated).day()
-        let calendar = Calendar.current
-        let range = calendar.isDate(first, inSameDayAs: last)
-            ? first.formatted(style)
-            : calendar.isDate(first, equalTo: last, toGranularity: .month)
-                ? "\(first.formatted(style)) - \(last.formatted(.dateTime.day()))"
-                : "\(first.formatted(style)) - \(last.formatted(style))"
-        return "\(selectedWeek.label) · \(range)"
+    /// "Tue, Oct 20 · 2026-27 · 3 games".
+    private var dayHeading: String? {
+        guard let selectedDay else { return nil }
+        let season = slate.first.map { SeasonLabel.text($0.season) }
+        let count = slate.count == 1 ? "1 game" : "\(slate.count) games"
+        return [selectedDay.label, season, count].compactMap { $0 }.joined(separator: " · ")
     }
 
     private var favoriteGame: Game? {
@@ -58,15 +43,15 @@ struct GamesView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                if viewModel.games.isEmpty {
+                if viewModel.slateGames.isEmpty {
                     emptyState
                 } else {
-                    weekSelector
+                    daySelector
                         .padding(.top, 10)
-                    if let range = weekDateRange {
-                        Text(range)
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                    if let heading = dayHeading {
+                        Text(heading)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
                             .padding(.top, 8)
@@ -77,7 +62,7 @@ struct GamesView: View {
             }
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .refreshable { await viewModel.loadGames(force: true) }
         .task(id: isActive) {
             guard isActive else { return }
@@ -97,8 +82,8 @@ struct GamesView: View {
                 switch game.status(now: now) {
                 case .inProgress, .awaitingScore: return true
                 case .final:
-                    guard let kickoff = game.kickoff else { return false }
-                    return !viewModel.hasStats(game) && now.timeIntervalSince(kickoff) < 12 * 3_600
+                    guard let tipoff = game.tipoff else { return false }
+                    return !viewModel.hasStats(game) && now.timeIntervalSince(tipoff) < 12 * 3_600
                 case .upcoming: return false
                 }
             }
@@ -106,39 +91,39 @@ struct GamesView: View {
         }
     }
 
-    // MARK: - Week selector
+    // MARK: - Day selector
 
-    private var weekSelector: some View {
+    private var daySelector: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    ForEach(weeks) { week in
-                        let isSelected = week.id == selectedWeek?.id
+                    ForEach(days) { day in
+                        let isSelected = day.id == selectedDay?.id
                         Button {
-                            selectedWeekID = week.id
+                            selectedDayID = day.id
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         } label: {
-                            Text(week.shortLabel)
-                                .font(GridironType.smallBold)
-                                .foregroundStyle(isSelected ? .white : GridironPalette.inkSecondary)
+                            Text(day.shortLabel)
+                                .font(HardwoodType.smallBold)
+                                .foregroundStyle(isSelected ? .white : HardwoodPalette.inkSecondary)
                                 .padding(.horizontal, 12)
-                                .frame(height: GridironControl.height)
-                                .background(isSelected ? GridironPalette.turf : GridironPalette.surface)
+                                .frame(height: HardwoodControl.height)
+                                .background(isSelected ? HardwoodPalette.court : HardwoodPalette.surface)
                                 .clipShape(Capsule())
-                                .overlay(Capsule().stroke(isSelected ? Color.clear : GridironPalette.hairline, lineWidth: 0.5))
+                                .overlay(Capsule().stroke(isSelected ? Color.clear : HardwoodPalette.hairline, lineWidth: 0.5))
                         }
                         .buttonStyle(.plain)
-                        .id(week.id)
-                        .accessibilityLabel(week.label)
+                        .id(day.id)
+                        .accessibilityLabel(day.label)
                         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
                     }
                 }
                 .padding(.horizontal, 12)
             }
             .onAppear {
-                if let id = selectedWeek?.id { proxy.scrollTo(id, anchor: .center) }
+                if let id = selectedDay?.id { proxy.scrollTo(id, anchor: .center) }
             }
-            .onChange(of: selectedWeek?.id) { _, id in
+            .onChange(of: selectedDay?.id) { _, id in
                 guard let id else { return }
                 withAnimation { proxy.scrollTo(id, anchor: .center) }
             }
@@ -162,29 +147,24 @@ struct GamesView: View {
         if !upcoming.isEmpty { section(title: "Upcoming", games: upcoming) }
 
         if upcoming.contains(where: { viewModel.projection(for: $0) != nil }) {
-            Text("Projected margins come from StatScout Power Ratings: each club's efficiency and scoring against an average team, adjusted for schedule, plus two points for home field. Details on the Teams tab.")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+            Text("Projected margins come from StatScout Power Ratings: each team's points per 100 possessions against an average team, adjusted for schedule, plus two and a half points for home court. Details on the Teams tab.")
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
         }
 
-        if !byeTeams.isEmpty {
-            Text("Bye: " + byeTeams.map(displayTeamAbbr).joined(separator: ", "))
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
+        if viewModel.isSeasonPending, selectedDay?.id == viewModel.currentGameDay?.id, !viewModel.lastPlayedGames.isEmpty {
+            section(title: "Last played · \(SeasonLabel.text(viewModel.freeSeason))", games: viewModel.lastPlayedGames)
         }
 
         Text(favorites.team == nil
              ? "Scores post when each game goes final, stats usually within a few hours. Follow a team from its page to pin its game here."
              : "Scores post when each game goes final. Player stats usually follow within a few hours.")
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
+            .font(HardwoodType.micro)
+            .foregroundStyle(HardwoodPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 16)
@@ -193,7 +173,7 @@ struct GamesView: View {
 
     private func section(title: String, games: [Game]) -> some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: title)
+            HardwoodSectionBar(title: title)
             ForEach(Array(games.enumerated()), id: \.element.id) { index, game in
                 NavigationLink(value: GameRoute(gameId: game.id)) {
                     GameRow(
@@ -204,16 +184,16 @@ struct GamesView: View {
                         homeRecord: viewModel.record(forTeam: game.homeTeam, through: game),
                         projection: viewModel.projection(for: game)
                     )
-                        .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                        .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -232,13 +212,13 @@ struct GamesView: View {
                     systemImage: viewModel.gamesError == nil ? "calendar" : "wifi.slash"
                 )
             } description: {
-                Text(viewModel.gamesError ?? "The \(String(viewModel.freeSeason)) schedule isn't published yet.")
+                Text(viewModel.gamesError ?? "The \(SeasonLabel.text(viewModel.upcomingSeason ?? viewModel.freeSeason)) schedule isn't published yet.")
             } actions: {
                 Button("Try Again") {
                     Task { await viewModel.loadGames(force: true) }
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(GridironPalette.turf)
+                .tint(HardwoodPalette.court)
             }
             .padding(.vertical, 48)
         }
@@ -252,7 +232,7 @@ struct GameRow: View {
     let game: Game
     let hasStats: Bool
     var highlight: String? = nil
-    /// Each club's record through this game: after it for a final, going into
+    /// Each team's record through this game: after it for a final, going into
     /// it for one still to be played.
     var awayRecord: String? = nil
     var homeRecord: String? = nil
@@ -270,24 +250,24 @@ struct GameRow: View {
 
             VStack(alignment: .trailing, spacing: 3) {
                 Text(statusTitle(status))
-                    .font(GridironType.smallBold)
-                    .foregroundStyle(status == .inProgress ? GridironPalette.performanceLow : GridironPalette.ink)
+                    .font(HardwoodType.smallBold)
+                    .foregroundStyle(status == .inProgress ? HardwoodPalette.performanceLow : HardwoodPalette.ink)
                 if let detail = statusDetail(status) {
                     Text(detail)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                 }
             }
             .frame(width: 104, alignment: .trailing)
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, HardwoodGeo.padInline)
         .padding(.vertical, 10)
         .overlay(
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline),
             alignment: .bottom
         )
         .contentShape(Rectangle())
@@ -302,18 +282,20 @@ struct GameRow: View {
         return HStack(spacing: 8) {
             TeamColorDot(abbr: team, size: 10)
             Text(displayTeamAbbr(team))
-                .font(GridironType.bodyBold)
-                .foregroundStyle(dim ? GridironPalette.inkTertiary : GridironPalette.ink)
+                .font(HardwoodType.bodyBold)
+                .foregroundStyle(dim ? HardwoodPalette.inkTertiary : HardwoodPalette.ink)
                 .frame(width: 40, alignment: .leading)
-            Text(teamFullName(team))
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkTertiary)
+            // The full name plus a record does not fit beside the score, so a
+            // row that carries a record shows the nickname ("Knicks").
+            Text(record == nil ? teamFullName(team) : (teamFullName(team).split(separator: " ").last.map(String.init) ?? team))
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
             if let record {
                 Text(record)
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .monospacedDigit()
                     .fixedSize()
             }
@@ -325,8 +307,8 @@ struct GameRow: View {
             Spacer(minLength: 4)
             if let score {
                 Text("\(score)")
-                    .font(GridironType.statMed)
-                    .foregroundStyle(dim ? GridironPalette.inkTertiary : GridironPalette.ink)
+                    .font(HardwoodType.statMed)
+                    .foregroundStyle(dim ? HardwoodPalette.inkTertiary : HardwoodPalette.ink)
                     .monospacedDigit()
             }
         }
@@ -337,7 +319,7 @@ struct GameRow: View {
         case .final: return game.overtime ? "Final/OT" : "Final"
         case .inProgress: return "In progress"
         case .awaitingScore: return "Final soon"
-        case .upcoming: return game.kickoffLabel
+        case .upcoming: return game.tipoffLabel
         }
     }
 
@@ -349,7 +331,7 @@ struct GameRow: View {
             if let projection {
                 return projection.label(home: game.homeTeam, away: game.awayTeam)
             }
-            return game.kickoff.map { $0.formatted(.dateTime.month(.abbreviated).day()) }
+            return game.tipoff.map { $0.formatted(.dateTime.month(.abbreviated).day()) }
         }
     }
 
@@ -364,7 +346,7 @@ struct GameRow: View {
             return "\(away) at \(home), in progress"
         case .upcoming:
             let projected = projection.map { ", projected \($0.label(home: game.homeTeam, away: game.awayTeam))" } ?? ""
-            return "\(away) at \(home), \(game.dayLabel) at \(game.kickoff?.formatted(date: .omitted, time: .shortened) ?? "time TBD")\(projected)"
+            return "\(away) at \(home), \(game.dayLabel) at \(game.tipoff?.formatted(date: .omitted, time: .shortened) ?? "time TBD")\(projected)"
         }
     }
 }

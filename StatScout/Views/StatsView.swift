@@ -7,11 +7,8 @@ struct StatsView: View {
     @EnvironmentObject private var store: StoreService
 
     @AppStorage("stats.board") private var board: StatsBoard = .standard
-    /// Set when DEF, which has no advanced line until PFR publishes, pushed the
-    /// board to Standard, so leaving DEF puts Advanced back.
-    @State private var fellBackFromAdvanced = false
     @State private var showingFollowing = false
-    @State private var standardStat = "Pass Yds"
+    @State private var standardStat = "PPG"
     @State private var standardSortDescending = true
     @State private var paywallTrigger: PaywallTrigger?
 
@@ -32,7 +29,7 @@ struct StatsView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
             }
-            GridironSegmented(
+            HardwoodSegmented(
                 segments: [
                     .init(value: false, label: "League leaders"),
                     .init(value: true, label: "Following", systemImage: "star.fill"),
@@ -49,7 +46,7 @@ struct StatsView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(GridironPalette.canvas)
+        .background(HardwoodPalette.canvas)
         .modifier(
             SeasonPhaseNavBar(
                 title: "Stats",
@@ -69,13 +66,6 @@ struct StatsView: View {
                     for: kept,
                     position: next
                 )
-            }
-            if viewModel.availableAdvancedSortMetrics.isEmpty, board == .advanced {
-                board = .standard
-                fellBackFromAdvanced = true
-            } else if fellBackFromAdvanced, !viewModel.availableAdvancedSortMetrics.isEmpty {
-                if board == .standard { board = .advanced }
-                fellBackFromAdvanced = false
             }
         }
         .sheet(item: $paywallTrigger) { trigger in
@@ -99,14 +89,12 @@ struct StatsView: View {
             )
         case .bestWorst:
             BestWorstBoard(viewModel: viewModel, bindings: bindings)
-        case .contractValue:
-            ContractValueBoard(viewModel: viewModel, bindings: bindings)
         }
     }
 
     private var standardBoardPlayers: [Player] {
         viewModel.qualifiedSeasonPlayers.filter {
-            $0.positionGroup == viewModel.selectedPosition
+            viewModel.selectedPosition.includes($0)
                 && viewModel.matchesSelectedConference($0)
         }
     }

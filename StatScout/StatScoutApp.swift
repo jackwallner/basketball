@@ -206,7 +206,7 @@ struct OnboardingCards: View {
 
     var body: some View {
         ZStack {
-            GridironPalette.canvas.ignoresSafeArea()
+            HardwoodPalette.canvas.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 HStack {
@@ -214,8 +214,8 @@ struct OnboardingCards: View {
                     Button("Skip") {
                         withAnimation { hasCompletedOnboarding = true }
                     }
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.court)
                     .padding(.trailing, 20)
                     .opacity(isLastPage ? 0 : 1)
                     .allowsHitTesting(!isLastPage)
@@ -273,7 +273,7 @@ struct OnboardingCards: View {
         // Layout invariant: the primary button and the 24pt footer slot are the
         // ONLY things below the top of this stack that set the button's Y. The
         // button + footer slot are IDENTICAL on every page (Continue and the
-        // trial CTA are both a 52pt turf button with the same 24pt slot
+        // trial CTA are both a 52pt court button with the same 24pt slot
         // beneath), and everything else (Get Started, status line, disclosure,
         // Terms/Privacy) lives ABOVE the button where it grows upward. Because
         // the stack is bottom-anchored, that upper content can never move the
@@ -287,16 +287,16 @@ struct OnboardingCards: View {
                 // fills this slot in place instead of being inserted, so nothing
                 // above the button shifts either.
                 Text(trialError ?? " ")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.performanceLow)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.performanceLow)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .frame(height: 32, alignment: .top)
 
                 if let disclosure = trialDisclosure {
                     Text(disclosure)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -307,14 +307,14 @@ struct OnboardingCards: View {
                     Link("Terms", destination: StatScoutLegal.termsURL)
                     Link("Privacy", destination: StatScoutLegal.privacyURL)
                 }
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
             }
             .opacity(showsUpsellBlock ? 1 : 0)
             .allowsHitTesting(showsUpsellBlock)
             .accessibilityHidden(!showsUpsellBlock)
 
-            // --- Primary button: identical 52pt turf slot on every page ---
+            // --- Primary button: identical 52pt court slot on every page ---
             if isLastPage {
                 if store.isPro {
                     getStartedButton(prominent: true)
@@ -329,11 +329,11 @@ struct OnboardingCards: View {
                                 ProgressView().tint(.white)
                             }
                         }
-                        .font(GridironType.bodyBold)
+                        .font(HardwoodType.bodyBold)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(GridironPalette.turf)
+                        .background(HardwoodPalette.court)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                     .buttonStyle(.plain)
@@ -344,11 +344,11 @@ struct OnboardingCards: View {
                     withAnimation { currentPage += 1 }
                 } label: {
                     Text("Continue")
-                        .font(GridironType.bodyBold)
+                        .font(HardwoodType.bodyBold)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(GridironPalette.turf)
+                        .background(HardwoodPalette.court)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(.plain)
@@ -363,12 +363,12 @@ struct OnboardingCards: View {
                     HStack(spacing: 8) {
                         ProgressView()
                             .progressViewStyle(.circular)
-                            .tint(GridironPalette.inkSecondary)
+                            .tint(HardwoodPalette.inkSecondary)
                             .scaleEffect(0.7)
                         Text(viewModel.loadingMessage)
-                            .font(GridironType.micro)
+                            .font(HardwoodType.micro)
                     }
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                 } else if isLastPage && !store.isPro {
                     Button {
                         // Surface the outcome through the same trialError line the
@@ -385,8 +385,8 @@ struct OnboardingCards: View {
                         }
                     } label: {
                         Text(isRestoring ? "Restoring…" : "Restore Purchases")
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
                     }
                     .buttonStyle(.plain)
                     .disabled(isRestoring)
@@ -402,27 +402,27 @@ struct OnboardingCards: View {
     /// "Get Started" dismisses onboarding into the free tier. `prominent` is the
     /// solo state (Pro users, where it's the only, and primary, action, a filled
     /// button); otherwise it's a de-emphasized, borderless text link that sits
-    /// above the turf trial CTA so it never competes for the tap.
+    /// above the court trial CTA so it never competes for the tap.
     private func getStartedButton(prominent: Bool) -> some View {
         Button {
             withAnimation { hasCompletedOnboarding = true }
         } label: {
             if prominent {
                 Text("Get Started")
-                    .font(GridironType.bodyBold)
+                    .font(HardwoodType.bodyBold)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(GridironPalette.turf)
+                    .background(HardwoodPalette.court)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             } else {
                 // Borderless free-tier exit: same text as the boxed version,
                 // just no box. Keeps it legible and compliant (the free path
-                // must stay clearly visible) while the turf trial button is the
+                // must stay clearly visible) while the court trial button is the
                 // prominent action.
                 Text("Get Started")
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
             }
@@ -462,14 +462,14 @@ struct OnboardingCards: View {
 
     private let pages: [OnboardingPage] = [
         OnboardingPage(
-            icon: "football.fill",
+            icon: "basketball.fill",
             title: "Your Pocket\nScout",
-            description: "NFL percentile rankings built for a fast mobile view. Every player, every metric, updated soon after games finish.",
+            description: "NBA percentile rankings built for a fast mobile view. Every player, every metric, ranked against his own position group and updated soon after games finish.",
             bullets: [
-                BulletItem(text: "Every player ranked from week one", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "EPA, CPOE, YAC, RYOE, and more", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "Fresh stats soon after every game", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "No account or sign-up", icon: "checkmark.circle.fill", color: GridironPalette.turf)
+                BulletItem(text: "Every player ranked from game one", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
+                BulletItem(text: "TS%, USG%, shot zones, On-Off, and more", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Fresh stats soon after every game", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
+                BulletItem(text: "No account or sign-up", icon: "checkmark.circle.fill", color: HardwoodPalette.court)
             ]
         ),
         OnboardingPage(
@@ -477,11 +477,11 @@ struct OnboardingCards: View {
             title: "Find Insights\nFast",
             description: "Scores, leaders and movement across the league in seconds, with the numbers behind every game.",
             bullets: [
-                BulletItem(text: "Games: scores and box scores", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "Stats: leaders, best and worst", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "Trends: heating up, cooling off", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "Teams: any roster, any season", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "Compare: two players side by side", icon: "checkmark.circle.fill", color: GridironPalette.turf)
+                BulletItem(text: "Games: scores and box scores", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Stats: leaders, best and worst", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Trends: heating up, cooling off", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Teams: all 30, any roster, any season", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Compare: two players side by side", icon: "checkmark.circle.fill", color: HardwoodPalette.court)
             ]
         ),
         OnboardingPage(
@@ -489,10 +489,10 @@ struct OnboardingCards: View {
             title: "Go Deeper\nwith StatScout+",
             description: "Season numbers tell you who's good. StatScout+ tells you who's good right now, and lets you prove it.",
             bullets: [
-                BulletItem(text: "Trends: the league ranked by form", icon: "flame.fill", color: GridironPalette.turf),
-                BulletItem(text: "Last 3 / 5 / 8 games, any player", icon: "chart.bar.fill", color: GridironPalette.turf),
-                BulletItem(text: "Head-to-head on every percentile", icon: "person.2.fill", color: GridironPalette.turf),
-                BulletItem(text: "Seasons back to 2000, year over year", icon: "calendar.badge.clock", color: GridironPalette.turf)
+                BulletItem(text: "Trends: the league ranked by form", icon: "flame.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Last week, 2 weeks, 4 weeks, any player", icon: "chart.bar.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Head-to-head on every percentile", icon: "person.2.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Seasons back to 2002-03, year over year", icon: "calendar.badge.clock", color: HardwoodPalette.court)
             ]
         )
     ]
@@ -528,23 +528,23 @@ struct OnboardingCard: View {
                     .frame(width: 200, height: 104)
                 ZStack {
                     Circle()
-                        .fill(GridironPalette.midnight)
+                        .fill(HardwoodPalette.midnight)
                         .frame(width: 84, height: 84)
                     Image(systemName: icon)
                         .font(.system(size: 36, weight: .semibold))
                         .foregroundStyle(.white)
                 }
-                .shadow(color: GridironPalette.midnight.opacity(0.25), radius: 12, y: 4)
+                .shadow(color: HardwoodPalette.midnight.opacity(0.25), radius: 12, y: 4)
             }
 
             Text(title)
-                .font(GridironType.playerName)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.playerName)
+                .foregroundStyle(HardwoodPalette.ink)
                 .multilineTextAlignment(.center)
 
             Text(description)
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.body)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
 
@@ -555,8 +555,8 @@ struct OnboardingCard: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(bullet.color)
                         Text(bullet.text)
-                            .font(GridironType.body)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(HardwoodType.body)
+                            .foregroundStyle(HardwoodPalette.ink)
                             // Wrap, never truncate. A benefit that ends in an
                             // ellipsis is worse than one set on two lines.
                             .fixedSize(horizontal: false, vertical: true)
@@ -590,7 +590,7 @@ private struct StatcastBarBackdrop: View {
         HStack(alignment: .bottom, spacing: 6) {
             ForEach(Array(percentiles.enumerated()), id: \.offset) { _, pct in
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(GridironPalette.color(forPercentile: pct).opacity(0.55))
+                    .fill(HardwoodPalette.color(forPercentile: pct).opacity(0.55))
                     .frame(width: 14, height: CGFloat(pct) * 1.1)
             }
         }
@@ -603,22 +603,22 @@ struct ConfigMissingView: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 44, weight: .bold))
-                .foregroundStyle(GridironPalette.turf)
+                .foregroundStyle(HardwoodPalette.court)
             Text("StatScout can't load")
-                .font(GridironType.playerName)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.playerName)
+                .foregroundStyle(HardwoodPalette.ink)
             Text("This build is missing its data-feed configuration. Please install the latest TestFlight build or contact support.")
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.body)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
-            if let supportURL = URL(string: "https://jackwallner.github.io/football/support.html") {
+            if let supportURL = URL(string: "https://jackwallner.github.io/basketball/support.html") {
                 Link("Contact Support", destination: supportURL)
                     .buttonStyle(.borderedProminent)
-                    .tint(GridironPalette.turf)
+                    .tint(HardwoodPalette.court)
             }
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
     }
 }

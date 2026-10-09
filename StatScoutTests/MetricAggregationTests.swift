@@ -1,10 +1,10 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Hardwood_StatScout
 
 /// Covers the roster-pooling rules the team comparison relies on. The important
 /// property is that a rate is weighted by the volume it was measured over: an
-/// unweighted mean lets a three-carry cameo outrank a 300-carry season, which is
-/// the failure mode these tests exist to prevent.
+/// unweighted mean lets a ten-minute cameo outrank a 2,000-minute season, which
+/// is the failure mode these tests exist to prevent.
 final class MetricAggregationTests: XCTestCase {
     private func player(
         id: Int,
@@ -12,8 +12,8 @@ final class MetricAggregationTests: XCTestCase {
         standard: [StandardStat]
     ) -> Player {
         Player(
-            playerId: id, name: "P\(id)", team: "KC", position: "QB",
-            handedness: "", updatedAt: Date(), season: 2025,
+            playerId: id, name: "P\(id)", team: "BOS", position: "G",
+            handedness: "", updatedAt: Date(), season: 2026,
             metrics: metrics, standardStats: standard, games: []
         )
     }
@@ -24,78 +24,59 @@ final class MetricAggregationTests: XCTestCase {
 
     // MARK: - Aggregation rules
 
-    func testPassingRatesWeightByAttempts() {
-        XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "EPA/Play", category: .passing),
-            .weighted(.attempts)
-        )
-        XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "Sack%", category: .passing),
-            .weighted(.attempts)
-        )
-        // Volume stats still add up.
-        XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "Pass Yds", category: .passing),
-            .sum
-        )
+    func testAdvancedRatesWeightByMinutes() {
+        for (label, category) in [("TS%", MetricCategory.scoring), ("AST%", .playmaking), ("REB%", .rebounding),
+                                  ("BLK%", .defense), ("On-Off", .impact), ("Rim FG%", .shooting), ("FG%", .scoring)] {
+            XCTAssertEqual(
+                BasketballMetricRegistry.aggregation(for: label, category: category),
+                .weighted(.minutes),
+                label
+            )
+        }
     }
 
-    func testRushingTotalsSumAndRatesWeightByCarries() {
-        XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "RYOE", category: .rushing),
-            .sum
-        )
-        XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "Rush EPA", category: .rushing),
-            .sum
-        )
-        XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "EPA/Rush", category: .rushing),
-            .weighted(.carries)
-        )
+    func testCountsAndPerGameLinesAddUp() {
+        for (label, category) in [("PPG", MetricCategory.scoring), ("3PM", .scoring), ("APG", .playmaking),
+                                  ("AST", .playmaking), ("RPG", .rebounding), ("BLK", .defense), ("+/-", .impact), ("GS", .impact)] {
+            XCTAssertEqual(BasketballMetricRegistry.aggregation(for: label, category: category), .sum, label)
+        }
     }
 
-    func testTargetSharesSumWhileTargetRatesWeight() {
-        // A roster's target shares are shares of one offence, so they add.
-        XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "Target Share", category: .receiving),
-            .sum
-        )
-        XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "EPA/Tgt", category: .receiving),
-            .weighted(.targets)
-        )
+    func testMinutesPerGameWeightsByGames() {
+        XCTAssertEqual(BasketballMetricRegistry.aggregation(for: "MPG", category: .impact), .weighted(.games))
+    }
+
+    func testEveryRegistryMetricHasAnAggregationRule() {
+        for definition in BasketballMetricRegistry.definitions {
+            switch BasketballMetricRegistry.aggregation(for: definition.label, category: definition.category) {
+            case .sum, .weighted: break
+            }
+        }
     }
 
     // MARK: - Weight extraction
 
-    func testAttemptWeightReadsDenominatorOfCmpAtt() {
-        let p = player(id: 1, metrics: [], standard: [std("Cmp/Att", "401/584")])
-        XCTAssertEqual(MetricWeight.attempts.value(for: p), 584)
+    func testMinuteWeightReadsTotalMinutesWithItsGrouping() {
+        let p = player(id: 1, metrics: [], standard: [std("MIN", "2,262")])
+        XCTAssertEqual(MetricWeight.minutes.value(for: p), 2262)
     }
 
-    func testTargetWeightReadsDenominatorOfRecTgt() {
-        let p = player(id: 1, metrics: [], standard: [std("Rec/Tgt", "98/141")])
-        XCTAssertEqual(MetricWeight.targets.value(for: p), 141)
-    }
-
-    func testCarryWeightReadsPlainColumn() {
-        let p = player(id: 1, metrics: [], standard: [std("Car", "272")])
-        XCTAssertEqual(MetricWeight.carries.value(for: p), 272)
+    func testGameWeightReadsPlainColumn() {
+        let p = player(id: 1, metrics: [], standard: [std("G", "68")])
+        XCTAssertEqual(MetricWeight.games.value(for: p), 68)
     }
 
     /// A player with no volume must drop out of the weighted mean rather than
     /// enter it at weight 1 - that is what would let a cameo swing a team rate.
     func testMissingWeightIsNilNotZero() {
-        let p = player(id: 1, metrics: [], standard: [std("G", "17")])
-        XCTAssertNil(MetricWeight.attempts.value(for: p))
-        XCTAssertNil(MetricWeight.targets.value(for: p))
-        XCTAssertNil(MetricWeight.carries.value(for: p))
+        let p = player(id: 1, metrics: [], standard: [std("PPG", "17.0")])
+        XCTAssertNil(MetricWeight.minutes.value(for: p))
+        XCTAssertNil(MetricWeight.games.value(for: p))
     }
 
     func testZeroVolumeIsTreatedAsMissing() {
-        let p = player(id: 1, metrics: [], standard: [std("Car", "0")])
-        XCTAssertNil(MetricWeight.carries.value(for: p))
+        let p = player(id: 1, metrics: [], standard: [std("MIN", "0")])
+        XCTAssertNil(MetricWeight.minutes.value(for: p))
     }
 
     // MARK: - Value formatting
@@ -115,10 +96,10 @@ final class MetricAggregationTests: XCTestCase {
     }
 
     func testGroupedIntegerFormat() {
-        let format = MetricValueFormat.inferred(from: ["3,322", "1,004"])
+        let format = MetricValueFormat.inferred(from: ["1,502", "1,004"])
         XCTAssertTrue(format.hasGrouping)
         XCTAssertEqual(format.decimals, 0)
-        XCTAssertEqual(format.string(4918), "4,918")
+        XCTAssertEqual(format.string(2918), "2,918")
     }
 
     /// Mixed precision in one column should render at the finer of the two, not
@@ -130,15 +111,15 @@ final class MetricAggregationTests: XCTestCase {
     }
 
     func testTwoDecimalRateFormat() {
-        let format = MetricValueFormat.inferred(from: ["0.05", "0.18"])
+        let format = MetricValueFormat.inferred(from: ["0.25", "0.18"])
         XCTAssertFalse(format.isPercent)
-        XCTAssertEqual(format.string(0.115), "0.12")
+        XCTAssertEqual(format.string(0.2), "0.20")
     }
 
     // MARK: - Parsing
 
     func testNumericParsingHandlesFeedShapes() {
-        XCTAssertEqual(metricNumericValue("3,322"), 3322)
+        XCTAssertEqual(metricNumericValue("1,502"), 1502)
         XCTAssertEqual(metricNumericValue("6.2%"), 6.2)
         XCTAssertEqual(metricNumericValue("+2.3"), 2.3)
         XCTAssertEqual(metricNumericValue("-1.4"), -1.4)

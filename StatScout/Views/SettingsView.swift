@@ -30,7 +30,7 @@ struct AboutView: View {
             .padding(.bottom, 12)
             Color.clear.frame(height: 88)
         }
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .sheet(item: $paywallTrigger) { trigger in
             PaywallView(trigger: trigger)
         }
@@ -41,18 +41,18 @@ struct AboutView: View {
             StatGlossaryView()
         } label: {
             VStack(spacing: 0) {
-                GridironSectionBar(title: "REFERENCE")
+                HardwoodSectionBar(title: "REFERENCE")
                 row(
                     icon: "text.book.closed.fill",
                     title: "Stat Glossary",
                     subtitle: "Definitions and formulas for every stat in StatScout."
                 )
             }
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(HardwoodPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                    .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
             )
         }
         .buttonStyle(.plain)
@@ -60,43 +60,43 @@ struct AboutView: View {
 
     private var aboutCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "STATSCOUT")
+            HardwoodSectionBar(title: "STATSCOUT")
             HStack(spacing: 12) {
-                Image(systemName: "football.fill")
+                Image(systemName: "basketball.fill")
                     .font(.title2)
-                    .foregroundStyle(GridironPalette.turf)
+                    .foregroundStyle(HardwoodPalette.court)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Percentile Rankings")
-                        .font(GridironType.cardTitle)
-                        .foregroundStyle(GridironPalette.ink)
-                    Text("Mobile-first percentile rankings and leaderboards for fans and media.")
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(HardwoodType.cardTitle)
+                        .foregroundStyle(HardwoodPalette.ink)
+                    Text("Percentile rankings and leaderboards for every NBA player, ranked within guards, forwards and centers.")
+                        .font(HardwoodType.small)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                 }
                 Spacer()
             }
-            .padding(GridironGeo.padCard)
+            .padding(HardwoodGeo.padCard)
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
     private var proStatusCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "STATSCOUT+")
+            HardwoodSectionBar(title: "STATSCOUT+")
             VStack(spacing: 0) {
                 HStack {
                     Image(systemName: store.isPro ? "crown.fill" : "crown")
                         .font(.title2)
-                        .foregroundStyle(store.isPro ? Color.yellow : GridironPalette.inkTertiary)
+                        .foregroundStyle(store.isPro ? Color.yellow : HardwoodPalette.inkTertiary)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(store.isPro ? "StatScout+ Unlocked" : "Free Version")
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(HardwoodType.bodyBold)
+                            .foregroundStyle(HardwoodPalette.ink)
                         // Named to match `PaywallView.proFeatures`. This used to
                         // promise "historical seasons and year-over-year
                         // comparisons" and stop there, undercounting the
@@ -105,9 +105,9 @@ struct AboutView: View {
                         // going looking for the offer.
                         Text(store.isPro
                              ? "All StatScout+ features are active."
-                             : "Unlock Trends, recent form, head-to-head and every season back to 2000.")
-                            .font(GridironType.small)
-                            .foregroundStyle(GridironPalette.inkSecondary)
+                             : "Unlock Trends, recent form, head-to-head and every season back to 2002-03.")
+                            .font(HardwoodType.small)
+                            .foregroundStyle(HardwoodPalette.inkSecondary)
                     }
                     Spacer()
                     if !store.isPro {
@@ -115,13 +115,13 @@ struct AboutView: View {
                             paywallTrigger = store.defaultUpgradeTrigger
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(GridironPalette.turf)
+                        .tint(HardwoodPalette.court)
                         .controlSize(.small)
                     }
                 }
-                .padding(GridironGeo.padCard)
+                .padding(HardwoodGeo.padCard)
 
-                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+                Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
                 Button {
                     Task { await store.restorePurchases() }
                 } label: {
@@ -129,47 +129,43 @@ struct AboutView: View {
                         Image(systemName: "arrow.clockwise")
                             .font(.caption)
                         Text("Restore Purchases")
-                            .font(GridironType.smallBold)
+                            .font(HardwoodType.smallBold)
                     }
-                    .foregroundStyle(GridironPalette.linkBlue)
+                    .foregroundStyle(HardwoodPalette.linkBlue)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(GridironGeo.padCard)
+                    .padding(HardwoodGeo.padCard)
                 }
                 .buttonStyle(.plain)
 
                 if let error = store.lastError {
-                    Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+                    Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
                     Text(error)
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.turf)
+                        .font(HardwoodType.small)
+                        .foregroundStyle(HardwoodPalette.court)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(GridironGeo.padCard)
+                        .padding(HardwoodGeo.padCard)
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
     /// Which games are in, phrased the way the boards phrase it.
     ///
-    /// The row "Last Refreshed" needs standing next to it. The nightly job runs
-    /// every night against a source that publishes weekly, so on most days it
-    /// rewrites every row and closes out no new game: the write stamp says
-    /// today while the newest game is Sunday's. Reporting only the write stamp
-    /// made the app contradict the Trends header, which correctly says "Through
-    /// Week 12". Weeks lead because that is the unit the sport and the rest of
-    /// the app count in; the date follows for anyone who wants it.
+    /// The row "Last Refreshed" needs standing next to it. The refresh runs
+    /// after every game night against a source that republishes nightly, so on
+    /// most days it rewrites every row and closes out few new games: the write
+    /// stamp says today while the newest game is last night's. Reporting only
+    /// the write stamp made the app contradict the Trends header, which
+    /// correctly says "Through Jun 13".
     private var gamesThroughText: String {
         guard let coverage = freshness?.coverage ?? dataCoverage else { return "-" }
-        let stamp = coverage.asOf.formatted(DataCoverage.gameDayStyle)
-        guard let week = coverage.week else { return stamp }
-        let phase = coverage.phase == .playoffs ? " (playoffs)" : ""
-        return "Week \(week)\(phase) · \(stamp)"
+        return coverage.asOf.formatted(DataCoverage.gameDayStyle)
     }
 
     private var checkedText: String {
@@ -182,26 +178,26 @@ struct AboutView: View {
 
     private var refreshCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "DATA")
+            HardwoodSectionBar(title: "DATA")
             row(
                 icon: "arrow.triangle.2.circlepath",
                 title: "Data Updates",
-                subtitle: "Checks for new NFL player data throughout the season."
+                subtitle: "Checks for new NBA player data throughout the season."
             )
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
             row(
                 icon: "calendar.badge.clock",
                 title: "Games Through",
                 subtitle: gamesThroughText
             )
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
             row(
                 icon: "clock.arrow.circlepath",
                 title: "Last Checked",
                 subtitle: checkedText
             )
             if let sourcePublishedText {
-                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+                Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
                 row(
                     icon: "cloud.sun.fill",
                     title: "Source Published",
@@ -209,17 +205,17 @@ struct AboutView: View {
                 )
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
     private var linkCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "SUPPORT & PRIVACY")
+            HardwoodSectionBar(title: "SUPPORT & PRIVACY")
             Button {
                 if let onRequestReview {
                     onRequestReview()
@@ -235,7 +231,7 @@ struct AboutView: View {
             }
             .buttonStyle(.plain)
 
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
 
             // Always-works fallback: the native rating sheet is rate-limited and
             // may show nothing, so keep a direct write-review link for users who
@@ -249,9 +245,9 @@ struct AboutView: View {
             }
             .buttonStyle(.plain)
 
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
 
-            if let supportURL = URL(string: "https://jackwallner.github.io/football/support.html") {
+            if let supportURL = URL(string: "https://jackwallner.github.io/basketball/support.html") {
                 Link(destination: supportURL) {
                     row(
                         icon: "envelope.fill",
@@ -262,9 +258,9 @@ struct AboutView: View {
                 .buttonStyle(.plain)
             }
             
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
             
-            if let privacyURL = URL(string: "https://jackwallner.github.io/football/privacy-policy.html") {
+            if let privacyURL = URL(string: "https://jackwallner.github.io/basketball/privacy-policy.html") {
                 Link(destination: privacyURL) {
                     row(
                         icon: "shield.lefthalf.filled",
@@ -275,51 +271,51 @@ struct AboutView: View {
                 .buttonStyle(.plain)
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
     private var versionCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "VERSION")
+            HardwoodSectionBar(title: "VERSION")
             HStack {
                 Text("App Version")
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                 Spacer()
                 Text(version)
-                    .font(GridironType.statSmall)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.statSmall)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
             }
-            .padding(GridironGeo.padCard)
+            .padding(HardwoodGeo.padCard)
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
     private var disclaimerCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "DISCLAIMER")
-            Text("Not affiliated with, endorsed by, or sponsored by the National Football League, its teams, or the NFLPA. Team names and abbreviations are used for identification only. All trademarks are property of their respective owners.")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+            HardwoodSectionBar(title: "DISCLAIMER")
+            Text("Not affiliated with, endorsed by, or sponsored by the National Basketball Association, its teams, or the NBPA. Team names and abbreviations are used for identification only. All trademarks are property of their respective owners.")
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(GridironGeo.padCard)
+                .padding(HardwoodGeo.padCard)
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -327,19 +323,19 @@ struct AboutView: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(GridironPalette.turf)
+                .foregroundStyle(HardwoodPalette.court)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                 Text(subtitle)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
             }
             Spacer()
         }
-        .padding(GridironGeo.padCard)
+        .padding(HardwoodGeo.padCard)
     }
 }
 
@@ -348,33 +344,36 @@ private struct GlossaryEntry: Identifiable {
     let label: String
     let category: String
     let description: String
+    /// "Advanced · Efficiency": the kind and family a registry metric belongs to.
+    var detail: String? = nil
 }
 
 struct StatGlossaryView: View {
     @State private var searchText = ""
 
     private let supplemental: [GlossaryEntry] = [
-        .init(id: "general-games", label: "G", category: "General", description: "Games in which the player recorded a tracked statistic."),
-        .init(id: "general-value", label: "Contract Value", category: "General", description: "Production percentile minus pay percentile, both ranked among this season's qualified players at the position who have an active contract. Pay is the deal's yearly average as a share of the salary cap when it was signed. +20 means producing like a player paid far more. Offense only until advanced defensive stats publish. Contracts: OverTheCap via nflverse."),
-        .init(id: "general-power", label: "Power Rating", category: "General", description: "Points per game better or worse than an average team on a neutral field, from EPA per dropback, EPA per run and points, for minus against, adjusted for schedule. Early in the season last year's rating counts as five games of evidence. Two ratings read like a point spread, with about two points for home field. Modeled on Hawk Blogger's HB Power Rankings."),
-        .init(id: "general-small-sample", label: "Small sample", category: "General", description: "Below the playing-time minimum for that stat, prorated by how much of the season the typical team has played. Defenders need a quarter of their team's defensive snaps."),
+        .init(id: "general-games", label: "G", category: "Standard Stats", description: "Games in which the player appeared."),
+        .init(id: "standard-fg", label: "FG", category: "Standard Stats", description: "Field goals made and attempted. Ranked by shooting percentage, not by makes."),
+        .init(id: "standard-3p", label: "3P", category: "Standard Stats", description: "Three-pointers made and attempted. Ranked by shooting percentage."),
+        .init(id: "standard-ft", label: "FT", category: "Standard Stats", description: "Free throws made and attempted. Ranked by shooting percentage."),
+        .init(id: "standard-tov", label: "TOV", category: "Standard Stats", description: "Total turnovers. Lower is better."),
+        .init(id: "standard-pf", label: "PF", category: "Standard Stats", description: "Total personal fouls. Lower is better."),
+        .init(id: "standard-min", label: "MIN", category: "Standard Stats", description: "Total minutes played. Every rate on a roster is weighted by it."),
+        .init(id: "general-power", label: "Power Rating", category: "General", description: "Points per 100 possessions better or worse than an average team, from offensive and defensive rating adjusted for schedule. Early in the season last season's rating carries part of the weight. Two ratings read like a point spread, with about two and a half points for home court."),
+        .init(id: "general-small-sample", label: "Small sample", category: "General", description: "Below the playing-time minimum for that stat, prorated by how much of the season the typical team has played. A full-season player needs about 870 minutes and 20 games."),
         .init(id: "general-not-ranked", label: "Not ranked", category: "General", description: "A counting stat at zero. When most of the league has none of something, a tie at zero has no honest percentile, so the value shows and the bar does not."),
-        .init(id: "passing-cmp-att", label: "Cmp/Att", category: "Passing", description: "Pass completions and attempts."),
-        .init(id: "passing-cmp", label: "Cmp", category: "Passing", description: "Completed forward passes."),
-        .init(id: "passing-att", label: "Att", category: "Passing", description: "Forward pass attempts."),
-        .init(id: "rushing-car", label: "Car", category: "Rushing", description: "Rushing attempts, also called carries."),
-        .init(id: "receiving-rec-tgt", label: "Rec/Tgt", category: "Receiving", description: "Receptions and targets."),
-        .init(id: "receiving-tgt", label: "Tgt", category: "Receiving", description: "Pass attempts directed at the receiver."),
-        .init(id: "percentile", label: "Percentile", category: "General", description: "A 1–100 rank among players in the same season, season type, and stat category. Higher is always better after lower-is-better stats are inverted."),
+        .init(id: "general-groups", label: "Position groups", category: "General", description: "Guards (G), forwards (F) and centers (C), as the box score lists them. A center's rebounding is ranked against centers, so a percentile always means \"among players who play where he plays\"."),
+        .init(id: "percentile", label: "Percentile", category: "General", description: "A 1–100 rank among players in the same position group, season, and season type. Higher is always better after lower-is-better stats are inverted."),
     ]
 
     private var entries: [GlossaryEntry] {
-        let registry = FootballMetricRegistry.definitions.map {
+        let registry = BasketballMetricRegistry.definitions.map {
             GlossaryEntry(
                 id: "\($0.category.rawValue)-\($0.label)",
                 label: $0.label,
                 category: $0.category.rawValue,
-                description: $0.description
+                description: $0.description,
+                detail: "\($0.kind.rawValue) · \($0.family.rawValue)"
             )
         }
         let all = (supplemental + registry).sorted {
@@ -389,7 +388,7 @@ struct StatGlossaryView: View {
     }
 
     private var categories: [String] {
-        let order = ["General", "Passing", "Rushing", "Receiving", "Defense"]
+        let order = ["General"] + MetricCategory.allCases.map(\.rawValue) + ["Standard Stats"]
         return order.filter { category in entries.contains { $0.category == category } }
     }
 
@@ -411,9 +410,9 @@ struct StatGlossaryView: View {
             VStack(spacing: 12) {
                 SearchField(text: $searchText, prompt: "Search stats")
 
-                Text("Values come from nflverse player statistics and NFL Next Gen Stats. Percentiles are calculated separately for each season and season type. The current season ranks everyone who has played; past seasons rank qualifying players.")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                Text("Values come from ESPN box scores, play-by-play and shot charts via hoopR. Percentiles are calculated within each position group, separately for each season and season type. The current season ranks everyone who has played; past seasons rank qualifying players.")
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 4)
@@ -422,7 +421,7 @@ struct StatGlossaryView: View {
                     ContentUnavailableView {
                         Label("No stats found", systemImage: "magnifyingglass")
                     } description: {
-                        Text("Nothing matches \"\(searchText)\". Try a stat's abbreviation, like YAC or EPA.")
+                        Text("Nothing matches \"\(searchText)\". Try a stat's abbreviation, like TS% or AST%.")
                     }
                     .padding(.vertical, 40)
                 } else {
@@ -440,61 +439,68 @@ struct StatGlossaryView: View {
             Color.clear.frame(height: 88)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .navigationTitle("Stat Glossary")
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private func categoryCard(_ category: String) -> some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: category.uppercased())
+            HardwoodSectionBar(title: category.uppercased())
 
             let rows = entries.filter { $0.category == category }
             ForEach(Array(rows.enumerated()), id: \.element.id) { index, entry in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(entry.label)
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(entry.label)
+                            .font(HardwoodType.bodyBold)
+                            .foregroundStyle(HardwoodPalette.ink)
+                        if let detail = entry.detail {
+                            Text(detail.uppercased())
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
+                        }
+                    }
                     Text(entry.description)
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(HardwoodType.small)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(GridironGeo.padCard)
-                .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .padding(HardwoodGeo.padCard)
+                .background(index % 2 == 0 ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                 .overlay(
-                    Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                    Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline),
                     alignment: .bottom
                 )
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
     private var sourcesCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "SOURCES")
+            HardwoodSectionBar(title: "SOURCES")
             sourceRow(
-                "NFL Next Gen Stats Glossary",
-                url: URL(string: "https://nextgenstats.nfl.com/glossary")!
+                "hoopR NBA data (ESPN box scores, play-by-play, shots)",
+                url: URL(string: "https://hoopr.sportsdataverse.org/")!
             )
             sourceRow(
-                "nflreadpy Player Stats",
-                url: URL(string: "https://nflreadpy.nflverse.com/api/load_functions/#nflreadpy.load_player_stats")!,
+                "Basketball-Reference Glossary",
+                url: URL(string: "https://www.basketball-reference.com/about/glossary.html")!,
                 isLast: true
             )
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -502,19 +508,19 @@ struct StatGlossaryView: View {
         Link(destination: url) {
             HStack(spacing: 8) {
                 Text(title)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.court)
                 Spacer(minLength: 0)
                 Image(systemName: "arrow.up.right")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
-            .padding(GridironGeo.padCard)
-            .background(GridironPalette.surface)
+            .padding(HardwoodGeo.padCard)
+            .background(HardwoodPalette.surface)
             .overlay(
                 Rectangle()
-                    .fill(isLast ? Color.clear : GridironPalette.divider)
-                    .frame(height: GridironGeo.hairline),
+                    .fill(isLast ? Color.clear : HardwoodPalette.divider)
+                    .frame(height: HardwoodGeo.hairline),
                 alignment: .bottom
             )
         }
@@ -526,7 +532,7 @@ struct StatGlossaryView: View {
     NavigationStack {
         AboutView(
             lastUpdated: Date(),
-            dataCoverage: DataCoverage(asOf: .now, week: 12, phase: .regular)
+            dataCoverage: DataCoverage(asOf: .now, week: nil, phase: .regular)
         )
             .environmentObject(StoreService.shared)
     }

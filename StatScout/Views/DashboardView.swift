@@ -47,7 +47,7 @@ struct DashboardView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(GridironPalette.canvas)
+        .background(HardwoodPalette.canvas)
         .sheet(isPresented: $showingAbout) {
             NavigationStack {
                 AboutView(
@@ -76,25 +76,30 @@ struct DashboardView: View {
         }
     }
 
-    /// Why an older season shows fewer advanced metrics. Absent for seasons with
-    /// the full set, so it never becomes furniture the eye learns to skip.
     /// Why a season, or the live season so far, shows fewer advanced metrics,
-    /// plus what the dimmed rows and the bars mean.
+    /// plus what the dimmed rows and the bars mean. Absent for seasons with the
+    /// full set, so it never becomes furniture the eye learns to skip.
     private var coverageNoteText: String? {
-        let category = viewModel.selectedPosition.primaryCategory
         let isLive = viewModel.selectedSeason == viewModel.freeSeason && viewModel.selectedPhase == .regular
         let pending = isLive ? MetricCoverage.pendingNote(
-            category: category,
-            advancedDefenseStatus: viewModel.dataFreshness?.advancedDefenseStatus,
-            nextGenStatus: viewModel.dataFreshness?.nextGenStatus
+            category: nil,
+            shotsStatus: viewModel.dataFreshness?.shotsStatus,
+            playByPlayStatus: viewModel.dataFreshness?.playByPlayStatus
         ) : nil
-        let noun = viewModel.selectedPosition == .defense ? "defender" : viewModel.selectedPosition.rawValue
+        let noun = viewModel.selectedPosition.noun
         let cohort = isLive ? "every \(noun) with a line this season" : "every qualified \(noun)"
         let minimum = viewModel.qualifierLevel == .all
             ? "Dimmed rows are under the playing-time minimum."
             : "Players under the playing-time minimum are hidden; View shows them."
-        let legend = isLive ? "Bars show the percentile among \(cohort). \(minimum)" : "Bars show the percentile among \(cohort)."
-        return [MetricCoverage.note(for: viewModel.selectedSeason, category: category), pending, legend]
+        let ruler = viewModel.selectedPosition == .all
+            ? "Bars show each player's percentile within his own position group."
+            : "Bars show the percentile among \(cohort)."
+        let legend = isLive ? "\(ruler) \(minimum)" : ruler
+        return [
+            MetricCoverage.note(for: viewModel.selectedSeason, phase: viewModel.selectedPhase),
+            pending,
+            legend,
+        ]
             .compactMap { $0 }
             .joined(separator: " ")
     }
@@ -108,8 +113,8 @@ struct DashboardView: View {
                 Text(note)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
+            .font(HardwoodType.micro)
+            .foregroundStyle(HardwoodPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.top, 10)
@@ -124,20 +129,20 @@ struct DashboardView: View {
                         Image(systemName: "crown.fill")
                             .font(.system(size: 10))
                         Text(store.upgradeCTALabel)
-                            .font(GridironType.micro)
+                            .font(HardwoodType.micro)
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(GridironPalette.turf)
+                    .background(HardwoodPalette.court)
                     .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
             Button(action: { showingAbout = true }) {
                 Text("About StatScout")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .padding(.vertical, 8)
             }
             .buttonStyle(.plain)
@@ -165,7 +170,7 @@ struct DashboardView: View {
     /// height, so the one control that decides what the whole screen is about
     /// looked like nothing else in the app.
     private var positionSelector: some View {
-        GridironTabs(
+        HardwoodTabs(
             tabs: PlayerPositionGroup.allCases.map(\.rawValue),
             selected: Binding(
                 get: { viewModel.selectedPosition.rawValue },
@@ -222,8 +227,8 @@ struct DashboardView: View {
             }
         }
         .padding(.trailing, 12)
-        .frame(height: GridironControl.height + 2)
-        .padding(.top, GridironGeo.controlRowGap)
+        .frame(height: HardwoodControl.height + 2)
+        .padding(.top, HardwoodGeo.controlRowGap)
     }
 
     /// True while the search row is open or a query is still applied, so the
@@ -238,7 +243,7 @@ struct DashboardView: View {
             if !isSearching { viewModel.searchText = "" }
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         } label: {
-            GridironChip(systemImage: "magnifyingglass", isActive: isActiveSearch)
+            HardwoodChip(systemImage: "magnifyingglass", isActive: isActiveSearch)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Search players or teams")
@@ -253,8 +258,8 @@ struct DashboardView: View {
                     viewModel.searchText = ""
                 }
             }
-            .font(GridironType.small)
-            .foregroundStyle(GridironPalette.turf)
+            .font(HardwoodType.small)
+            .foregroundStyle(HardwoodPalette.court)
         }
         .padding(.horizontal, 12)
         .padding(.top, 8)
@@ -274,12 +279,12 @@ struct DashboardView: View {
         .buttonStyle(.plain)
     }
 
-    /// Clubs matching the search, above the filtered player rows.
+    /// Teams matching the search, above the filtered player rows.
     ///
     /// Searching used to only ever narrow the list of players. Someone typing
-    /// "chiefs" is usually after Kansas City, so the club itself is a result:
-    /// one tap to the team page, with the roster still filtered underneath if
-    /// that's what they wanted.
+    /// "knicks" is usually after New York, so the team itself is a result: one
+    /// tap to the team page, with the roster still filtered underneath if that's
+    /// what they wanted.
     @ViewBuilder
     private var teamResults: some View {
         let teams = viewModel.searchedTeams
@@ -288,44 +293,44 @@ struct DashboardView: View {
                 ForEach(Array(teams.prefix(3).enumerated()), id: \.element) { index, team in
                     if index > 0 {
                         Rectangle()
-                            .fill(GridironPalette.divider)
-                            .frame(height: GridironGeo.hairline)
+                            .fill(HardwoodPalette.divider)
+                            .frame(height: HardwoodGeo.hairline)
                     }
                     NavigationLink(value: TeamDestination(abbr: team)) {
                         HStack(spacing: 10) {
                             ZStack {
                                 Circle()
-                                    .fill(NFLTeamColor.color(team))
+                                    .fill(NBATeamColor.color(team))
                                     .frame(width: 28, height: 28)
                                 Text(displayTeamAbbr(team))
-                                    .font(GridironType.micro)
+                                    .font(HardwoodType.micro)
                                     .foregroundStyle(.white)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.6)
                             }
                             Text(teamFullName(team))
-                                .font(GridironType.bodyBold)
-                                .foregroundStyle(GridironPalette.ink)
+                                .font(HardwoodType.bodyBold)
+                                .foregroundStyle(HardwoodPalette.ink)
                             Text("TEAM PAGE")
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
                         }
-                        .padding(.horizontal, GridironGeo.padCard)
-                        .frame(height: GridironGeo.rowHeight)
+                        .padding(.horizontal, HardwoodGeo.padCard)
+                        .frame(height: HardwoodGeo.rowHeight)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(HardwoodPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                    .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
             )
             .padding(.horizontal, 12)
             .padding(.bottom, 8)
@@ -343,8 +348,8 @@ struct DashboardView: View {
                 .padding(.vertical, 24)
                 .frame(minHeight: 200)
             } else if let errorMessage = viewModel.errorMessage, viewModel.leaderboard.isEmpty {
-                // An offline first run is not a data error. The live season
-                // ships no bundled rows, so there is genuinely nothing to show
+                // An offline first run is not a data error. When the live season
+                // is newer than the bundle there is genuinely nothing to show
                 // until one update lands, and saying "Data Error" beside a
                 // warning triangle blamed the stats for the phone's signal.
                 let isOffline = viewModel.lastFailureWasConnectivity
@@ -362,13 +367,13 @@ struct DashboardView: View {
                         Task { await viewModel.load() }
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(GridironPalette.inkTertiary)
+                    .tint(HardwoodPalette.inkTertiary)
                 }
                 .padding(.vertical, 24)
                 .frame(minHeight: 200)
             } else if viewModel.leaderboard.isEmpty && viewModel.isHistoricalLoading {
                 // Season history is fetched on demand, so the first tap on a past
-                // season (or on All since 2000) arrives before its rows do. This
+                // season (or on All Time) arrives before its rows do. This
                 // used to fall through to "No player data is available", which
                 // reads as a permanent answer to a temporary state - the board
                 // filled in seconds later, by which point the user had believed
@@ -376,21 +381,21 @@ struct DashboardView: View {
                 VStack(spacing: 12) {
                     ProgressView()
                     Text("Loading \(SeasonLabel.text(viewModel.selectedSeason))…")
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(HardwoodType.small)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                 }
                 .padding(.vertical, 40)
                 .frame(maxWidth: .infinity, minHeight: 200)
             } else if viewModel.leaderboard.isEmpty && !viewModel.isLoading {
                 let hasSeasonData = !viewModel.seasonPlayers.isEmpty
-                // The live season ships no bundled rows on purpose: a snapshot
-                // baked into a build is a week stale by the time anyone
-                // installs it, and there is no honest way to caption it as the
-                // current league. So a first run with no connection genuinely
-                // has nothing here, and says so - "No player data is available
-                // for the 2026 season" reads as a verdict on the season rather
-                // than on the network, and sent people looking for a refresh
-                // control that would not have helped.
+                // A live season newer than the bundle (the day 2026-27 publishes)
+                // has no bundled rows, and a snapshot baked into a build is stale
+                // by the time anyone installs it. So a first run with no
+                // connection genuinely has nothing here, and says so - "No
+                // player data is available for the 2026-27 season" reads as a
+                // verdict on the season rather than on the network, and sent
+                // people looking for a refresh control that would not have
+                // helped.
                 let needsFirstConnection = !hasSeasonData
                     && viewModel.selectedSeason == viewModel.freeSeason
                     && viewModel.lastFetchFailed
@@ -399,7 +404,7 @@ struct DashboardView: View {
                         needsFirstConnection
                             ? "Connect to load \(SeasonLabel.text(viewModel.selectedSeason))"
                             : (hasSeasonData ? "No matching metrics" : "No players yet"),
-                        systemImage: needsFirstConnection ? "wifi.exclamationmark" : "football"
+                        systemImage: needsFirstConnection ? "wifi.exclamationmark" : "basketball"
                     )
                 } description: {
                     if needsFirstConnection {
@@ -415,7 +420,7 @@ struct DashboardView: View {
                             Task { await viewModel.load() }
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(GridironPalette.inkTertiary)
+                        .tint(HardwoodPalette.inkTertiary)
                     }
                 }
                 .padding(.vertical, 24)
@@ -440,11 +445,11 @@ struct DashboardView: View {
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 8)
@@ -462,21 +467,21 @@ struct DashboardView: View {
         VStack(spacing: 14) {
             ProgressView(value: min(max(viewModel.loadingProgress, 0), 1), total: 1)
                 .progressViewStyle(.linear)
-                .tint(GridironPalette.turf)
+                .tint(HardwoodPalette.court)
             Text(viewModel.loadingMessage)
-                .font(GridironType.bodyBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.bodyBold)
+                .foregroundStyle(HardwoodPalette.ink)
             Text("\(Int(min(max(viewModel.loadingProgress, 0), 1) * 100))%")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
         }
         .padding(22)
         .frame(maxWidth: 300)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .shadow(color: .black.opacity(0.08), radius: 16, y: 8)
         .padding(.horizontal, 24)
@@ -486,20 +491,20 @@ struct DashboardView: View {
         HStack(spacing: 10) {
             ProgressView(value: min(max(viewModel.loadingProgress, 0), 1), total: 1)
                 .progressViewStyle(.linear)
-                .tint(GridironPalette.turf)
+                .tint(HardwoodPalette.court)
                 .frame(maxWidth: .infinity)
             Text(viewModel.loadingMessage)
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .lineLimit(1)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(GridironPalette.surface)
+        .background(HardwoodPalette.surface)
         .clipShape(Capsule())
         .overlay(
             Capsule()
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
     }

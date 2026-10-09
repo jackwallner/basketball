@@ -11,7 +11,7 @@ import SwiftUI
 /// optimise for. Native scrolls properly, sizes itself, dismisses correctly and
 /// is the control users already know.
 ///
-/// `GridironSegmented` still covers two-to-four inline options; past that, this.
+/// `HardwoodSegmented` still covers two-to-four inline options; past that, this.
 /// The generic is named `Trigger`, not `Label`, so the rows below can still say
 /// `Label(_:systemImage:)` and mean SwiftUI's.
 struct SeasonMenu<Trigger: View>: View {
@@ -46,7 +46,7 @@ struct SeasonMenu<Trigger: View>: View {
         // Newest season first is the order the array already carries; without
         // this UIKit reverses it for menus that open upward.
         .menuOrder(.fixed)
-        .gridironMenuAppearance()
+        .hardwoodMenuAppearance()
         .accessibilityLabel("Season")
         .accessibilityValue(SeasonLabel.text(selected))
     }
@@ -75,7 +75,7 @@ struct SeasonPhaseMenu<Trigger: View>: View {
             label()
         }
         .menuOrder(.fixed)
-        .gridironMenuAppearance()
+        .hardwoodMenuAppearance()
         .accessibilityLabel("Season type")
         .accessibilityValue(selected.label)
     }
@@ -85,8 +85,8 @@ struct SeasonPhaseMenu<Trigger: View>: View {
 /// draws.
 ///
 /// Season type comes *first*, and that ordering is the whole reason one menu
-/// can hold both. The season list is twenty-seven rows (All Time plus 2000
-/// through the current year), which is far taller than a menu can show, so with
+/// can hold both. The season list is twenty-five rows (All Time plus 2002-03
+/// through the current season), which is far taller than a menu can show, so with
 /// seasons on top the two phase rows sat below the fold: the control existed,
 /// scrolled to the very bottom of a long list, and to anyone opening the menu
 /// the playoffs simply weren't switchable. Two rows above a scrolling list cost
@@ -95,7 +95,7 @@ struct SeasonPhaseMenu<Trigger: View>: View {
 /// Shared by the tab nav bars and the team page. The team page used to carry a
 /// season-only `SeasonMenu`, which is how a screen whose every number is filtered
 /// by `selectedPhase` ended up with no way to reach the playoffs - and because
-/// the Teams tab pushes straight into your favorite club on first visit, that
+/// the Teams tab pushes straight into your favorite team on first visit, that
 /// was the *only* Teams screen most sessions ever saw.
 struct SeasonPhasePicker<Trigger: View>: View {
     let seasons: [Int]
@@ -146,7 +146,7 @@ struct SeasonPhasePicker<Trigger: View>: View {
         // Newest season first is the order the array already carries; without
         // this UIKit reverses it for menus that open upward.
         .menuOrder(.fixed)
-        .gridironMenuAppearance()
+        .hardwoodMenuAppearance()
         .accessibilityLabel("Season and season type")
         .accessibilityValue(SeasonLabel.text(selectedSeason) + ", " + selectedPhase.label)
     }
@@ -247,7 +247,7 @@ struct SeasonPhaseNavBar: ViewModifier {
             // it, and it is the right thing to cut: a four-digit year beside the
             // word "Season" is already unmistakably a date, so the icon was
             // decoration sitting in front of the label it decorated.
-            GridironNavPill(
+            HardwoodNavPill(
                 title: SeasonLabel.text(selectedSeason) + " · " + selectedPhase.label
             )
         }
@@ -264,7 +264,7 @@ extension View {
     /// below it opened white. Same control, two looks, a tap apart. The pill
     /// labels set their own colours explicitly, so forcing light here changes
     /// nothing but the popup.
-    func gridironMenuAppearance() -> some View {
+    func hardwoodMenuAppearance() -> some View {
         environment(\.colorScheme, .light)
     }
 }
@@ -275,7 +275,7 @@ extension View {
 /// copy of this, and they drifted, one was a `Menu`, the others popovers, and
 /// the team page's had no `fixedSize()` so it clipped to a bare icon. One view
 /// now, so a change lands everywhere.
-struct GridironNavPill: View {
+struct HardwoodNavPill: View {
     /// Optional: a bar that is tight on width can drop the glyph and keep the
     /// label, which is the part that carries meaning.
     var systemImage: String? = nil
@@ -295,7 +295,7 @@ struct GridironNavPill: View {
                 // scale buys the words back without touching the CTA, and this
                 // is nav-bar chrome rather than content, so it can afford to sit
                 // a size below the board it labels.
-                .font(GridironType.micro)
+                .font(HardwoodType.micro)
             Image(systemName: "chevron.down")
                 .font(.system(size: 8, weight: .bold))
         }
@@ -305,25 +305,25 @@ struct GridironNavPill: View {
         .fixedSize()
         .padding(.horizontal, 9)
         .padding(.vertical, 5)
-        .background(GridironPalette.turf)
+        .background(HardwoodPalette.court)
         .clipShape(Capsule())
     }
 }
 
 /// In-content variant: same control, but sitting on a card rather than the midnight
 /// bar, so it's a quiet outlined capsule instead of a green one. It's a
-/// `GridironChip` with a chevron, so it can't drift from the sort / search /
+/// `HardwoodChip` with a chevron, so it can't drift from the sort / search /
 /// Filters chips it shares a row with.
-struct GridironInlinePill: View {
+struct HardwoodInlinePill: View {
     let systemImage: String?
     let title: String
     var isLocked: Bool = false
-    /// See `GridironChip.compressible`: set it where two of these share a
+    /// See `HardwoodChip.compressible`: set it where two of these share a
     /// half-width column, as they do in each Compare slot.
     var compressible: Bool = false
 
     var body: some View {
-        GridironChip(
+        HardwoodChip(
             title: title,
             systemImage: systemImage,
             trailing: .chevron,

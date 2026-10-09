@@ -27,10 +27,10 @@ struct TeamsView: View {
     // Auto-enter the favorite team once per launch; popping back must not
     // re-push it, or the user can never reach the list.
     @State private var didAutoEnterFavorite = false
-    @AppStorage("teams.view") private var mode: TeamsMode = .clubs
+    @AppStorage("teams.view") private var mode: TeamsMode = .teams
 
     enum TeamsMode: String, Hashable {
-        case clubs
+        case teams
         case standings
         case power
     }
@@ -41,29 +41,32 @@ struct TeamsView: View {
         viewModel.selectedSeason == viewModel.freeSeason && viewModel.selectedPhase == .regular
     }
 
-    private static let allTeams: [String] = nflTeamAbbreviations
+    private static let allTeams: [String] = nbaTeamAbbreviations
 
-    /// Eight divisions of four, in standings order. Grouping this way is what
-    /// lets all thirty-two clubs fit one screen without scrolling, and it's how
+    /// Six divisions of five, grouped by conference. Grouping this way is what
+    /// lets all thirty teams fit one screen without scrolling, and it's how
     /// people already hold the league in their heads, so it reads faster than an
-    /// alphabetical wall even before the space saving. Four across also sits
-    /// more comfortably than baseball's five.
+    /// alphabetical wall even before the space saving.
     static let divisions: [(name: String, teams: [String])] = [
-        ("AFC East",    ["BUF", "MIA", "NE", "NYJ"]),
-        ("AFC North",   ["BAL", "CIN", "CLE", "PIT"]),
-        ("AFC South",   ["HOU", "IND", "JAX", "TEN"]),
-        ("AFC West",    ["DEN", "KC", "LV", "LAC"]),
-        ("NFC East",    ["DAL", "NYG", "PHI", "WAS"]),
-        ("NFC North",   ["CHI", "DET", "GB", "MIN"]),
-        ("NFC South",   ["ATL", "CAR", "NO", "TB"]),
-        ("NFC West",    ["ARI", "LA", "SF", "SEA"]),
+        ("East · Atlantic",  ["BOS", "BKN", "NYK", "PHI", "TOR"]),
+        ("East · Central",   ["CHI", "CLE", "DET", "IND", "MIL"]),
+        ("East · Southeast", ["ATL", "CHA", "MIA", "ORL", "WAS"]),
+        ("West · Northwest", ["DEN", "MIN", "OKC", "POR", "UTA"]),
+        ("West · Pacific",   ["GSW", "LAC", "LAL", "PHX", "SAC"]),
+        ("West · Southwest", ["DAL", "HOU", "MEM", "NOP", "SAS"]),
+    ]
+
+    /// The two conferences, for the standings tables.
+    static let conferences: [(name: String, teams: [String])] = [
+        ("Eastern Conference", divisions.filter { $0.name.hasPrefix("East") }.flatMap(\.teams)),
+        ("Western Conference", divisions.filter { $0.name.hasPrefix("West") }.flatMap(\.teams)),
     ]
 
     private var filteredTeams: [String] {
-        // The division grid always draws all 32 clubs, so search and the count
-        // cover them too. Filtering to teams with published rows meant that in
-        // Week 1, with four teams played, "Chiefs" found nothing and the header
-        // read "4 teams" above a grid of 32.
+        // The division grid always draws all 30 teams, so search and the count
+        // cover them too. Filtering to teams with published rows meant that on
+        // opening night, with two teams played, "Celtics" found nothing and the
+        // header read "2 teams" above a grid of 30.
         guard !viewModel.teamsWithData.isEmpty else { return [] }
         let teams = searchText.isEmpty ? Self.allTeams : Self.allTeams.filter {
             teamFullName($0).localizedCaseInsensitiveContains(searchText) ||
@@ -106,9 +109,9 @@ struct TeamsView: View {
                     teamsLoadingState
                 } else {
                     if showsLeagueTables {
-                        GridironSegmented(
+                        HardwoodSegmented(
                             segments: [
-                                .init(value: TeamsMode.clubs, label: "Clubs"),
+                                .init(value: TeamsMode.teams, label: "Teams"),
                                 .init(value: TeamsMode.standings, label: "Standings"),
                                 .init(value: TeamsMode.power, label: "Power"),
                             ],
@@ -117,11 +120,11 @@ struct TeamsView: View {
                         .padding(.horizontal, 12)
                         .padding(.bottom, 12)
                     }
-                    switch showsLeagueTables ? mode : .clubs {
-                    case .clubs:
+                    switch showsLeagueTables ? mode : .teams {
+                    case .teams:
                         allTeamsSection
                     case .standings:
-                        StandingsView(viewModel: viewModel, divisions: Self.divisions)
+                        StandingsView(viewModel: viewModel, conferences: Self.conferences)
                     case .power:
                         PowerRankingsView(viewModel: viewModel)
                     }
@@ -133,15 +136,15 @@ struct TeamsView: View {
             .padding(.top, 12)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         // Same header as Stats and Trends, from the one shared modifier, so the
         // season you are reading never moves when you change tabs.
         .modifier(
             SeasonPhaseNavBar(
                 title: "Teams",
                 // No All Time here: a career row carries the player's last team,
-                // so a franchise's "all time" list would credit it with yards
-                // earned elsewhere. See `seasonsExcludingAllTime`.
+                // so a franchise's "all time" list would credit it with points
+                // scored elsewhere. See `seasonsExcludingAllTime`.
                 seasons: viewModel.seasonsExcludingAllTime,
                 selectedSeason: viewModel.selectedSeason,
                 selectedPhase: viewModel.selectedPhase,
@@ -182,19 +185,19 @@ struct TeamsView: View {
     /// The season is chosen once and shared across tabs, so picking All Time on
     /// Stats and then opening Teams lands here. Rather than silently reinterpret
     /// the selection (a franchise list built from career rows would credit each
-    /// team with yards its players earned elsewhere) or silently change it back,
+    /// team with points its players scored elsewhere) or silently change it back,
     /// this says what it can't do and offers the one tap that fixes it.
     private var allTimeUnavailableState: some View {
         VStack(spacing: 12) {
             Image(systemName: "shield.lefthalf.filled.slash")
                 .font(.system(size: 28, weight: .regular))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
             Text("Teams needs a single season")
-                .font(GridironType.cardTitle)
-                .foregroundStyle(GridironPalette.ink)
-            Text("Career totals follow the player, not the club: a career line carries whichever team he finished with, so an all-time roster would credit a franchise with yards earned somewhere else. Pick a season to see its teams.")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.cardTitle)
+                .foregroundStyle(HardwoodPalette.ink)
+            Text("Career totals follow the player, not the team: a career line carries whichever team he finished with, so an all-time roster would credit a franchise with points scored somewhere else. Pick a season to see its teams.")
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Button {
@@ -202,11 +205,11 @@ struct TeamsView: View {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
                 Text("Show " + SeasonLabel.text(latestUnlockedSeason))
-                    .font(GridironType.smallBold)
+                    .font(HardwoodType.smallBold)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 18)
                     .padding(.vertical, 9)
-                    .background(GridironPalette.turf)
+                    .background(HardwoodPalette.court)
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
@@ -214,11 +217,11 @@ struct TeamsView: View {
         .padding(.vertical, 36)
         .padding(.horizontal, 24)
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
     }
@@ -235,14 +238,14 @@ struct TeamsView: View {
             ForEach(0..<6, id: \.self) { _ in
                 HStack(spacing: 12) {
                     Circle()
-                        .fill(GridironPalette.surfaceAlt)
+                        .fill(HardwoodPalette.surfaceAlt)
                         .frame(width: 36, height: 36)
                     VStack(alignment: .leading, spacing: 6) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(GridironPalette.surfaceAlt)
+                            .fill(HardwoodPalette.surfaceAlt)
                             .frame(width: 140, height: 12)
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(GridironPalette.surfaceAlt)
+                            .fill(HardwoodPalette.surfaceAlt)
                             .frame(width: 40, height: 10)
                     }
                     Spacer()
@@ -252,11 +255,11 @@ struct TeamsView: View {
             }
         }
         .padding(.horizontal, 12)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .redacted(reason: .placeholder)
@@ -274,8 +277,8 @@ struct TeamsView: View {
             if let fav = pinnedFavorite {
                 HStack {
                     Text("FAVORITE TEAM")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                     Spacer()
                 }
                 .padding(.horizontal, 16)
@@ -295,17 +298,17 @@ struct TeamsView: View {
 
             HStack {
                 Text("ALL TEAMS")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                 Spacer()
                 if searchText.isEmpty {
                     Text("\(filteredTeams.count) teams")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                 } else {
                     Button("Clear") { searchText = "" }
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                 }
             }
             .padding(.horizontal, 16)
@@ -330,7 +333,7 @@ struct TeamsView: View {
             } else {
                 // A search result has no meaningful division shape, so it falls
                 // back to a flat run of whatever matched.
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 8) {
                     ForEach(gridTeams, id: \.self) { abbr in
                         teamDot(abbr)
                     }
@@ -341,7 +344,7 @@ struct TeamsView: View {
         }
     }
 
-    /// Eight labelled rows of four. Sized so the whole league sits on one
+    /// Six labelled rows of five. Sized so the whole league sits on one
     /// screen.
     private var divisionGrid: some View {
         VStack(spacing: 10) {
@@ -349,8 +352,8 @@ struct TeamsView: View {
                 VStack(spacing: 6) {
                     HStack {
                         Text(division.name.uppercased())
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
                         Spacer()
                     }
                     HStack(spacing: 8) {
@@ -365,15 +368,15 @@ struct TeamsView: View {
         .padding(.bottom, 12)
     }
 
-    /// One club: the colour disk with its abbreviation, a favorite star when
-    /// set, and a long-press to toggle it. No full team name, at four across
-    /// there isn't room, and the helmet colours plus abbreviation are how people
-    /// recognise a club anyway.
+    /// One team: the colour disk with its abbreviation, a favorite star when
+    /// set, and a long-press to toggle it. No full team name, at five across
+    /// there isn't room, and the team colours plus abbreviation are how people
+    /// recognise a team anyway.
     private func teamDot(_ abbr: String) -> some View {
         NavigationLink(value: TeamDestination(abbr: abbr)) {
             // The disk already carries the abbreviation, so no caption beneath,
             // it printed the same letters twice and ate the vertical room the
-            // eight division rows need.
+            // six division rows need.
             VStack(spacing: 3) {
                 ZStack(alignment: .topTrailing) {
                     TeamAbbrDisk(abbr: abbr)
@@ -382,13 +385,13 @@ struct TeamsView: View {
                             .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(Color.yellow)
                             .padding(2)
-                            .background(GridironPalette.surface, in: Circle())
+                            .background(HardwoodPalette.surface, in: Circle())
                             .offset(x: 3, y: -3)
                     }
                 }
-                if let status = weekStatus(abbr) {
+                if let status = teamStatus(abbr) {
                     Text(status.text)
-                        .font(GridironType.micro)
+                        .font(HardwoodType.micro)
                         .foregroundStyle(status.color)
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
@@ -411,45 +414,23 @@ struct TeamsView: View {
                       systemImage: teamsViewModel.isFavorite(abbr) ? "star.slash" : "star.fill")
             }
         }
-        .accessibilityLabel([teamFullName(abbr), weekStatus(abbr)?.spoken].compactMap { $0 }.joined(separator: ", "))
+        .accessibilityLabel([teamFullName(abbr), teamStatus(abbr)?.spoken].compactMap { $0 }.joined(separator: ", "))
     }
 
-    /// The club's record under each disk, or "Live" while it is playing. It
-    /// used to be this week's kickoff day, which from Tuesday to Saturday put
-    /// "Sun" under 28 of the 32 clubs and said nothing about any of them.
-    private func weekStatus(_ abbr: String) -> (text: String, spoken: String, color: Color)? {
+    /// The team's record under each disk, or "Live" while it is playing. The
+    /// record is the live season's, so while the next season is pending it is
+    /// the finished one's, which the Teams header says.
+    private func teamStatus(_ abbr: String) -> (text: String, spoken: String, color: Color)? {
         guard viewModel.selectedSeason == viewModel.freeSeason,
               viewModel.selectedPhase == .regular else { return nil }
         if let game = viewModel.currentGame(forTeam: abbr),
            [.inProgress, .awaitingScore].contains(game.status()) {
-            return ("Live", "playing \(game.matchupLabel(for: abbr))", GridironPalette.performanceLow)
+            return ("Live", "playing \(game.matchupLabel(for: abbr))", HardwoodPalette.performanceLow)
         }
         if let record = viewModel.record(forTeam: abbr) {
-            return (record, "record \(record)", GridironPalette.inkSecondary)
+            return (record, "record \(record)", HardwoodPalette.inkSecondary)
         }
-        return legacyWeekStatus(abbr)
-    }
-
-    /// Before a club's first final: its first kickoff day, or its bye.
-    private func legacyWeekStatus(_ abbr: String) -> (text: String, spoken: String, color: Color)? {
-        guard let week = viewModel.currentGameWeek else { return nil }
-        guard let game = viewModel.currentGame(forTeam: abbr) else {
-            return week.phase == .regular ? ("Bye", "bye week", GridironPalette.inkTertiary) : nil
-        }
-        switch game.status() {
-        case .final:
-            let line = game.resultLine(for: abbr) ?? "Final"
-            let color = game.result(for: abbr) == "L" ? GridironPalette.performanceLow : GridironPalette.performanceHigh
-            return (line, "\(line) \(game.matchupLabel(for: abbr))", color)
-        case .inProgress, .awaitingScore:
-            return ("Live", "playing \(game.matchupLabel(for: abbr))", GridironPalette.performanceLow)
-        case .upcoming:
-            return (
-                game.kickoff?.formatted(.dateTime.weekday(.abbreviated)) ?? "TBD",
-                "\(game.matchupLabel(for: abbr)), \(game.dayLabel)",
-                GridironPalette.inkSecondary
-            )
-        }
+        return nil
     }
 }
 
@@ -460,9 +441,9 @@ private struct TeamAbbrDisk: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(NFLTeamColor.color(abbr))
+            Circle().fill(NBATeamColor.color(abbr))
             Text(displayTeamAbbr(abbr))
-                .font(GridironType.smallBold)
+                .font(HardwoodType.smallBold)
                 .foregroundStyle(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
@@ -490,7 +471,7 @@ struct FavoriteTeamCard: View {
                 HStack(spacing: 14) {
                     ZStack {
                         Circle()
-                            .fill(NFLTeamColor.color(abbr))
+                            .fill(NBATeamColor.color(abbr))
                             .frame(width: 52, height: 52)
                             .shadow(color: Color.black.opacity(0.08), radius: 4, y: 2)
                         Text(abbr)
@@ -500,11 +481,11 @@ struct FavoriteTeamCard: View {
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("YOUR TEAM")
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.turf)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.court)
                         Text(teamFullName(abbr))
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(HardwoodType.bodyBold)
+                            .foregroundStyle(HardwoodPalette.ink)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
@@ -513,16 +494,16 @@ struct FavoriteTeamCard: View {
 
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .padding(.trailing, 36)
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity)
-                .background(GridironPalette.surfaceAlt)
-                .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                .background(HardwoodPalette.surfaceAlt)
+                .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
                 .overlay(
-                    RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                        .stroke(GridironPalette.turf, lineWidth: 1.5)
+                    RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                        .stroke(HardwoodPalette.court, lineWidth: 1.5)
                 )
             }
             .buttonStyle(.plain)
@@ -534,8 +515,8 @@ struct FavoriteTeamCard: View {
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(Color.yellow)
                     .padding(8)
-                    .background(Circle().fill(GridironPalette.surface))
-                    .overlay(Circle().stroke(GridironPalette.hairline, lineWidth: 0.5))
+                    .background(Circle().fill(HardwoodPalette.surface))
+                    .overlay(Circle().stroke(HardwoodPalette.hairline, lineWidth: 0.5))
             }
             .buttonStyle(.borderless)
             .accessibilityLabel("Remove favorite")
@@ -553,35 +534,35 @@ struct TeamRowContent: View {
     var body: some View {
         HStack(spacing: 0) {
             Circle()
-                .fill(NFLTeamColor.color(abbr))
+                .fill(NBATeamColor.color(abbr))
                 .frame(width: 36, height: 36)
                 .overlay(
                     Text(abbr)
-                        .font(GridironType.smallBold)
+                        .font(HardwoodType.smallBold)
                         .foregroundStyle(.white)
                 )
                 .padding(.trailing, 12)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(teamFullName(abbr))
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .lineLimit(1)
 
                 Text(abbr)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
         }
         .padding(.leading, 12)
         .frame(height: 56)
         .contentShape(Rectangle())
-        .background(isFavorite ? GridironPalette.surfaceAlt : GridironPalette.surface)
+        .background(isFavorite ? HardwoodPalette.surfaceAlt : HardwoodPalette.surface)
     }
 }
 
@@ -595,10 +576,10 @@ struct TeamTile: View {
         VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(NFLTeamColor.color(abbr))
+                    .fill(NBATeamColor.color(abbr))
                     .frame(width: 44, height: 44)
                 Text(abbr)
-                    .font(GridironType.smallBold)
+                    .font(HardwoodType.smallBold)
                     .foregroundStyle(.white)
 
                 if isFavorite {
@@ -619,20 +600,20 @@ struct TeamTile: View {
             }
 
             Text(teamFullName(abbr))
-                .font(GridironType.smallBold)
-                .foregroundStyle(isFavorite ? GridironPalette.turf : GridironPalette.ink)
+                .font(HardwoodType.smallBold)
+                .foregroundStyle(isFavorite ? HardwoodPalette.court : HardwoodPalette.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .padding(.horizontal, 6)
-        .background(isFavorite ? GridironPalette.surfaceAlt : GridironPalette.surface)
+        .background(isFavorite ? HardwoodPalette.surfaceAlt : HardwoodPalette.surface)
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(isFavorite ? GridironPalette.turf : GridironPalette.hairline, lineWidth: isFavorite ? 2 : 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(isFavorite ? HardwoodPalette.court : HardwoodPalette.hairline, lineWidth: isFavorite ? 2 : 0.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
     }
 }
 

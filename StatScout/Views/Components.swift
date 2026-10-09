@@ -9,7 +9,7 @@ struct PlayerHeadshot: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(NFLTeamColor.color(team))
+            Circle().fill(NBATeamColor.color(team))
             Text(initials)
                 .font(.system(size: size * 0.34, weight: .bold, design: .default))
                 .foregroundStyle(.white)
@@ -67,17 +67,17 @@ struct OverallPercentileBadge: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("\(percentile)")
-                .font(GridironType.statHero)
+                .font(HardwoodType.statHero)
                 .foregroundStyle(.white)
                 .shadow(color: Color.black.opacity(0.4), radius: 2, x: 0, y: 1)
             Text(percentile.ordinal)
-                .font(GridironType.micro)
+                .font(HardwoodType.micro)
                 .foregroundStyle(.white.opacity(0.9))
                 .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 0.5)
         }
         .frame(width: size, height: size)
-        .background(GridironPalette.color(forPercentile: percentile))
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusBadge))
+        .background(HardwoodPalette.color(forPercentile: percentile))
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusBadge))
         .accessibilityLabel("Overall \(percentile.ordinalString) percentile, \(tierDescription)")
     }
 }
@@ -86,7 +86,7 @@ struct TeamColorDot: View {
     let abbr: String
     var size: CGFloat = 8
     var body: some View {
-        Circle().fill(NFLTeamColor.color(abbr)).frame(width: size, height: size)
+        Circle().fill(NBATeamColor.color(abbr)).frame(width: size, height: size)
             .accessibilityHidden(true)
     }
 }
@@ -99,7 +99,7 @@ func displayTeamAbbr(_ abbr: String) -> String {
     return abbr
 }
 
-// MARK: - Module 2: Percentile Bar Row (MetricBar) - football analytics Style
+// MARK: - Module 2: Percentile Bar Row (MetricBar)
 
 struct MetricBar: View {
     let metric: Metric
@@ -118,31 +118,36 @@ struct MetricBar: View {
         HStack(spacing: 12) {
             // Label column - left aligned
             VStack(alignment: .leading, spacing: 1) {
+                // Basketball labels run longer than the old ones ("Non-Corner 3%",
+                // "Short Mid FG%"), so give them room and let the longest shrink
+                // before it wraps to three lines.
                 Text(metric.label)
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
                 if metric.isSmallSample, !metric.isUnranked {
                     Text("Small sample")
                         .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
             }
-            .frame(width: 70, alignment: .leading)
+            .frame(width: 104, alignment: .leading)
 
             if metric.isUnranked {
                 // A zero count has no honest rank (see `Metric.isUnranked`):
                 // an empty track, no bubble, no colour.
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(GridironPalette.surfaceSunk)
+                        .fill(HardwoodPalette.surfaceSunk)
                         .frame(height: 10)
                     Text("Not ranked")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .padding(.horizontal, 6)
-                        .background(Capsule().fill(GridironPalette.surfaceSunk))
+                        .background(Capsule().fill(HardwoodPalette.surfaceSunk))
                         .padding(.leading, 8)
                 }
                 .frame(height: 28)
@@ -155,8 +160,8 @@ struct MetricBar: View {
             // Value column - far right, fixed width (sized for "30.0 ft/s" / "0.421" range)
             if showValue && !metric.value.isEmpty {
                 Text(metric.value)
-                    .font(GridironType.statMed)
-                    .foregroundStyle(metric.isSmallSample || metric.isUnranked ? GridironPalette.inkSecondary : GridironPalette.ink)
+                    .font(HardwoodType.statMed)
+                    .foregroundStyle(metric.isSmallSample || metric.isUnranked ? HardwoodPalette.inkSecondary : HardwoodPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .frame(width: 72, alignment: .trailing)
@@ -178,16 +183,16 @@ struct MetricBar: View {
 
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(GridironPalette.surfaceSunk)
+                        .fill(HardwoodPalette.surfaceSunk)
                         .frame(height: 10)
 
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(GridironPalette.color(forPercentile: percentileValue))
+                        .fill(HardwoodPalette.color(forPercentile: percentileValue))
                         .frame(width: offset, height: 10)
 
                     ZStack {
                         Circle()
-                            .fill(GridironPalette.color(forPercentile: percentileValue))
+                            .fill(HardwoodPalette.color(forPercentile: percentileValue))
                             .frame(width: circleSize, height: circleSize)
 
                         Text("\(percentileValue)")
@@ -203,7 +208,7 @@ struct MetricBar: View {
     }
 }
 
-/// Season + recent percentile bars stacked in one row - same Gridiron layout,
+/// Season + recent percentile bars stacked in one row - same Hardwood layout,
 /// with a compact recent track under the season bar when both are available.
 struct DualMetricBar: View {
     let season: Metric
@@ -214,16 +219,16 @@ struct DualMetricBar: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Text("Season")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(width: 52, alignment: .leading)
                 MetricBar(metric: season, showValue: true)
             }
 
             HStack(spacing: 6) {
                 Text(recentCaption)
-                    .font(GridironType.micro)
-                    .foregroundStyle(recent == nil ? GridironPalette.inkTertiary : GridironPalette.turf)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(recent == nil ? HardwoodPalette.inkTertiary : HardwoodPalette.court)
                     .frame(width: 52, alignment: .leading)
                 if let recent {
                     MetricBar(metric: recent, showValue: true)
@@ -231,15 +236,13 @@ struct DualMetricBar: View {
                     // The row used to just vanish, which made "Both" look
                     // identical to "Season" and read as a broken toggle rather
                     // than as a metric with no window figure. Say which it is.
-                    // Nothing here is derivable for the Next Gen Stats season
-                    // aggregates (Separation, CPOE, Time to Throw) or the
-                    // team-relative shares (Target Share, WOPR): the per-game
-                    // feed carries no denominator for them, and averaging their
-                    // per-game averages would be a different number wearing this
-                    // one's label.
-                    Text("Not available per game")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                    // Season totals (3PM, AST, STL...) have no per-week figure
+                    // on the season's ruler: a two-week block placed against
+                    // full-season totals would read as the 1st percentile for
+                    // everyone, a different number wearing this one's label.
+                    Text("Not available per week")
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
@@ -260,17 +263,17 @@ struct SearchField: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
             ZStack(alignment: .leading) {
                 if text.isEmpty {
                     Text(prompt)
-                        .font(GridironType.body)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(HardwoodType.body)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                         .allowsHitTesting(false)
                 }
                 TextField("", text: $text)
                     .textInputAutocapitalization(.never)
-                    .foregroundStyle(GridironPalette.ink)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .focused($isFocused)
             }
         }
@@ -281,11 +284,11 @@ struct SearchField: View {
         }
         .padding(.horizontal, 12)
         .frame(height: 36)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 1)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
     }
@@ -300,9 +303,9 @@ struct CategoryFilter: View {
     var body: some View {
         let categoryTabs = MetricCategory.allCases.map { $0.rawValue }
         let tabs = showAllOption ? ["All"] + categoryTabs : categoryTabs
-        let selectedTab = selectedCategory?.rawValue ?? (showAllOption ? "All" : MetricCategory.passing.rawValue)
+        let selectedTab = selectedCategory?.rawValue ?? (showAllOption ? "All" : MetricCategory.scoring.rawValue)
 
-        GridironTabs(
+        HardwoodTabs(
             tabs: tabs,
             selected: Binding(
                 get: { selectedTab },
@@ -332,26 +335,26 @@ struct QualifierPicker: View {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     } label: {
                         Text(level.rawValue)
-                            .font(GridironType.micro)
-                            .foregroundStyle(selection == level ? .white : GridironPalette.inkSecondary)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(selection == level ? .white : HardwoodPalette.inkSecondary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 28)
-                            .background(selection == level ? GridironPalette.turf : Color.clear)
+                            .background(selection == level ? HardwoodPalette.court : Color.clear)
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(2)
-            .background(GridironPalette.surface)
+            .background(HardwoodPalette.surface)
             .clipShape(Capsule())
-            .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+            .overlay(Capsule().stroke(HardwoodPalette.hairline, lineWidth: 0.5))
 
             // Threshold caption - keeps "All" and "Min Sample" from reading as
             // synonyms by spelling out what the active level actually filters.
             Text(selection.description)
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
         }
     }
 }
@@ -381,16 +384,16 @@ struct QualifierMenu: View {
                 Image(systemName: "line.3.horizontal.decrease.circle")
                     .font(.system(size: 11, weight: .semibold))
                 Text(selection.rawValue)
-                    .font(GridironType.micro)
+                    .font(HardwoodType.micro)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 9, weight: .bold))
             }
-            .foregroundStyle(GridironPalette.inkSecondary)
+            .foregroundStyle(HardwoodPalette.inkSecondary)
             .padding(.horizontal, 10)
             .frame(height: 30)
-            .background(GridironPalette.surface)
+            .background(HardwoodPalette.surface)
             .clipShape(Capsule())
-            .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+            .overlay(Capsule().stroke(HardwoodPalette.hairline, lineWidth: 0.5))
         }
         .menuOrder(.fixed)
         .accessibilityLabel("Qualifier")
@@ -407,11 +410,11 @@ struct SectionHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(GridironType.sectionTitle)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.sectionTitle)
+                .foregroundStyle(HardwoodPalette.ink)
             Text(subtitle)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
         }
     }
 }
@@ -437,9 +440,9 @@ struct TrendGlyph: View {
 
     private var color: Color {
         switch direction {
-        case .up: GridironPalette.up
-        case .flat: GridironPalette.inkTertiary
-        case .down: GridironPalette.down
+        case .up: HardwoodPalette.up
+        case .flat: HardwoodPalette.inkTertiary
+        case .down: HardwoodPalette.down
         }
     }
 }
@@ -456,23 +459,23 @@ struct TrendGlyph: View {
 /// not a garnish on the season leaderboard.
 struct TrendArrow: View {
     let delta: Double
-    /// Yardage and counting stats move in whole numbers, percentages in tenths,
-    /// EPA per play in hundredths.
+    /// Counting stats move in whole numbers, percentages and per-100 rates in
+    /// tenths, ratios like FT Rate in hundredths.
     var decimals: Int = 1
-    /// For metrics where down is the good direction, INT%, Sack%, Fumble%. The
+    /// For metrics where down is the good direction, TOV%, Fouls/100. The
     /// arrow still points the way the number actually moved; only the colour
     /// flips, so green always means "better".
     var lowerIsBetter: Bool = false
 
     /// Below half of the last displayed digit a delta is noise, and an arrow
     /// would imply a signal: 0.5 for whole numbers, 0.05 for a percent reported
-    /// to a tenth, 0.005 for EPA per play.
+    /// to a tenth, 0.005 for a ratio reported to a hundredth.
     private var isFlat: Bool { abs(delta) < 5 * pow(10, -Double(decimals + 1)) }
 
     private var tint: Color {
-        if isFlat { return GridironPalette.inkTertiary }
+        if isFlat { return HardwoodPalette.inkTertiary }
         let improved = lowerIsBetter ? delta < 0 : delta > 0
-        return improved ? GridironPalette.performanceHigh : GridironPalette.performanceLow
+        return improved ? HardwoodPalette.performanceHigh : HardwoodPalette.performanceLow
     }
 
     private var text: String {
@@ -487,7 +490,7 @@ struct TrendArrow: View {
                     .font(.system(size: 8, weight: .bold))
             }
             Text(text)
-                .font(GridironType.micro)
+                .font(HardwoodType.micro)
                 .monospacedDigit()
         }
         .foregroundStyle(tint)
@@ -509,11 +512,11 @@ struct PercentileBarMini: View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: height/2)
-                    .fill(GridironPalette.surfaceSunk)
+                    .fill(HardwoodPalette.surfaceSunk)
                     .frame(height: height)
 
                 RoundedRectangle(cornerRadius: height/2)
-                    .fill(tint ?? GridironPalette.color(forPercentile: percentile))
+                    .fill(tint ?? HardwoodPalette.color(forPercentile: percentile))
                     .frame(width: proxy.size.width * CGFloat(percentile) / 100.0, height: height)
             }
         }
@@ -534,18 +537,18 @@ struct LeaderboardTableHeader: View {
     var body: some View {
         HStack(spacing: 0) {
             Text("RANK")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .frame(width: 42, alignment: .leading)
 
             Text("PLAYER")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Text("TEAM")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .frame(width: 44, alignment: .leading)
 
             HStack(spacing: 2) {
@@ -569,8 +572,8 @@ struct LeaderboardTableHeader: View {
                         Image(systemName: "chevron.down")
                             .font(.system(size: 7, weight: .bold))
                     }
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.court)
                 }
                 .menuOrder(.fixed)
                 .accessibilityLabel("Metric")
@@ -579,7 +582,7 @@ struct LeaderboardTableHeader: View {
                 Button(action: onToggleDirection) {
                     Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(GridironPalette.turf)
+                        .foregroundStyle(HardwoodPalette.court)
                         .frame(width: 18, height: 26)
                 }
                 .buttonStyle(.plain)
@@ -588,10 +591,10 @@ struct LeaderboardTableHeader: View {
             }
             .frame(width: 104, alignment: .trailing)
         }
-        .frame(height: GridironGeo.rowHeightHeader)
-        .padding(.horizontal, GridironGeo.padInline)
-        .background(GridironPalette.surfaceAlt)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .frame(height: HardwoodGeo.rowHeightHeader)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .background(HardwoodPalette.surfaceAlt)
+        .overlay(Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline), alignment: .bottom)
     }
 }
 
@@ -602,17 +605,17 @@ struct InlineLoadError: View {
     var body: some View {
         VStack(spacing: 10) {
             Text(message)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
             Button("Try Again") {
                 Task { await retry() }
             }
-            .font(GridironType.smallBold)
-            .foregroundStyle(GridironPalette.turf)
+            .font(HardwoodType.smallBold)
+            .foregroundStyle(HardwoodPalette.court)
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, HardwoodGeo.padInline)
         .padding(.vertical, 24)
     }
 }
@@ -629,9 +632,9 @@ struct LeaderboardTableRow: View {
     /// wrong ruler for five games' worth of numbers, and there is no window
     /// curve to colour it against.
     var valueOverride: String? = nil
-    /// The volume behind the ranked number, "16 att" or "142 snaps", printed
-    /// after the position. A rate with no denominator beside it gave a
-    /// 16-attempt backup the same authority as a 60-attempt starter.
+    /// The volume behind the ranked number, "1,820 min", printed after the
+    /// position. A rate with no denominator beside it gave a 90-minute
+    /// reserve the same authority as a 2,400-minute starter.
     var volume: String? = nil
     /// Under the playing-time bar for the ranked metric: value and bar dimmed.
     var isSmallSample: Bool = false
@@ -662,10 +665,10 @@ struct LeaderboardTableRow: View {
     }
 
     private var displayValueColor: Color {
-        if isSmallSample || displayMetric?.isUnranked == true { return GridironPalette.inkTertiary }
+        if isSmallSample || displayMetric?.isUnranked == true { return HardwoodPalette.inkTertiary }
         return valueOverride == nil
-            ? GridironPalette.textColor(forPercentile: displayPercentile)
-            : GridironPalette.ink
+            ? HardwoodPalette.textColor(forPercentile: displayPercentile)
+            : HardwoodPalette.ink
     }
 
     private var subtitle: String {
@@ -677,8 +680,8 @@ struct LeaderboardTableRow: View {
     var body: some View {
         HStack(spacing: 0) {
             Text("\(rank)")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.statSmall)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .frame(width: 42, alignment: .leading)
                 .monospacedDigit()
 
@@ -686,14 +689,14 @@ struct LeaderboardTableRow: View {
                 PlayerHeadshot(team: player.team, initials: player.initials, size: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(player.name)
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.bodyBold)
+                        .foregroundStyle(HardwoodPalette.ink)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.85)
+                        .minimumScaleFactor(0.6)
                         .truncationMode(.tail)
                     Text(subtitle)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 }
@@ -703,8 +706,8 @@ struct LeaderboardTableRow: View {
             HStack(spacing: 4) {
                 TeamColorDot(abbr: player.team, size: 6)
                 Text(displayTeamAbbr(player.team))
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
             }
             .frame(width: 44, alignment: .leading)
 
@@ -726,7 +729,7 @@ struct LeaderboardTableRow: View {
                         }
                     }
                     Text(displayValueText)
-                        .font(GridironType.statSmall)
+                        .font(HardwoodType.statSmall)
                         .foregroundStyle(displayValueColor)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -734,8 +737,8 @@ struct LeaderboardTableRow: View {
                         .monospacedDigit()
                 } else {
                     Text("-")
-                        .font(GridironType.statSmall)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.statSmall)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                         .monospacedDigit()
                 }
@@ -747,14 +750,14 @@ struct LeaderboardTableRow: View {
                     .frame(width: 46, alignment: .trailing)
             }
         }
-        .frame(height: GridironGeo.rowHeight)
-        .padding(.horizontal, GridironGeo.padInline)
+        .frame(height: HardwoodGeo.rowHeight)
+        .padding(.horizontal, HardwoodGeo.padInline)
         // Banded rows, the same white / near-white alternation the Trends board
         // and the standard-stats board already use. Fifty rows of one flat
         // surface is where the eye loses its place tracking a name across to a
         // number; the band is what carries it. Keyed on `rank` (1-based) so the
         // first row is the plain surface and the card's top edge stays clean.
-        .background(rank % 2 == 1 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .background(rank % 2 == 1 ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
         .contentShape(Rectangle())
     }
 }
@@ -781,8 +784,8 @@ struct BlurGateUnlock: View {
     var body: some View {
         VStack(spacing: 8) {
             Text(headline)
-                .font(GridironType.smallBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.smallBold)
+                .foregroundStyle(HardwoodPalette.ink)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -794,7 +797,7 @@ struct BlurGateUnlock: View {
         .frame(maxWidth: .infinity)
         .background(
             LinearGradient(
-                colors: [.clear, GridironPalette.surface.opacity(0.95), GridironPalette.surface],
+                colors: [.clear, HardwoodPalette.surface.opacity(0.95), HardwoodPalette.surface],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -809,8 +812,8 @@ struct BlurGateUnlock: View {
 ///
 /// The glossary already held a definition for every metric in the app and there
 /// was exactly one way in: Settings, behind the gear, two taps from anywhere.
-/// So the one moment a reader wants it - looking at a CPOE bar and wondering
-/// what CPOE is - was the moment it was furthest away, and nothing on the screen
+/// So the one moment a reader wants it - looking at an AST:USG bar and wondering
+/// what AST:USG is - was the moment it was furthest away, and nothing on the screen
 /// suggested it existed at all.
 ///
 /// A footer rather than a badge on every row: the question is "what is all this",
@@ -829,22 +832,22 @@ struct StatGlossaryLink: View {
             HStack(spacing: 8) {
                 Image(systemName: "info.circle")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(GridironPalette.turf)
+                    .foregroundStyle(HardwoodPalette.court)
                 Text("What do these stats mean?")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.court)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
-            .padding(GridironGeo.padCard)
+            .padding(HardwoodGeo.padCard)
             .frame(maxWidth: .infinity)
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(HardwoodPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                    .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
             )
         }
         .buttonStyle(.plain)
@@ -907,26 +910,26 @@ struct PlusDirectCTA: View {
             // button *is* the purchase point now (Apple 3.1.2).
             if let disclosure = store.yearlyCTADisclosureText(emphasis: emphasis) ?? store.paywallBlurSubtext {
                 Text(disclosure)
-                    .font(GridironType.micro)
+                    .font(HardwoodType.micro)
                     .tracking(0.3)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if let statusMessage {
                 Text(statusMessage)
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.court)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if showsAllPlansLink {
                 Button("See all plans") { showingPlans = true }
-                    .font(GridironType.micro)
+                    .font(HardwoodType.micro)
                     .tracking(0.3)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
             }
         }
         .frame(maxWidth: .infinity)
@@ -950,13 +953,13 @@ struct PlusDirectCTA: View {
                     Image(systemName: "crown.fill")
                         .font(.system(size: 11))
                     Text(store.directCTALabel(for: trigger, emphasis: emphasis))
-                        .font(GridironType.bodyBold)
+                        .font(HardwoodType.bodyBold)
                 }
             }
             .foregroundStyle(.white)
             .padding(.horizontal, 22)
             .frame(height: 42)
-            .background(GridironPalette.turf)
+            .background(HardwoodPalette.court)
             .clipShape(Capsule())
         case .bar:
             // Two lines only where the emphasis asks for it: the billed amount
@@ -967,10 +970,10 @@ struct PlusDirectCTA: View {
             ZStack {
                 VStack(spacing: 1) {
                     Text(store.directCTALabel(for: trigger, emphasis: emphasis))
-                        .font(GridironType.bodyBold)
+                        .font(HardwoodType.bodyBold)
                     if let subline {
                         Text(subline)
-                            .font(GridironType.micro)
+                            .font(HardwoodType.micro)
                             .foregroundStyle(.white.opacity(0.85))
                     }
                 }
@@ -983,7 +986,7 @@ struct PlusDirectCTA: View {
             .frame(maxWidth: .infinity)
             .frame(minHeight: 50)
             .padding(.vertical, subline == nil ? 0 : 6)
-            .background(GridironPalette.turf)
+            .background(HardwoodPalette.court)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }

@@ -2,35 +2,45 @@ import Foundation
 
 /// What the data can and cannot say about a given season.
 ///
-/// StatScout carries every season from 2000 on, but the *advanced* metrics don't
-/// all reach that far back, because the sources don't. Next Gen Stats begin in
-/// 2016 (2018 for rushing-over-expected), CPOE needs the play-by-play air-yards
-/// tracking that starts in 2006, Pro-Football-Reference's advanced defensive
-/// table starts in 2018, and nflverse's `targets` column is simply blank for
-/// 2003-2008, which takes every target-derived receiving metric with it.
+/// StatScout carries every season from 2002-03 on, but the *advanced* metrics
+/// don't all reach that far back, because the sources don't. ESPN's box score
+/// has no plus/minus before 2008-09, the shot feed tracks nearly every attempt
+/// only from 2003-04, and On-Off needs a play-by-play replay that reproduces
+/// the box score's plus/minus, which it does in only some seasons.
 ///
-/// Without this, those gaps read as bugs. A user who opens 2004, sees a receiving
-/// board with no Target Share and no Catch%, and is told nothing, has been given
-/// a reason to distrust the numbers that *are* there. Naming the limit is what
-/// makes the rest of the board credible - and it is a limit of the public record,
-/// not of the app.
+/// Without this, those gaps read as bugs. A user who opens 2005-06, sees an
+/// Impact board with no On-Court +/- and is told nothing, has been given a
+/// reason to distrust the numbers that *are* there. Naming the limit is what
+/// makes the rest of the board credible - and it is a limit of the public
+/// record, not of the app.
 ///
 /// The season numbers here mirror the constants in `backend/ingest.py`; the
-/// coverage table in `handoff/NFL_CONTRACT.md` is the shared reference.
+/// coverage table in `handoff/NBA_CONTRACT.md` is the shared reference.
 enum MetricCoverage {
-    /// Next Gen Stats: Time to Throw, Aggressiveness, Intended Air Yds,
-    /// Separation, YAC+.
-    static let nextGenFirstSeason = 2016
-    /// NGS rushing-over-expected (RYOE) arrived two years after the rest.
-    static let rushingOverExpectedFirstSeason = 2018
-    /// CPOE needs pbp air-yards tracking.
-    static let cpoeFirstSeason = 2006
-    /// PFR advanced defence: pressures, coverage allowed, missed-tackle rate.
-    static let advancedDefenseFirstSeason = 2018
-    /// Seasons where nflverse reports essentially no targets, so Target Share,
-    /// WOPR, RACR, Catch% and EPA/Tgt cannot be computed. Receivers in these
-    /// years are qualified by receptions instead.
-    static let missingTargetSeasons = 2003...2008
+    /// Every box-score metric (Scoring, Playmaking, Rebounding, Defense, Min%,
+    /// MPG, GS). hoopR's player box starts in 2002; 2003 is the first full
+    /// season.
+    static let boxScoreFirstSeason = 2003
+    /// On-Court +/- and the +/- total. ESPN's plus/minus is a placeholder for
+    /// every player through 2007-08.
+    static let onCourtFirstSeason = 2009
+    /// Shot zones: the shot feed tracks 98-100% of box attempts from 2003-04.
+    static let shotZonesFirstSeason = 2004
+    /// On-Off is published per season and phase, only where the play-by-play
+    /// replay reproduces the box plus/minus for at least 97% of player games.
+    /// From this season on it clears the bar every time.
+    static let onOffAlwaysFirstSeason = 2021
+    static let onOffRegularSeasons: Set<Int> = [2014, 2015]
+    static let onOffPostseasons: Set<Int> = [2009, 2010, 2012, 2013, 2014, 2015]
+
+    static func hasOnOff(season: Int, phase: SeasonPhase = .regular) -> Bool {
+        if StatScoutSeason.isAllTime(season) { return false }
+        if season >= onOffAlwaysFirstSeason { return true }
+        switch phase {
+        case .regular: return onOffRegularSeasons.contains(season)
+        case .playoffs: return onOffPostseasons.contains(season)
+        }
+    }
 
     /// One short sentence explaining what this season is missing, or nil when
     /// the season has the full metric set.
@@ -38,83 +48,100 @@ enum MetricCoverage {
     /// Deliberately at most two clauses. A season that predates several sources
     /// at once would otherwise produce a paragraph nobody reads, so the oldest
     /// and most sweeping limit is the one named.
-    static func note(for season: Int, category: MetricCategory? = nil) -> String? {
+    static func note(
+        for season: Int,
+        category: MetricCategory? = nil,
+        phase: SeasonPhase = .regular
+    ) -> String? {
         // The career rollup spans every era, so it is bounded by all of them at
-        // once; saying so once is more honest than listing four start years.
+        // once; saying so once is more honest than listing three start years.
         if StatScoutSeason.isAllTime(season) {
-            return "Career totals span 2000 onward. Advanced metrics cover only the seasons their source tracked, so rate metrics are averaged over those years."
+            return "Career totals span \(SeasonLabel.text(boxScoreFirstSeason)) onward. Shot zones count from \(SeasonLabel.text(shotZonesFirstSeason)), On-Court +/- from \(SeasonLabel.text(onCourtFirstSeason)), and career On-Off is not published."
         }
 
-        if let category, category == .defense {
-            return season < advancedDefenseFirstSeason
-                ? "Advanced defensive stats (pressures, coverage allowed, missed tackles) start in \(advancedDefenseFirstSeason)."
+        if category == .shooting {
+            return season < shotZonesFirstSeason
+                ? "Shot-zone numbers start in \(SeasonLabel.text(shotZonesFirstSeason))."
                 : nil
         }
 
-        if let category, category == .receiving, missingTargetSeasons.contains(season) {
-            return "The play-by-play record has no target data for \(missingTargetSeasons.lowerBound)-\(missingTargetSeasons.upperBound), so target-based metrics are unavailable and receivers are ranked by receptions."
+        if category == .impact {
+            if season < onCourtFirstSeason {
+                return "Plus/minus starts in \(SeasonLabel.text(onCourtFirstSeason)); ESPN's box scores carry none before that."
+            }
+            return hasOnOff(season: season, phase: phase)
+                ? nil
+                : "On-Off is not published for this \(phase == .regular ? "season" : "postseason"): the replay of the play-by-play did not match the box score closely enough."
         }
 
-        if missingTargetSeasons.contains(season) {
-            return "Next Gen Stats start in \(nextGenFirstSeason). Target data is also missing league-wide for \(missingTargetSeasons.lowerBound)-\(missingTargetSeasons.upperBound)."
-        }
+        if category != nil { return nil }
 
-        if season < cpoeFirstSeason {
-            return "Only EPA and traditional stats reach \(season). CPOE starts in \(cpoeFirstSeason) and Next Gen Stats in \(nextGenFirstSeason)."
+        if season < shotZonesFirstSeason {
+            return "Shot zones start in \(SeasonLabel.text(shotZonesFirstSeason)) and plus/minus in \(SeasonLabel.text(onCourtFirstSeason))."
         }
-
-        if season < nextGenFirstSeason {
-            return "Next Gen Stats (Time to Throw, Separation, YAC+) start in \(nextGenFirstSeason)."
+        if season < onCourtFirstSeason {
+            return "On-Court +/- and On-Off start later: plus/minus in \(SeasonLabel.text(onCourtFirstSeason))."
         }
-
-        if season < rushingOverExpectedFirstSeason {
-            return "Rushing Yards Over Expected starts in \(rushingOverExpectedFirstSeason)."
+        if !hasOnOff(season: season, phase: phase) {
+            return "On-Off is not published for this \(phase == .regular ? "season" : "postseason"): the play-by-play replay did not match the box score closely enough."
         }
-
         return nil
     }
 
-    /// The live season's own gap: a source that exists for this year but has
-    /// not published yet. `note(for:)` can only say what a year predates, so at
-    /// 2026 Week 3, with Pro-Football-Reference's advanced defensive table not
-    /// yet out, the defensive boards said nothing about why two thirds of the
-    /// league had no advanced line.
+    /// The live season's own gap: a feed that exists for this year but has not
+    /// caught up with the games already published. `note(for:)` can only say
+    /// what a year predates, so a week after opening night, with the shot feed
+    /// a day behind, the Shooting board said nothing about why the zones were
+    /// missing for the latest games.
     static func pendingNote(
-        category: MetricCategory,
-        advancedDefenseStatus: String?,
-        nextGenStatus: String?
+        category: MetricCategory?,
+        shotsStatus: String?,
+        playByPlayStatus: String?
     ) -> String? {
         func pending(_ status: String?) -> Bool {
             guard let status = status?.lowercased() else { return false }
             return status != "ready" && status != "not_applicable" && status != "unavailable"
         }
-        if category == .defense, pending(advancedDefenseStatus) {
-            return "Advanced defensive stats (pressures, coverage allowed, missed tackles) publish once Pro-Football-Reference posts them for this season, usually within the first month. Until then defenders are ranked on production."
+        let shots = "Shot-zone numbers for the latest games are still arriving"
+        let onOff = "On/off numbers for the latest games are still arriving"
+        switch category {
+        case .shooting:
+            return pending(shotsStatus) ? shots + "." : nil
+        case .impact:
+            return pending(playByPlayStatus) ? onOff + "." : nil
+        case nil:
+            return [pending(shotsStatus) ? shots : nil, pending(playByPlayStatus) ? onOff : nil]
+                .compactMap { $0 }
+                .map { $0 + "." }
+                .joined(separator: " ")
+                .nilIfEmpty
+        default:
+            return nil
         }
-        if category != .defense, pending(nextGenStatus) {
-            return "Next Gen Stats (CPOE, separation, RYOE) for the latest games are still arriving."
-        }
-        return nil
     }
 
     /// Whether a metric is expected to exist at all in this season. Lets a
-    /// caller distinguish "nobody qualified" from "not tracked yet".
-    static func isTracked(_ label: String, in season: Int) -> Bool {
-        if StatScoutSeason.isAllTime(season) { return true }
+    /// caller distinguish "nobody qualified" from "not tracked".
+    static func isTracked(
+        _ label: String,
+        in season: Int,
+        phase: SeasonPhase = .regular
+    ) -> Bool {
+        if StatScoutSeason.isAllTime(season) { return label != "On-Off" }
         switch label {
-        case "Time to Throw", "Aggressiveness", "Intended Air Yds", "Separation", "YAC+":
-            return season >= nextGenFirstSeason
-        case "RYOE":
-            return season >= rushingOverExpectedFirstSeason
-        case "CPOE":
-            return season >= cpoeFirstSeason
-        case "Pressures", "Hurries", "QB KD", "Cmp% Allowed",
-             "Yds/Tgt Allowed", "Rating Allowed", "Missed Tkl%":
-            return season >= advancedDefenseFirstSeason
-        case "Target Share", "WOPR", "RACR", "Catch%", "EPA/Tgt":
-            return !missingTargetSeasons.contains(season)
+        case "Rim Freq", "Rim FG%", "Short Mid Freq", "Short Mid FG%",
+             "Long Mid Freq", "Long Mid FG%", "Corner 3%", "Non-Corner 3%", "Assisted FG%":
+            return season >= shotZonesFirstSeason
+        case "On-Court +/-", "+/-":
+            return season >= onCourtFirstSeason
+        case "On-Off":
+            return hasOnOff(season: season, phase: phase)
         default:
-            return true
+            return season >= boxScoreFirstSeason
         }
     }
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
 }

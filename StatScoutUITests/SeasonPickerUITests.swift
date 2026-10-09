@@ -4,10 +4,10 @@ import XCTest
 /// effect.
 ///
 /// The previous version was baseball-fork leftover and could not pass here. It
-/// waited on `app.staticTexts["LEADERBOARD"]` - a section title the football
-/// redesign removed - and looked for `Calendar.current.component(.year)`, i.e.
-/// the real-world year, when the NFL season label lags it (season 2025 runs into
-/// February 2026). It also drove the picker by tapping normalised screen
+/// waited on `app.staticTexts["LEADERBOARD"]` - a section title the redesign
+/// removed - and looked for `Calendar.current.component(.year)`, i.e. the
+/// real-world year, when a season is named for the year it ends (2025-26 is
+/// season 2026). It also drove the picker by tapping normalised screen
 /// coordinates, which broke the moment the bar changed. This version anchors on
 /// the table header and addresses the control by its accessibility label.
 final class SeasonPickerUITests: XCTestCase {
@@ -36,7 +36,7 @@ final class SeasonPickerUITests: XCTestCase {
     }
 
     /// Season and phase share one pill, labelled for VoiceOver as
-    /// "Season and season type" with a value like "2025, Regular Season".
+    /// "Season and season type" with a value like "2025-26, Regular Season".
     ///
     /// The *hittable* one, and both words are load-bearing.
     ///
@@ -69,20 +69,19 @@ final class SeasonPickerUITests: XCTestCase {
         XCTAssertTrue(control.waitForExistence(timeout: 15), "Season control should exist in the nav bar")
         control.tap()
 
-        // The menu should carry the career rollup plus the full 2000-current
-        // range. Spot-check the ends and the sentinel rather than all 27 rows,
-        // since a long menu scrolls and off-screen rows aren't hittable.
-        // "All since 2000", not "All Time": `SeasonLabel.text` renamed it
-        // deliberately, because "All Time" claimed a century of football the
-        // data does not have. The test kept asking for the old wording.
+        // The menu should carry the career rollup plus every season from
+        // 2002-03 on. Spot-check the sentinel and a recent season rather than
+        // all 25 rows, since a long menu scrolls and off-screen rows aren't
+        // hittable.
         XCTAssertTrue(
-            app.buttons["All since 2000"].waitForExistence(timeout: 20),
+            app.buttons["All Time"].waitForExistence(timeout: 20),
             "Season menu should offer the career rollup"
         )
-        XCTAssertTrue(app.buttons["2025"].exists, "Season menu should offer a recent season")
+        XCTAssertTrue(app.buttons["2024-25"].exists, "Season menu should offer a recent season")
 
-        // Years are bare four-digit strings - never thousands-separated, which is
-        // what this originally guarded against ("2,025").
+        // Seasons read as "2025-26" - never a bare year, and never
+        // thousands-separated, which is what this originally guarded against
+        // ("2,025").
         let commaYears = app.buttons.matching(
             NSPredicate(format: "label MATCHES %@", "^[0-9],[0-9]{3}$")
         )
@@ -146,7 +145,7 @@ final class SeasonPickerUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Regular Season"].exists, "Regular season should be listed too")
 
         // `exists` alone was not enough, and this is the bug that shipped: the
-        // season section listed 27 rows above these two, so the phase sat below
+        // season section listed 25 rows above these two, so the phase sat below
         // the fold of a scrolling menu. It was in the hierarchy the whole time -
         // present, addressable, and untappable without scrolling to the bottom
         // of a list nobody would think to scroll. Hittability is the assertion

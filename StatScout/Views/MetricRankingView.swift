@@ -16,7 +16,7 @@ struct MetricRankingView: View {
         self.season = season
         self.viewModel = viewModel
         // Default to "best first" for the active metric (descending for
-        // higher-is-better, ascending for pitcher xwOBA / ERA / WHIP / etc.).
+        // higher-is-better, ascending for TOV% and Fouls/100).
         // User can still flip via the header chevron.
         _sortDescending = State(initialValue: DashboardViewModel.defaultSortDescending(label: metricLabel, category: metricCategory))
     }
@@ -48,14 +48,14 @@ struct MetricRankingView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                GridironSectionBar(
+                HardwoodSectionBar(
                     title: "\(metricLabel) · \(metricCategory.rawValue)",
                     trailing: AnyView(
                         HStack(spacing: 12) {
                             if let season {
                                 Text(SeasonLabel.text(season))
-                                    .font(GridironType.micro)
-                                    .foregroundStyle(GridironPalette.inkSecondary)
+                                    .font(HardwoodType.micro)
+                                    .foregroundStyle(HardwoodPalette.inkSecondary)
                             }
                             Button(action: {
                                 sortDescending.toggle()
@@ -66,8 +66,8 @@ struct MetricRankingView: View {
                                     Text(metricLabel)
                                     Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
                                 }
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkSecondary)
+                                .font(HardwoodType.micro)
+                                .foregroundStyle(HardwoodPalette.inkSecondary)
                             }
                         }
                     )
@@ -82,7 +82,7 @@ struct MetricRankingView: View {
                     .padding(.vertical, 24)
                 } else {
                     // Sorted by raw stat value - header carries the metric label
-                    // (e.g. "xwOBA") so the column matches what's in each row.
+                    // (e.g. "TS%") so the column matches what's in each row.
                     LeaderboardTableHeader(sortDescending: sortDescending, sortLabel: metricLabel)
                     ForEach(Array(rankedPlayers.enumerated()), id: \.element.id) { index, player in
                         NavigationLink(value: player) {
@@ -100,18 +100,18 @@ struct MetricRankingView: View {
                     }
                 }
             }
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(HardwoodPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                    .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
             )
             .padding(.horizontal, 12)
             .padding(.top, 12)
             Color.clear.frame(height: 88)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .navigationTitle("\(metricLabel) · \(metricCategory.rawValue)")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -125,7 +125,7 @@ struct MetricRankingView: View {
 #if DEBUG
 #Preview {
     NavigationStack {
-        MetricRankingView(metricLabel: "Pass Yds", metricCategory: .passing, players: SampleData.players, season: 2025)
+        MetricRankingView(metricLabel: "PPG", metricCategory: .scoring, players: SampleData.players, season: 2026)
     }
 }
 #endif

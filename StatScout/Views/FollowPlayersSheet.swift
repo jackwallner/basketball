@@ -15,14 +15,14 @@ struct FollowPlayersSheet: View {
     @Bindable var viewModel: DashboardViewModel
     /// Which position group the Trends board is showing, so the sheet opens
     /// on the list the user was already looking at.
-    var side: TrendSide = .qb
+    var side: TrendSide = .guard
 
     @Environment(\.dismiss) private var dismiss
     @State private var favorites = FavoritesStore.shared
     @State private var searchText = ""
     @State private var listSide: TrendSide
 
-    init(viewModel: DashboardViewModel, side: TrendSide = .qb) {
+    init(viewModel: DashboardViewModel, side: TrendSide = .guard) {
         self.viewModel = viewModel
         self.side = side
         _listSide = State(initialValue: side)
@@ -62,12 +62,12 @@ struct FollowPlayersSheet: View {
                     // jump down by its height on the first star you tapped,
                     // right under the finger about to tap the second one.
                     card {
-                        GridironSectionBar(title: "FOLLOWING (\(followed.count))")
+                        HardwoodSectionBar(title: "FOLLOWING (\(followed.count))")
                         if followed.isEmpty {
                             Text("Nobody yet. Tap a star to follow.")
-                                .font(GridironType.small)
-                                .foregroundStyle(GridironPalette.inkSecondary)
-                                .frame(height: GridironGeo.rowHeight)
+                                .font(HardwoodType.small)
+                                .foregroundStyle(HardwoodPalette.inkSecondary)
+                                .frame(height: HardwoodGeo.rowHeight)
                                 .frame(maxWidth: .infinity)
                         } else {
                             ForEach(Array(followed.enumerated()), id: \.element.playerId) { index, player in
@@ -77,10 +77,9 @@ struct FollowPlayersSheet: View {
                     }
 
                     card {
-                        // Same five-group menu the Trends board uses. A
-                        // segmented row can't hold five legibly, and the two
-                        // screens ask the identical question, so they use the
-                        // identical control.
+                        // Same position-group menu the Trends board uses: the
+                        // two screens ask the identical question, so they use
+                        // the identical control.
                         HStack {
                             Menu {
                                 ForEach(TrendSide.allCases) { option in
@@ -96,7 +95,7 @@ struct FollowPlayersSheet: View {
                                     }
                                 }
                             } label: {
-                                GridironInlinePill(systemImage: "person.fill", title: listSide.label)
+                                HardwoodInlinePill(systemImage: "person.fill", title: listSide.label)
                             }
                             .menuOrder(.fixed)
                             .accessibilityLabel("Position group")
@@ -107,8 +106,8 @@ struct FollowPlayersSheet: View {
 
                         if candidates.isEmpty {
                             Text("No players match “\(searchText)”.")
-                                .font(GridironType.small)
-                                .foregroundStyle(GridironPalette.inkSecondary)
+                                .font(HardwoodType.small)
+                                .foregroundStyle(HardwoodPalette.inkSecondary)
                                 .padding(.vertical, 24)
                                 .frame(maxWidth: .infinity)
                         } else {
@@ -121,13 +120,13 @@ struct FollowPlayersSheet: View {
                     Color.clear.frame(height: 24)
                 }
             }
-            .background(GridironPalette.canvas)
+            .background(HardwoodPalette.canvas)
             .navigationTitle("Follow Players")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
-                        .font(GridironType.smallBold)
+                        .font(HardwoodType.smallBold)
                 }
             }
         }
@@ -137,9 +136,9 @@ struct FollowPlayersSheet: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
             TextField("Search players", text: $searchText)
-                .font(GridironType.body)
+                .font(HardwoodType.body)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.words)
             if !searchText.isEmpty {
@@ -148,16 +147,16 @@ struct FollowPlayersSheet: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 14))
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 12)
         .frame(height: 40)
-        .background(GridironPalette.surface)
+        .background(HardwoodPalette.surface)
         .clipShape(Capsule())
-        .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+        .overlay(Capsule().stroke(HardwoodPalette.hairline, lineWidth: 0.5))
         .padding(.horizontal, 12)
         .padding(.top, 12)
     }
@@ -172,22 +171,22 @@ struct FollowPlayersSheet: View {
                 PlayerHeadshot(team: player.team, initials: player.initials, size: 34)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(player.name)
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.bodyBold)
+                        .foregroundStyle(HardwoodPalette.ink)
                         .lineLimit(1)
                     Text("\(player.team) · \(player.position)")
-                        .font(GridironType.micro)
+                        .font(HardwoodType.micro)
                         .tracking(0.3)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: following ? "star.fill" : "star")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(following ? Color.yellow : GridironPalette.inkTertiary)
+                    .foregroundStyle(following ? Color.yellow : HardwoodPalette.inkTertiary)
             }
-            .padding(.horizontal, GridironGeo.padInline)
-            .frame(height: GridironGeo.rowHeight)
-            .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+            .padding(.horizontal, HardwoodGeo.padInline)
+            .frame(height: HardwoodGeo.rowHeight)
+            .background(index % 2 == 0 ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -196,11 +195,11 @@ struct FollowPlayersSheet: View {
 
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(spacing: 0) { content() }
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(HardwoodPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                    .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
             )
             .padding(.horizontal, 12)
             .padding(.top, 12)

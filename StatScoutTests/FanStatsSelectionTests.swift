@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Hardwood_StatScout
 
 final class FanStatsSelectionTests: XCTestCase {
     func testFollowingDoesNotSubstitutePriorSeasonOrPostseasonStats() {
@@ -15,9 +15,14 @@ final class FanStatsSelectionTests: XCTestCase {
     }
 
     func testMissingSummaryStatsAreNotShownAsZero() {
-        let selected = player(1, stats: [StandardStat(id: "yards", label: "Pass Yds", value: "280")])
-        XCTAssertEqual(FanStatsSelection.summary(for: selected).map(\.label), ["Pass Yds"])
+        let selected = player(1, stats: [StandardStat(id: "ppg", label: "PPG", value: "28.4")])
+        XCTAssertEqual(FanStatsSelection.summary(for: selected).map(\.label), ["PPG"])
         XCTAssertTrue(FanStatsSelection.summary(for: player(2)).isEmpty)
+    }
+
+    func testSummaryIsScoringReboundingAndPlaymakingInThatOrder() {
+        let stats = ["APG", "RPG", "PPG", "SPG"].map { StandardStat(id: $0, label: $0, value: "1.0") }
+        XCTAssertEqual(FanStatsSelection.summary(for: player(1, stats: stats)).map(\.label), ["PPG", "RPG", "APG"])
     }
 
     private func player(
@@ -25,9 +30,9 @@ final class FanStatsSelectionTests: XCTestCase {
         stats: [StandardStat] = []
     ) -> Player {
         Player(
-            playerId: id, name: "Player \(id)", team: "SEA", position: "QB",
+            playerId: id, name: "Player \(id)", team: "SEA", position: "G",
             handedness: "", updatedAt: Date(timeIntervalSince1970: 0), season: season,
-            seasonPhase: phase, playerType: "qb", metrics: [], standardStats: stats, games: []
+            seasonPhase: phase, playerType: "g", metrics: [], standardStats: stats, games: []
         )
     }
 }

@@ -12,12 +12,12 @@ import XCTest
 /// charts. A Test Store subscription expires five minutes after purchase, so
 /// read the attributes promptly:
 ///
-///     rc-funnel-attributes football --user <the id this run used>
+///     rc-funnel-attributes basketball --user <the id this run used>
 final class PaywallFunnelUITests: XCTestCase {
 
     func testTestStorePurchaseRecordsTheConversion() {
         let probeUser = ProcessInfo.processInfo.environment["RC_PROBE_USER"]
-            ?? "funnel-probe-football-uitest"
+            ?? "funnel-probe-basketball-uitest"
 
         // Addressed by bundle id rather than by the implicit initialiser: several
         // apps in this fleet have a PRODUCT_NAME that differs from the target

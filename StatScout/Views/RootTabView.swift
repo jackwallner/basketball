@@ -9,8 +9,8 @@ struct MetricRoute: Hashable {
     let label: String
     let category: MetricCategory
     /// Which season's leaderboard to open. The player profile has its own
-    /// season selector, so a route from a 2022 profile has to carry 2022,
-    /// otherwise tapping Cmp% there opened the current-season leaderboard.
+    /// season selector, so a route from a 2021-22 profile has to carry 2022,
+    /// otherwise tapping TS% there opened the current-season leaderboard.
     var season: Int? = nil
     /// Which half of that year. A profile is scoped to the phase you arrived
     /// from and its season selector never crosses one, so a route from a
@@ -23,7 +23,6 @@ struct MetricRoute: Hashable {
 /// Drill-down from a traditional stat row to its league leaderboard.
 struct StandardStatRoute: Hashable {
     let stat: String
-    let category: StandardStatCategory
     var season: Int? = nil
     /// See `MetricRoute.phase`.
     var phase: SeasonPhase? = nil
@@ -50,7 +49,7 @@ struct RootTabView: View {
 
     var body: some View {
         tabView
-            .tint(GridironPalette.turf)
+            .tint(HardwoodPalette.court)
             .sheet(isPresented: $showReviewPrompt, onDismiss: {
             // "Maybe later" already recorded a soft defer; calling markShown
             // here would clear it and apply the full 120-day cooldown to a
@@ -136,7 +135,7 @@ struct RootTabView: View {
             floatingTabBar
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .ignoresSafeArea(edges: .bottom)
         #if DEBUG
         .onAppear {
@@ -219,9 +218,9 @@ struct RootTabView: View {
         // board. It still floats; it just no longer shares its pixels.
         .background {
             Capsule().fill(.regularMaterial)
-            Capsule().fill(GridironPalette.surface.opacity(0.9))
+            Capsule().fill(HardwoodPalette.surface.opacity(0.9))
         }
-        .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+        .overlay(Capsule().stroke(HardwoodPalette.hairline, lineWidth: 0.5))
         .shadow(color: .black.opacity(0.10), radius: 12, y: 4)
         .padding(.bottom, 12)
     }
@@ -232,9 +231,9 @@ struct RootTabView: View {
                 viewModel: viewModel,
                 isActive: selection == Tab.games.rawValue
             )
-                .navigationTitle("Games · \(String(viewModel.freeSeason))")
+                .navigationTitle("Games · \(SeasonLabel.text(viewModel.upcomingSeason ?? viewModel.freeSeason))")
                 .navigationBarTitleDisplayMode(.inline)
-                .modifier(GridironNavBar())
+                .modifier(HardwoodNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
@@ -244,7 +243,7 @@ struct RootTabView: View {
         NavigationStack {
             StatsView(viewModel: viewModel)
                 // Title and season pills come from SeasonPhaseNavBar.
-                .modifier(GridironNavBar())
+                .modifier(HardwoodNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
@@ -257,7 +256,7 @@ struct RootTabView: View {
                 isActive: selection == Tab.trends.rawValue
             )
                 // Title and season pills come from SeasonPhaseNavBar.
-                .modifier(GridironNavBar())
+                .modifier(HardwoodNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
@@ -267,7 +266,7 @@ struct RootTabView: View {
         NavigationStack(path: $teamsPath) {
             TeamsView(viewModel: viewModel, path: $teamsPath)
                 // Title and season pills come from SeasonPhaseNavBar.
-                .modifier(GridironNavBar())
+                .modifier(HardwoodNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
@@ -285,7 +284,7 @@ struct RootTabView: View {
             )
                 .navigationTitle("Compare")
                 .navigationBarTitleDisplayMode(.inline)
-                .modifier(GridironNavBar())
+                .modifier(HardwoodNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
@@ -294,7 +293,7 @@ struct RootTabView: View {
 }
 
 /// One item in the hand-rolled floating tab bar. The selected pill uses the
-/// turf green at low opacity rather than a filled capsule so the bar stays
+/// court green at low opacity rather than a filled capsule so the bar stays
 /// light over whatever content scrolls beneath it.
 private struct TabBarButton: View {
     let icon: String
@@ -308,14 +307,14 @@ private struct TabBarButton: View {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .semibold))
                 Text(label)
-                    .font(GridironType.smallBold)
+                    .font(HardwoodType.smallBold)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .foregroundStyle(isSelected ? GridironPalette.turf : GridironPalette.inkSecondary)
+            .foregroundStyle(isSelected ? HardwoodPalette.court : HardwoodPalette.inkSecondary)
             .frame(width: 68, height: 52)
             .background(
-                isSelected ? GridironPalette.turf.opacity(0.12) : .clear,
+                isSelected ? HardwoodPalette.court.opacity(0.12) : .clear,
                 in: Capsule()
             )
         }
@@ -326,10 +325,10 @@ private struct TabBarButton: View {
     }
 }
 
-private struct GridironNavBar: ViewModifier {
+private struct HardwoodNavBar: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .toolbarBackground(GridironPalette.midnight, for: .navigationBar)
+            .toolbarBackground(HardwoodPalette.midnight, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
     }
@@ -367,10 +366,10 @@ private struct HomeTabToolbar: ViewModifier {
                 Image(systemName: "crown.fill")
                     .font(.system(size: 10, weight: .bold))
                 Text(ctaLabel)
-                    .font(GridironType.micro)
+                    .font(HardwoodType.micro)
                     .fontWeight(.bold)
             }
-            .foregroundStyle(GridironPalette.midnight)
+            .foregroundStyle(HardwoodPalette.midnight)
             // Tight, because the season pill next to it now spells out
             // "Regular Season" and the bar has no slack left. Trimming padding
             // here is far cheaper than losing the verb: a bare crown reads as a
@@ -429,7 +428,7 @@ private struct HomeTabToolbar: ViewModifier {
                 )
                 .navigationTitle("Settings")
                 .navigationBarTitleDisplayMode(.inline)
-                .modifier(GridironNavBar())
+                .modifier(HardwoodNavBar())
             }
             .toolbar {
                 // One trailing item holding both controls, not two items.
@@ -492,8 +491,8 @@ struct PlayerProfileDestination: ViewModifier {
                     historicalLoadingMessage: viewModel.loadingMessage,
                     historicalLoadingProgress: viewModel.loadingProgress,
                     loadHistorical: { await viewModel.loadHistoricalIfNeeded() },
-                    fetchGameLogs: { id, season, phase in
-                        try await viewModel.fetchGameLogs(
+                    fetchRecentForm: { id, season, phase in
+                        try await viewModel.fetchPlayerRecentForm(
                             playerId: id,
                             season: season,
                             seasonPhase: phase
@@ -505,15 +504,15 @@ struct PlayerProfileDestination: ViewModifier {
                         defaultPhase: profilePhase
                     )
                 )
-                    .modifier(GridironNavBar())
+                    .modifier(HardwoodNavBar())
             }
             .navigationDestination(for: GameRoute.self) { route in
                 GameDetailView(viewModel: viewModel, gameId: route.gameId)
-                    .modifier(GridironNavBar())
+                    .modifier(HardwoodNavBar())
             }
             .navigationDestination(for: TeamScheduleRoute.self) { route in
                 TeamScheduleView(viewModel: viewModel, team: route.team)
-                    .modifier(GridironNavBar())
+                    .modifier(HardwoodNavBar())
             }
     }
 }
@@ -525,19 +524,8 @@ private struct StandardDestinations: ViewModifier {
         content
             .modifier(PlayerProfileDestination(viewModel: viewModel))
             .navigationDestination(for: TeamDestination.self) { dest in
-                TeamView(
-                    team: dest.abbr,
-                    viewModel: viewModel,
-                    fetchTeamGameLogs: { team, season, phase, since in
-                        try await viewModel.fetchTeamGameLogs(
-                            team: team,
-                            season: season,
-                            seasonPhase: phase,
-                            sinceDate: since
-                        )
-                    }
-                )
-                    .modifier(GridironNavBar())
+                TeamView(team: dest.abbr, viewModel: viewModel)
+                    .modifier(HardwoodNavBar())
             }
             .navigationDestination(for: MetricRoute.self) { route in
                 let season = route.season ?? viewModel.selectedSeason
@@ -549,7 +537,7 @@ private struct StandardDestinations: ViewModifier {
                     season: season,
                     viewModel: viewModel
                 )
-                    .modifier(GridironNavBar())
+                    .modifier(HardwoodNavBar())
             }
             .navigationDestination(for: StandardStatRoute.self) { route in
                 let season = route.season ?? viewModel.selectedSeason
@@ -557,20 +545,19 @@ private struct StandardDestinations: ViewModifier {
                 StandardStatsLeaderboardScreen(
                     players: viewModel.players(forSeason: season, phase: phase),
                     initialStat: route.stat,
-                    initialCategory: route.category,
                     season: season
                 )
                     // The phase only earns title space when it isn't the
-                    // default: an inline title is tight, and "Pass Yds · 2024
-                    // Regular Season" sweeps into a truncation that "Pass Yds ·
-                    // 2024 Playoffs" is worth paying for.
+                    // default: an inline title is tight, and "PPG · 2023-24
+                    // Regular Season" sweeps into a truncation that "PPG ·
+                    // 2023-24 Playoffs" is worth paying for.
                     .navigationTitle(
                         route.stat + " · " + (phase == .regular
                             ? SeasonLabel.text(season)
                             : SeasonLabel.text(season, phase: phase))
                     )
                     .navigationBarTitleDisplayMode(.inline)
-                    .modifier(GridironNavBar())
+                    .modifier(HardwoodNavBar())
             }
             .navigationDestination(for: ComparisonRoute.self) { route in
                 PlayerComparisonView(
@@ -581,7 +568,7 @@ private struct StandardDestinations: ViewModifier {
                         defaultPhase: route.playerA.seasonPhase
                     )
                 )
-                    .modifier(GridironNavBar())
+                    .modifier(HardwoodNavBar())
             }
     }
 }

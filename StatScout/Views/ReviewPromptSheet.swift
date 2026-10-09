@@ -71,7 +71,7 @@ struct ReviewPromptSheet: View {
             }
             .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
-            .modifier(GridironNavBarPublic())
+            .modifier(HardwoodNavBarPublic())
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Not now") {
@@ -83,7 +83,7 @@ struct ReviewPromptSheet: View {
         }
         .presentationDetents(step == .feedback ? [.large] : [.medium, .large])
         .presentationDragIndicator(.visible)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
     }
 
     private var navigationTitle: String {
@@ -98,17 +98,17 @@ struct ReviewPromptSheet: View {
         VStack(spacing: 20) {
             ZStack {
                 Circle()
-                    .fill(GridironPalette.turf)
+                    .fill(HardwoodPalette.court)
                     .frame(width: 64, height: 64)
-                Image(systemName: "football.fill")
+                Image(systemName: "basketball.fill")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.white)
             }
             .padding(.top, 8)
 
             Text("If StatScout is helping you scout the league, a quick rating on the App Store makes a real difference.")
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.body)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 8)
@@ -136,15 +136,15 @@ struct ReviewPromptSheet: View {
     private var reviewPitchContent: some View {
         VStack(spacing: 18) {
             Text("StatScout is built by one indie developer. No ads, no accounts, and your scouting data stays on your phone.")
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.body)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 8)
 
-            Text("An honest App Store review takes seconds and helps more fans find a clean NFL advanced-stats scout.")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkTertiary)
+            Text("An honest App Store review takes seconds and helps more fans find a clean NBA advanced-stats scout.")
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -174,24 +174,24 @@ struct ReviewPromptSheet: View {
     private var feedbackContent: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("What would make StatScout work better for you?")
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.body)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             TextEditor(text: $feedbackText)
-                .font(GridironType.body)
+                .font(HardwoodType.body)
                 .frame(minHeight: 140)
                 .padding(10)
-                .background(GridironPalette.surface, in: RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                .background(HardwoodPalette.surface, in: RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
                 .overlay(
-                    RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                        .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                        .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
                 )
                 .focused($feedbackFocused)
 
             Text("Opens your mail app with a draft to the developer. No analytics, just your words.")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
 
             Button {
                 sendFeedback()
@@ -209,17 +209,17 @@ struct ReviewPromptSheet: View {
 
     private func primaryButtonLabel(_ title: String) -> some View {
         Text(title)
-            .font(GridironType.bodyBold)
+            .font(HardwoodType.bodyBold)
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(GridironPalette.turf, in: Capsule())
+            .background(HardwoodPalette.court, in: Capsule())
     }
 
     private func secondaryButtonLabel(_ title: String) -> some View {
         Text(title)
-            .font(GridironType.smallBold)
-            .foregroundStyle(GridironPalette.linkBlue)
+            .font(HardwoodType.smallBold)
+            .foregroundStyle(HardwoodPalette.linkBlue)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
     }

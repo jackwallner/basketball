@@ -1,12 +1,12 @@
 import XCTest
 
-/// Product-only captures for the Football 1.2 App Store set. The app is
+/// Product-only captures for the Basketball 1.0 App Store set. The app is
 /// launched with its DEBUG fixture provider, but every frame is rendered by
 /// the same navigation destinations and views shipped to customers.
 @MainActor
 final class StatScoutV12ScreenshotUITests: XCTestCase {
-    private let fixturePlayer = "Caleb Mercer"
-    private let comparisonPlayer = "Mason Reed"
+    private let fixturePlayer = "Shai Gilgeous-Alexander"
+    private let comparisonPlayer = "Jalen Brunson"
 
     func testCapture01LeagueLeaders() throws {
         let app = launch(tab: "stats")
@@ -32,7 +32,7 @@ final class StatScoutV12ScreenshotUITests: XCTestCase {
     func testCapture04Team() throws {
         let app = launch(tab: "teams")
         waitForText("TEAM ADVANCED STATS", in: app)
-        waitForText("Kansas City Chiefs", in: app)
+        waitForText("New York Knicks", in: app)
         capture(app, name: "04_team")
     }
 
@@ -71,16 +71,16 @@ final class StatScoutV12ScreenshotUITests: XCTestCase {
         let yearCompare = app.buttons["Year Compare"]
         XCTAssertTrue(yearCompare.waitForExistence(timeout: 30), "Year Compare tab should load")
         yearCompare.tap()
-        waitForText("SEASON TOTALS", in: app)
-        waitForText("2026", in: app)
-        waitForText("2025", in: app)
+        waitForText("STANDARD STATS", in: app)
+        waitForText("2025-26", in: app)
+        waitForText("2024-25", in: app)
         capture(app, name: "07_year_history")
     }
 
     func testCapture08Roster() throws {
         let app = launch(tab: "teams")
         waitForText("TEAM ADVANCED STATS", in: app)
-        waitForText("Kansas City Chiefs", in: app)
+        waitForText("New York Knicks", in: app)
 
         let roster = app.buttons["Roster"]
         XCTAssertTrue(roster.waitForExistence(timeout: 30), "Roster tab should load")
@@ -95,7 +95,7 @@ final class StatScoutV12ScreenshotUITests: XCTestCase {
             "FORCE_PRO": "1",
             "STATSCOUT_FORCE_PRO": "1",
             "SCREENSHOT_MODE": "1",
-            "TEST_RUNNER_SCREENSHOT_APP_VERSION": "1.2",
+            "TEST_RUNNER_SCREENSHOT_APP_VERSION": "1.0",
         ]
         app.launchArguments = [
             "-ScreenshotData",

@@ -2,7 +2,10 @@ import Foundation
 
 protocol PlayerCaching: Sendable {
     func loadPlayers() throws -> [Player]
-    func savePlayers(_ players: [Player]) throws
+    /// Persists a snapshot. `liveSeason` is the season the server is currently
+    /// writing: rows from it onward are the expiring server tier, everything
+    /// before it is permanent history.
+    func savePlayers(_ players: [Player], liveSeason: Int) throws
 }
 
 struct DiskPlayerCache: PlayerCaching {
@@ -36,10 +39,16 @@ struct DiskPlayerCache: PlayerCaching {
         return try JSONDecoder.statScout.decode([Player].self, from: data)
     }
 
-    func savePlayers(_ players: [Player]) throws {
+    func savePlayers(_ players: [Player], liveSeason: Int) throws {
         let data = try JSONEncoder.statScout.encode(players)
         try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: fileURL, options: [.atomic])
+    }
+}
+
+extension DiskPlayerCache {
+    func savePlayers(_ players: [Player]) throws {
+        try savePlayers(players, liveSeason: 0)
     }
 }
 
@@ -54,24 +63,31 @@ struct PlistPlayerCache: PlayerCaching {
 
     func loadPlayers() throws -> [Player] {
         let data = try Data(contentsOf: fileURL)
-        return try PropertyListDecoder.statScout.decode([Player].self, from: data)
+        // Lossy per row, like the network path: one malformed row must not take
+        // every past season down with it.
+        return try PropertyListDecoder.statScout.decode([Lenient<Player>].self, from: data).compactMap(\.value)
     }
 
-    func savePlayers(_ players: [Player]) throws {
+    func savePlayers(_ players: [Player], liveSeason: Int) throws {
         let data = try PropertyListEncoder.statScout.encode(players)
         try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: fileURL, options: [.atomic])
     }
 }
 
+extension PlistPlayerCache {
+    func savePlayers(_ players: [Player]) throws {
+        try savePlayers(players, liveSeason: 0)
+    }
+}
+
 /// Proof that the current-season snapshot on disk came from the server, written
 /// beside it whenever this build saves one.
 ///
-/// Builds through 1.2.1 wrote server responses and a bundled four-team opening
-/// week export to the same `players-current.json`, with nothing in the file to
-/// tell them apart - and the opening-week validator accepts both, by design, so
-/// it can never be the thing that separates them. Without a marker the only
-/// honest reading of that file is "unknown origin".
+/// Without a marker the only honest reading of a file at that path is "unknown
+/// origin": a bundled export and a server response look identical on disk, and
+/// the opening-week validator accepts both, by design, so it can never be the
+/// thing that separates them.
 struct CurrentSnapshotProvenance: Codable {
     /// Bump when what the snapshot file means changes.
     static let currentSchema = 1
@@ -79,7 +95,15 @@ struct CurrentSnapshotProvenance: Codable {
     var savedAt: Date
 }
 
-/// Two-tier cache: permanent for historical data, expiring for current season.
+/// Two-tier cache: a permanent archive of past seasons, and the newest server
+/// snapshot for the live one.
+///
+/// The bundled archive carries every completed season, which includes the
+/// live one while the next has not published (2025-26 is both in the bundle and
+/// live from the network until 2026-27 tips off). The tiers therefore overlap on
+/// purpose, and the rule is precedence rather than exclusion: the server copy
+/// wins when present, and the bundled copy is what a cold, offline start shows
+/// until it arrives.
 struct TwoTierPlayerCache: PlayerCaching {
     private let historical: PlistPlayerCache
     private let legacyHistorical: DiskPlayerCache
@@ -106,27 +130,22 @@ struct TwoTierPlayerCache: PlayerCaching {
     }
 
     func loadPlayers() throws -> [Player] {
-        let historicalPlayers = loadHistoricalPlayers()
         let currentPlayers = (try? loadCurrentPlayers()) ?? []
-        return historicalPlayers + currentPlayers
+        let served = Set(currentPlayers.map(\.id))
+        // Server rows win a clash with the archive.
+        return loadHistoricalPlayers().filter { !served.contains($0.id) } + currentPlayers
     }
 
     /// The last snapshot this device accepted from the server, whatever its age.
     ///
-    /// Only server data is ever returned. Builds used to fall back to a bundled
-    /// current-season snapshot once this file passed 48 hours, and re-save it as
-    /// fresh, so a fan returning in Week 6 saw the four-team Week 1 export as the
-    /// live leaderboard. An old saved snapshot is still the user's newest real
-    /// data, and the freshness caption restored beside it says how old it is.
+    /// Only server data is ever returned. An old saved snapshot is still the
+    /// user's newest real data, and the freshness caption restored beside it says
+    /// how old it is.
     func loadCurrentPlayers() throws -> [Player] {
-        // An unprovenanced file predates the marker, so it is either a real
-        // server snapshot saved by 1.2.x or the bundled four-team opening-week
-        // export that 1.2 wrote to this same path after a failed refresh. It
-        // cannot be both, and nothing in it says which - so it is discarded
-        // once, on the first launch after upgrading, rather than kept and
-        // presented as the live league. The cost is one refresh; the next save
-        // writes the marker and this never happens again. See
-        // `CurrentSnapshotProvenance`.
+        // A file with no provenance marker cannot be vouched for as server data,
+        // so it is discarded once rather than kept and presented as the live
+        // league. The cost is one refresh; the next save writes the marker and
+        // this never happens again. See `CurrentSnapshotProvenance`.
         guard hasServerProvenance else {
             discardCurrentSnapshot()
             return []
@@ -159,24 +178,14 @@ struct TwoTierPlayerCache: PlayerCaching {
         try? data.write(to: currentProvenanceURL, options: [.atomic])
     }
 
-    /// The historical tier, never including the live season.
-    ///
-    /// The bundled archive is regenerated *ahead* of a season rollover, so a
-    /// shipped build can carry the season that is still live when it installs.
-    /// Those rows are a frozen mid-season snapshot, and `loadHistoricalIfNeeded`
-    /// merges history over whatever is already loaded, so left in they would
-    /// overwrite the live feed with stale numbers the moment someone opened a
-    /// past season. Filtered on read rather than stripped from the archive: the
-    /// rows are wanted, just not yet, and they become the newest historical
-    /// season by themselves once the calendar rolls over. The career rollup
-    /// sits under season 0 and so is always kept.
+    /// The permanent archive: every completed season the bundle carries, plus
+    /// the season-0 career rollup. This includes the season that is still live
+    /// while the next has not published, so a cold offline start has a board to
+    /// draw. Callers merge it *under* server rows (see `loadPlayers`), never
+    /// over them, so a frozen bundled snapshot can never overwrite the live feed.
     func loadHistoricalPlayers() -> [Player] {
-        loadHistoricalCandidates().filter { ($0.season ?? 0) < StatScoutSeason.current }
-    }
-
-    private func loadHistoricalCandidates() -> [Player] {
         let bundled = loadBundledPlayers(named: historicalBundleResourceName)
-        let bundledIsComplete = bundled.map(PlayerSnapshotValidator.isCompleteHistorical) ?? false
+        let bundledIsComplete = bundled.map { PlayerSnapshotValidator.isCompleteHistorical($0) } ?? false
 
         // 1. Permanent disk cache, unless the bundled archive has broader coverage.
         if let cached = try? historical.loadPlayers(), !cached.isEmpty {
@@ -210,14 +219,14 @@ struct TwoTierPlayerCache: PlayerCaching {
             return nil
         }
         if fileExtension == "plist" {
-            return try? PropertyListDecoder.statScout.decode([Player].self, from: data)
+            return try? PropertyListDecoder.statScout.decode([Lenient<Player>].self, from: data).compactMap(\.value)
         }
-        return try? JSONDecoder.statScout.decode([Player].self, from: data)
+        return try? JSONDecoder.statScout.decode([Lenient<Player>].self, from: data).compactMap(\.value)
     }
 
-    func savePlayers(_ players: [Player]) throws {
-        let historicalPlayers = players.filter { ($0.season ?? 0) < StatScoutSeason.current }
-        let currentPlayers = players.filter { ($0.season ?? 0) >= StatScoutSeason.current }
+    func savePlayers(_ players: [Player], liveSeason: Int) throws {
+        let historicalPlayers = players.filter { ($0.season ?? 0) < liveSeason }
+        let currentPlayers = players.filter { ($0.season ?? 0) >= liveSeason }
         if !historicalPlayers.isEmpty {
             try historical.savePlayers(historicalPlayers)
         }
@@ -231,11 +240,18 @@ struct TwoTierPlayerCache: PlayerCaching {
 }
 
 enum PlayerSnapshotValidator {
-    private static let minimumTeamCount = 30
-    private static let requiredTypes: Set<String> = ["qb", "rb", "wr", "te", "def"]
+    /// 2002-03 and 2003-04 were played by 29 teams; the Bobcats joined in
+    /// 2004-05.
+    private static let minimumHistoricalTeamCount = 29
+    private static let requiredTypes: Set<String> = ["g", "f", "c"]
 
-    static func isCompleteHistorical(_ players: [Player]) -> Bool {
-        let expectedSeasons = Set(StatScoutSeason.earliest..<StatScoutSeason.current)
+    /// Every season the bundle promises, each with a full league of teams and
+    /// all three position cohorts.
+    static func isCompleteHistorical(
+        _ players: [Player],
+        through lastSeason: Int = StatScoutSeason.bundledNewest
+    ) -> Bool {
+        let expectedSeasons = Set(StatScoutSeason.earliest...lastSeason)
         let grouped = Dictionary(grouping: players.filter {
             guard let season = $0.season else { return false }
             return expectedSeasons.contains(season)
@@ -246,23 +262,25 @@ enum PlayerSnapshotValidator {
         return grouped.values.allSatisfy { seasonPlayers in
             let teams = Set(seasonPlayers.map { normalizedTeamAbbreviation($0.team) })
             let types = Set(seasonPlayers.compactMap(\.playerType).map { $0.lowercased() })
-            return teams.count >= minimumTeamCount
+            return teams.count >= minimumHistoricalTeamCount
                 && requiredTypes.isSubset(of: types)
                 && seasonPlayers.allSatisfy { !$0.metrics.isEmpty }
         }
     }
 
-    static func isCompleteCurrent(_ players: [Player]) -> Bool {
-        let current = players.filter {
-            $0.season == StatScoutSeason.current
-                && $0.seasonPhase == .regular
-        }
+    /// A usable live-season snapshot. `season` is the one expected; nil means
+    /// the newest regular season present, which is how a saved snapshot is
+    /// judged without knowing which season was live when it was written.
+    static func isCompleteCurrent(_ players: [Player], season: Int? = nil) -> Bool {
+        let regular = players.filter { $0.seasonPhase == .regular }
+        guard let target = season ?? regular.compactMap(\.season).max() else { return false }
+        let current = regular.filter { $0.season == target }
         let teams = Set(current.map { normalizedTeamAbbreviation($0.team) })
         let types = Set(current.compactMap(\.playerType).map { $0.lowercased() })
         let metricLabels = Set(current.flatMap(\.metrics).map(\.label))
-        let requiredMetrics: Set<String> = ["EPA/Play", "EPA/Rush", "EPA/Tgt"]
+        let requiredMetrics: Set<String> = ["Pts/100", "AST%", "REB%"]
         // The first published game has two teams. A 30-team requirement kept
-        // valid opening-week data out of the cache until most of the NFL played.
+        // valid opening-night data out of the cache until every team had played.
         // The publisher checks game coverage and regression before promotion.
         return teams.count >= 2
             && current.count >= 20

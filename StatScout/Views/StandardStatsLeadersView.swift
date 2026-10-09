@@ -1,30 +1,5 @@
 import SwiftUI
 
-enum StandardStatCategory: String, CaseIterable {
-    case passing = "Passing"
-    case rushing = "Rushing"
-    case receiving = "Receiving"
-    case defense = "Defense"
-
-    var metricCategory: MetricCategory {
-        switch self {
-        case .passing: return .passing
-        case .rushing: return .rushing
-        case .receiving: return .receiving
-        case .defense: return .defense
-        }
-    }
-
-    var defaultPosition: PlayerPositionGroup {
-        switch self {
-        case .passing: return .qb
-        case .rushing: return .rb
-        case .receiving: return .wr
-        case .defense: return .defense
-        }
-    }
-}
-
 /// Traditional leaderboard with the same position tabs and control vocabulary
 /// as the Advanced board.
 struct StandardStatsLeadersView: View {
@@ -44,7 +19,7 @@ struct StandardStatsLeadersView: View {
 
     private var filteredPlayers: [Player] {
         players.filter { player in
-            player.positionGroup == selectedPosition
+            selectedPosition.includes(player)
                 && numericStat(for: player) != nil
         }
     }
@@ -73,7 +48,7 @@ struct StandardStatsLeadersView: View {
                         isSearching = false
                         searchText = ""
                     }
-                    .font(GridironType.small)
+                    .font(HardwoodType.small)
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
@@ -85,15 +60,15 @@ struct StandardStatsLeadersView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
                     .padding(.bottom, 12)
-                if let pendingNote {
+                if let note = rankingNote {
                     HStack(alignment: .top, spacing: 6) {
                         Image(systemName: "info.circle")
                             .font(.system(size: 10, weight: .semibold))
-                        Text(pendingNote)
+                        Text(note)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
                 }
@@ -104,7 +79,7 @@ struct StandardStatsLeadersView: View {
             .scrollDismissesKeyboard(.interactively)
             .refreshable { await viewModel?.load() }
         }
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: selectedPosition) { _, next in
             guard !StandardStatCatalog.stats(for: next).contains(selectedStat) else {
@@ -119,7 +94,7 @@ struct StandardStatsLeadersView: View {
     }
 
     private var positionSelector: some View {
-        GridironTabs(
+        HardwoodTabs(
             tabs: PlayerPositionGroup.allCases.map(\.rawValue),
             selected: Binding(
                 get: { selectedPosition.rawValue },
@@ -177,7 +152,7 @@ struct StandardStatsLeadersView: View {
                 isSearching.toggle()
                 if !isSearching { searchText = "" }
             } label: {
-                GridironChip(systemImage: "magnifyingglass", isActive: isSearching)
+                HardwoodChip(systemImage: "magnifyingglass", isActive: isSearching)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Search players or teams")
@@ -191,8 +166,8 @@ struct StandardStatsLeadersView: View {
             }
         }
         .padding(.trailing, 12)
-        .frame(height: GridironControl.height + 2)
-        .padding(.top, GridironGeo.controlRowGap)
+        .frame(height: HardwoodControl.height + 2)
+        .padding(.top, HardwoodGeo.controlRowGap)
     }
 
     private var statMenu: some View {
@@ -219,41 +194,41 @@ struct StandardStatsLeadersView: View {
             } label: {
                 HStack(spacing: 0) {
                     Text("RANK")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .frame(width: 42, alignment: .leading)
                     // Says who is on the list where the list is read. The rule
                     // otherwise lives only in the View menu, and "leaders" with
-                    // no minimum in Week 1 reads like a ranking of the best.
+                    // no minimum on opening night reads like a ranking of the best.
                     Text(sampleLabel)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("TEAM")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .frame(width: 44, alignment: .leading)
                     HStack(spacing: 4) {
                         Text(selectedStat.uppercased())
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.turf)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.court)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                         Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
                             .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(GridironPalette.turf)
+                            .foregroundStyle(HardwoodPalette.court)
                     }
                     .frame(width: 100, alignment: .trailing)
                 }
-                .frame(height: GridironGeo.rowHeightHeader)
-                .padding(.horizontal, GridironGeo.padInline)
-                .background(GridironPalette.surfaceAlt)
+                .frame(height: HardwoodGeo.rowHeightHeader)
+                .padding(.horizontal, HardwoodGeo.padInline)
+                .background(HardwoodPalette.surfaceAlt)
                 .overlay(
                     Rectangle()
-                        .fill(GridironPalette.divider)
-                        .frame(height: GridironGeo.hairline),
+                        .fill(HardwoodPalette.divider)
+                        .frame(height: HardwoodGeo.hairline),
                     alignment: .bottom
                 )
             }
@@ -266,10 +241,10 @@ struct StandardStatsLeadersView: View {
                 ContentUnavailableView {
                     Label("No data available", systemImage: "chart.bar")
                 } description: {
-                    Text("No \(selectedPosition.rawValue) players have \(selectedStat) data for this season.")
+                    Text("No \(selectedPosition == .all ? "" : selectedPosition.noun + " ")players have \(selectedStat) data for this season.")
                 }
                 .padding(.vertical, 48)
-                .background(GridironPalette.surface)
+                .background(HardwoodPalette.surface)
             } else {
                 let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
                 let ranked = Array(sortedPlayers.enumerated()).filter { _, player in
@@ -287,11 +262,11 @@ struct StandardStatsLeadersView: View {
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -299,8 +274,8 @@ struct StandardStatsLeadersView: View {
         NavigationLink(value: player) {
             HStack(spacing: 0) {
                 Text("\(rank)")
-                    .font(GridironType.statSmall)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.statSmall)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                     .frame(width: 36, alignment: .leading)
 
                 HStack(spacing: 10) {
@@ -311,14 +286,14 @@ struct StandardStatsLeadersView: View {
                     )
                     VStack(alignment: .leading, spacing: 2) {
                         Text(player.name)
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(HardwoodType.bodyBold)
+                            .foregroundStyle(HardwoodPalette.ink)
                             .lineLimit(1)
-                            .minimumScaleFactor(0.85)
+                            .minimumScaleFactor(0.6)
                             .truncationMode(.tail)
                         Text([player.displayPosition, volumeText(for: player)].compactMap { $0 }.joined(separator: " · "))
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
                             .lineLimit(1)
                     }
                 }
@@ -327,14 +302,14 @@ struct StandardStatsLeadersView: View {
                 HStack(spacing: 4) {
                     TeamColorDot(abbr: player.team, size: 6)
                     Text(displayTeamAbbr(player.team))
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(HardwoodType.small)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                 }
                 .frame(width: 44, alignment: .leading)
 
                 let pct = percentile(for: player, peerValues: peerValues)
                 // A zero count has no honest rank; see `Metric.isUnranked`.
-                // Not for a lower-is-better count: a passer's 0 INT is the
+                // Not for a lower-is-better count: a bench player's 0 PF is the
                 // best line on the board, not an absence.
                 let isZero = numericStat(for: player) == 0
                     && StandardStatSemantics.higherIsBetter(label: selectedStat)
@@ -346,8 +321,8 @@ struct StandardStatsLeadersView: View {
                             .frame(width: 34)
                     }
                     Text(statDisplay(for: player))
-                        .font(GridironType.statMed)
-                        .foregroundStyle(isZero ? GridironPalette.inkTertiary : GridironPalette.turf)
+                        .font(HardwoodType.statMed)
+                        .foregroundStyle(isZero ? HardwoodPalette.inkTertiary : HardwoodPalette.court)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                         .frame(width: 58, alignment: .trailing)
@@ -360,17 +335,17 @@ struct StandardStatsLeadersView: View {
                         : "\(selectedStat): \(statDisplay(for: player)), \(pct.ordinalString) percentile"
                 )
             }
-            .frame(height: GridironGeo.rowHeight)
-            .padding(.horizontal, GridironGeo.padInline)
+            .frame(height: HardwoodGeo.rowHeight)
+            .padding(.horizontal, HardwoodGeo.padInline)
             .background(
                 rank.isMultiple(of: 2)
-                    ? GridironPalette.surfaceAlt
-                    : GridironPalette.surface
+                    ? HardwoodPalette.surfaceAlt
+                    : HardwoodPalette.surface
             )
             .overlay(
                 Rectangle()
-                    .fill(GridironPalette.divider)
-                    .frame(height: GridironGeo.hairline),
+                    .fill(HardwoodPalette.divider)
+                    .frame(height: HardwoodGeo.hairline),
                 alignment: .bottom
             )
         }
@@ -396,53 +371,33 @@ struct StandardStatsLeadersView: View {
         return viewModel.qualifierLevel == .qualified ? "QUALIFIED PLAYERS" : "ALL PLAYERS"
     }
 
-    /// Defense on the live season, while PFR's advanced table is still out:
-    /// this board is the whole defensive picture, and it should say why.
-    private var pendingNote: String? {
-        guard let viewModel,
-              viewModel.selectedSeason == viewModel.freeSeason,
-              viewModel.selectedPhase == .regular else { return nil }
-        return MetricCoverage.pendingNote(
-            category: selectedPosition.primaryCategory,
-            advancedDefenseStatus: viewModel.dataFreshness?.advancedDefenseStatus,
-            nextGenStatus: nil
-        )
+    /// What the ranking means where it is easy to misread: shooting lines rank
+    /// by percentage, not by the made count in front of the slash.
+    private var rankingNote: String? {
+        ["FG", "3P", "FT"].contains(selectedStat.uppercased())
+            ? "Ranked by shooting percentage, not by makes."
+            : nil
     }
 
-    /// The volume behind the headline number: attempts for a passing stat,
-    /// carries for rushing, targets for receiving, games otherwise. One game of
-    /// 9 yards a carry means little on three carries.
+    /// The volume behind the headline number: games, or minutes when the stat is
+    /// the game count itself. A 40% three-point mark means little over three
+    /// games.
     private func volumeText(for player: Player) -> String? {
         let stats = player.standardStats ?? []
         func value(_ label: String) -> String? {
             stats.first { $0.label.caseInsensitiveCompare(label) == .orderedSame }?.value
         }
-        func denominator(_ pair: String?) -> String? {
-            pair?.split(separator: "/").last.map(String.init)
+        if selectedStat.uppercased() == "G" {
+            return value("MIN").map { "\($0) min" }
         }
-        let stat = selectedStat.uppercased()
-        if stat.hasPrefix("PASS") || stat == "INT" || stat == "CMP/ATT" || stat == "RATING" || stat == "Y/A" {
-            return denominator(value("Cmp/Att")).map { "\($0) att" }
-        }
-        if stat.hasPrefix("RUSH") || stat == "Y/C" {
-            return value("Car").map { "\($0) car" }
-        }
-        if stat.hasPrefix("REC") {
-            return denominator(value("Rec/Tgt")).map { "\($0) tgt" }
-        }
-        if selectedPosition == .defense, let viewModel,
-           let caption = viewModel.volumeCaption(for: player, category: .defense),
-           caption.hasSuffix("snaps") {
-            return caption
-        }
-        guard stat != "G", let games = value("G") else { return nil }
+        guard let games = value("G") else { return nil }
         return games == "1" ? "1 game" : "\(games) games"
     }
 
     private func numericStat(for player: Player) -> Double? {
         guard let stat = standardStat(for: player) else { return nil }
-        // Via the shared semantics so a paired value (Cmp/Att, Rec/Tgt) sorts
-        // on its rate rather than on the count in front of the slash.
+        // Via the shared semantics so a paired value (FG, 3P, FT) sorts on its
+        // percentage rather than on the count in front of the slash.
         return StandardStatSemantics.numericValue(label: stat.label, value: stat.value)
     }
 
@@ -484,8 +439,8 @@ struct StandardStatsLeaderboardScreen: View {
 
     init(
         players: [Player],
-        initialStat: String = "Pass Yds",
-        initialPosition: PlayerPositionGroup = .qb,
+        initialStat: String = "PPG",
+        initialPosition: PlayerPositionGroup = .all,
         season: Int? = nil
     ) {
         self.players = players
@@ -497,20 +452,6 @@ struct StandardStatsLeaderboardScreen: View {
                 for: initialStat,
                 position: initialPosition
             )
-        )
-    }
-
-    init(
-        players: [Player],
-        initialStat: String,
-        initialCategory: StandardStatCategory,
-        season: Int? = nil
-    ) {
-        self.init(
-            players: players,
-            initialStat: initialStat,
-            initialPosition: initialCategory.defaultPosition,
-            season: season
         )
     }
 

@@ -36,25 +36,13 @@ struct TrialPitchSheet: View {
             return [
                 Benefit(icon: "sportscourt.fill",
                         title: "Advanced box scores",
-                        detail: "EPA, success rate and CPOE for every player, every game."),
+                        detail: "TS%, usage and plus/minus for every player, every game."),
                 Benefit(icon: "flame.fill",
                         title: "The Trends board",
                         detail: "The whole league ranked by who's moving, right now."),
                 Benefit(icon: "chart.bar.fill",
                         title: "Recent form everywhere",
-                        detail: "Last 3 / 5 / 8 games on any player, team or board.")
-            ]
-        case .contractValue:
-            return [
-                Benefit(icon: "dollarsign.circle.fill",
-                        title: "Contract Value",
-                        detail: "Production against pay for every qualified player."),
-                Benefit(icon: "flame.fill",
-                        title: "The Trends board",
-                        detail: "The whole league ranked by who's moving, right now."),
-                Benefit(icon: "person.2.fill",
-                        title: "Head-to-head matchups",
-                        detail: "Stack any two players across every percentile.")
+                        detail: "Last week, 2 weeks and 4 weeks on any player, team or board.")
             ]
         case .playerScouting, .recentForm, .upgrade, .onboarding, .activation, .bestWorst:
             return [
@@ -63,7 +51,7 @@ struct TrialPitchSheet: View {
                         detail: "The whole league ranked by who's moving, right now."),
                 Benefit(icon: "chart.bar.fill",
                         title: "Recent form everywhere",
-                        detail: "Last 3 / 5 / 8 games on any player, team or board."),
+                        detail: "Last week, 2 weeks and 4 weeks on any player, team or board."),
                 Benefit(icon: "person.2.fill",
                         title: "Head-to-head matchups",
                         detail: "Stack any two players across every percentile.")
@@ -71,11 +59,11 @@ struct TrialPitchSheet: View {
         case .lockedSeason(let year):
             return [
                 Benefit(icon: "calendar.badge.clock",
-                        title: "The \(year) season",
-                        detail: "Every percentile ranking, plus every year back to 2000."),
+                        title: "The \(SeasonLabel.text(year)) season",
+                        detail: "Every percentile ranking, plus every year back to 2002-03."),
                 Benefit(icon: "arrow.left.arrow.right.circle.fill",
                         title: "Year-over-year trends",
-                        detail: "Put \(year) beside any other season and see what moved."),
+                        detail: "Put \(SeasonLabel.text(year)) beside any other season and see what moved."),
                 Benefit(icon: "flame.fill",
                         title: "The Trends board",
                         detail: "The whole league ranked by who's moving, right now.")
@@ -84,7 +72,7 @@ struct TrialPitchSheet: View {
             return [
                 Benefit(icon: "calendar.badge.clock",
                         title: "Every past season",
-                        detail: "Back to 2000, with full percentile history."),
+                        detail: "Back to 2002-03, with full percentile history."),
                 Benefit(icon: "arrow.left.arrow.right.circle.fill",
                         title: "Year-over-year trends",
                         detail: "Compare any two seasons side by side."),
@@ -99,7 +87,7 @@ struct TrialPitchSheet: View {
                         detail: "Stack any two players across every percentile."),
                 Benefit(icon: "shield.lefthalf.filled",
                         title: "Full team scouting",
-                        detail: "Every club's roster, ranked by any metric."),
+                        detail: "All 30 teams, every roster ranked by any metric."),
                 Benefit(icon: "flame.fill",
                         title: "The Trends board",
                         detail: "The whole league ranked by who's moving, right now.")
@@ -124,7 +112,7 @@ struct TrialPitchSheet: View {
 
             footer
         }
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         // A fixed height rather than a fraction, because what has to fit is a
         // fixed amount of content: hero, three benefits, CTA and the auto-renew
         // disclosure. A fraction that looked right on a 6.3" phone clipped the
@@ -154,17 +142,17 @@ struct TrialPitchSheet: View {
             HStack(spacing: 10) {
                 Image(systemName: trigger.icon)
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(GridironPalette.turf)
+                    .foregroundStyle(HardwoodPalette.court)
                 Text(trigger.title)
-                    .font(GridironType.pageTitle)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.pageTitle)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
             }
 
             Text(trigger.subtitle)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.small)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
@@ -178,16 +166,16 @@ struct TrialPitchSheet: View {
                 HStack(spacing: 12) {
                     Image(systemName: benefit.icon)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(GridironPalette.turf)
+                        .foregroundStyle(HardwoodPalette.court)
                         .frame(width: 24)
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(benefit.title)
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(HardwoodType.bodyBold)
+                            .foregroundStyle(HardwoodPalette.ink)
                         Text(benefit.detail)
-                            .font(GridironType.small)
-                            .foregroundStyle(GridironPalette.inkSecondary)
+                            .font(HardwoodType.small)
+                            .foregroundStyle(HardwoodPalette.inkSecondary)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -198,17 +186,17 @@ struct TrialPitchSheet: View {
 
                 if index < benefits.count - 1 {
                     Rectangle()
-                        .fill(GridironPalette.divider)
-                        .frame(height: GridironGeo.hairline)
+                        .fill(HardwoodPalette.divider)
+                        .frame(height: HardwoodGeo.hairline)
                 }
             }
         }
         .padding(.horizontal, 14)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -228,19 +216,19 @@ struct TrialPitchSheet: View {
                 Link("Privacy", destination: StatScoutLegal.privacyURL)
                 Button("Maybe later") { dismiss() }
             }
-            .font(GridironType.micro)
+            .font(HardwoodType.micro)
             .tracking(0.3)
-            .foregroundStyle(GridironPalette.inkSecondary)
+            .foregroundStyle(HardwoodPalette.inkSecondary)
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)
         .padding(.bottom, 10)
         .background(
-            GridironPalette.surface
+            HardwoodPalette.surface
                 .overlay(
                     Rectangle()
-                        .fill(GridironPalette.divider)
-                        .frame(height: GridironGeo.hairline),
+                        .fill(HardwoodPalette.divider)
+                        .frame(height: HardwoodGeo.hairline),
                     alignment: .top
                 )
                 .ignoresSafeArea(edges: .bottom)

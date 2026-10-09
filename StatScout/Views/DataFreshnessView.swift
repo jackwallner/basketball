@@ -1,7 +1,9 @@
 import SwiftUI
 
 /// One quiet caption that says what the numbers on screen include and how old
-/// they are, e.g. "Through Week 3 · 33 games · Updated 2h ago".
+/// they are, e.g. "Through Nov 12 · 189 games · Updated 2h ago". Between a
+/// season's last game and the next one's opening night it says so instead:
+/// "2025-26 final · Through Jun 13 · 2026-27 starts Oct 20".
 ///
 /// It used to be a bordered card with a status icon, two or three lines of copy
 /// and a Refresh button, repeated at the top of every board. That is a lot of
@@ -24,8 +26,8 @@ struct DataFreshnessView: View {
 
     private var status: DataFreshnessStatus {
         let raw = viewModel.freshnessStatus
-        // Every game is in and only optional enrichment (PFR or Next Gen) is
-        // late. That is a normal mid-week state, not something to flag.
+        // Every game is in and only optional enrichment (shot zones or on/off) is
+        // late. That is a normal overnight state, not something to flag.
         if raw == .partial, !isWaitingOnGames { return .ready }
         return raw
     }
@@ -71,8 +73,8 @@ struct DataFreshnessView: View {
                 }
                 Spacer(minLength: 0)
             }
-            .font(GridironType.micro)
-            .foregroundStyle(problemIcon == nil ? GridironPalette.inkTertiary : GridironPalette.performanceLow)
+            .font(HardwoodType.micro)
+            .foregroundStyle(problemIcon == nil ? HardwoodPalette.inkTertiary : HardwoodPalette.performanceLow)
             .frame(maxWidth: .infinity, minHeight: 20, alignment: .leading)
             .contentShape(Rectangle())
         }
@@ -102,28 +104,33 @@ struct DataFreshnessView: View {
         case .checking where coverageText == nil:
             return "Checking for new stats"
         case .ready, .checking, .pending, .partial:
+            if viewModel.isSeasonPending {
+                // Nothing is updating until opening night, so how old the last
+                // revision is would only read as staleness.
+                return [
+                    "\(SeasonLabel.text(viewModel.freeSeason)) final",
+                    coverageText,
+                    viewModel.upcomingSeasonStartsText,
+                ].compactMap { $0 }.joined(separator: " · ")
+            }
             let parts = [coverageText, updatedText(now: now)].compactMap { $0 }
             return parts.isEmpty ? "Checking for new stats" : parts.joined(separator: " · ")
         }
     }
 
-    /// "Through Week 3 · 33 games", or "... · 12 of 14 games in" while a slate is
-    /// still arriving.
+    /// "Through Nov 12 · 189 games", or "... · 12 of 14 games in" while a slate
+    /// is still arriving.
     private var coverageText: String? {
         guard let coverage = freshness?.coverage ?? viewModel.dataCoverage else { return nil }
         var parts: [String] = []
-        if let week = coverage.week {
-            // "Through": the game count after it is cumulative, and "Week 3 ·
-            // 33 games" read as thirty-three games in Week 3.
-            parts.append(coverage.phase == .playoffs ? "Through playoffs week \(week)" : "Through Week \(week)")
-        } else {
-            parts.append("Through \(coverage.asOf.formatted(DataCoverage.gameDayStyle))")
-        }
+        // "Through": the game count after it is cumulative, and "Nov 12 · 189
+        // games" read as a hundred and eighty-nine games on Nov 12.
+        parts.append("Through \(coverage.asOf.formatted(DataCoverage.gameDayStyle))")
         if let included = coverage.gamesIncluded {
             if let expected = coverage.expectedGames, included < expected {
-                parts.append("\(included) of \(expected) games in")
+                parts.append("\(included.formatted()) of \(expected.formatted()) games in")
             } else {
-                parts.append(included == 1 ? "1 game" : "\(included) games")
+                parts.append(included == 1 ? "1 game" : "\(included.formatted()) games")
             }
         }
         return parts.joined(separator: " · ")
@@ -136,7 +143,7 @@ struct DataFreshnessView: View {
         return "Updated \(Self.shortAge(of: date, now: now))"
     }
 
-    static func shortAge(of date: Date, now: Date = .now) -> String {
+    nonisolated static func shortAge(of date: Date, now: Date = .now) -> String {
         let seconds = max(0, now.timeIntervalSince(date))
         switch seconds {
         case ..<60: return "just now"
@@ -158,6 +165,6 @@ struct DataFreshnessView: View {
 #Preview {
     DataFreshnessView(viewModel: DashboardViewModel())
         .padding()
-        .background(GridironPalette.canvas)
+        .background(HardwoodPalette.canvas)
 }
 #endif

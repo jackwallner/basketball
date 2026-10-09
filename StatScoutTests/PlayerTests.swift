@@ -1,50 +1,53 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Hardwood_StatScout
 
 final class PlayerTests: XCTestCase {
-    func testOverallPercentileDoubleAverage() {
-        let metrics = [
-            Metric(id: "m1", label: "A", value: "1", percentile: 75, category: .passing),
-            Metric(id: "m2", label: "B", value: "2", percentile: 76, category: .passing),
-            Metric(id: "m3", label: "C", value: "3", percentile: 77, category: .passing)
-        ]
-        let player = Player(
-            playerId: 1, name: "Test", team: "KC", position: "QB",
-            handedness: "",
-            updatedAt: Date(), metrics: metrics, standardStats: [], games: []
+    private func player(
+        id: Int = 1,
+        name: String = "Test",
+        team: String = "BOS",
+        position: String = "G",
+        type: String? = nil,
+        metrics: [Metric] = [],
+        games: [GameTrend] = []
+    ) -> Player {
+        Player(
+            playerId: id, name: name, team: team, position: position,
+            handedness: "", updatedAt: Date(), playerType: type,
+            metrics: metrics, standardStats: [], games: games
         )
-        XCTAssertEqual(player.overallPercentile, 76) // 75.9 rounded
     }
 
-    func testShareSummaryIncludesTopSignal() {
-        let metric = Metric(id: "m1", label: "Pass Yds", value: "4,918", percentile: 100, category: .passing)
-        let player = Player(
-            playerId: 1, name: "Patrick Mahomes", team: "KC", position: "QB",
-            handedness: "",
-            updatedAt: Date(), metrics: [metric], standardStats: [], games: []
-        )
-        let summary = player.shareSummary
-        XCTAssertTrue(summary.contains("Patrick Mahomes"))
-        XCTAssertTrue(summary.contains("Pass Yds"))
+    func testOverallPercentileDoubleAverage() {
+        let metrics = [
+            Metric(id: "m1", label: "A", value: "1", percentile: 75, category: .scoring),
+            Metric(id: "m2", label: "B", value: "2", percentile: 76, category: .scoring),
+            Metric(id: "m3", label: "C", value: "3", percentile: 77, category: .scoring)
+        ]
+        XCTAssertEqual(player(metrics: metrics).overallPercentile, 76) // 75.9 rounded
+    }
+
+    func testShareSummaryIncludesTopSignalAndAppName() {
+        let metric = Metric(id: "m1", label: "Pts/100", value: "44.3", percentile: 100, category: .scoring)
+        let summary = player(name: "Shai Gilgeous-Alexander", team: "OKC", metrics: [metric]).shareSummary
+        XCTAssertTrue(summary.contains("Shai Gilgeous-Alexander"))
+        XCTAssertTrue(summary.contains("Pts/100"))
         XCTAssertTrue(summary.contains("100th"))
+        XCTAssertTrue(summary.hasSuffix("Hardwood StatScout"))
     }
 
     func testMultiCategoryOverallUsesBestCategoryAverage() {
-        // A rushing QB carries both Passing and Rushing metrics - the headline
-        // number should reflect the best category, not a blended average.
+        // A rim protector who scores little carries both Defense and Scoring
+        // metrics - the headline number should reflect the best category, not a
+        // blended average.
         let metrics = [
-            Metric(id: "p1", label: "Pass Yds", value: "4,000", percentile: 95, category: .passing),
-            Metric(id: "p2", label: "Rating", value: "105", percentile: 95, category: .passing),
-            Metric(id: "r1", label: "Rush Yds", value: "500", percentile: 30, category: .rushing),
-            Metric(id: "r2", label: "Rush TD", value: "5", percentile: 30, category: .rushing)
+            Metric(id: "d1", label: "BLK%", value: "6.1%", percentile: 95, category: .defense),
+            Metric(id: "d2", label: "BPG", value: "2.4", percentile: 95, category: .defense),
+            Metric(id: "s1", label: "PPG", value: "8.0", percentile: 30, category: .scoring),
+            Metric(id: "s2", label: "USG%", value: "13.0%", percentile: 30, category: .scoring)
         ]
-        let player = Player(
-            playerId: 1, name: "Dual Threat", team: "BUF", position: "QB",
-            handedness: "",
-            updatedAt: Date(), playerType: "qb",
-            metrics: metrics, standardStats: [], games: []
-        )
-        XCTAssertEqual(player.overallPercentile, 95)
+        XCTAssertEqual(player(type: "c", metrics: metrics).overallPercentile, 95)
+        XCTAssertEqual(player(type: "c", metrics: metrics).primaryCategory, .defense)
     }
 
     func testPlayerDecodesSeasonAndPlayerType() throws {
@@ -52,166 +55,207 @@ final class PlayerTests: XCTestCase {
         {
             "id": 1,
             "name": "Test",
-            "team": "KC",
-            "position": "QB",
+            "team": "BOS",
+            "position": "G",
             "handedness": "",
             "image_url": null,
-            "updated_at": "2026-04-28T12:00:00Z",
-            "season": 2025,
-            "player_type": "qb",
-            "source": "nflreadpy",
+            "updated_at": "2026-06-14T12:00:00Z",
+            "season": 2026,
+            "player_type": "g",
+            "source": "hoopR",
             "metrics": [],
             "standard_stats": [],
             "games": []
         }
         """.data(using: .utf8)!
-        let decoder = JSONDecoder.statScout
-        let player = try decoder.decode(Player.self, from: json)
-        XCTAssertEqual(player.season, 2025)
-        XCTAssertEqual(player.playerType, "qb")
-        XCTAssertEqual(player.source, "nflreadpy")
+        let player = try JSONDecoder.statScout.decode(Player.self, from: json)
+        XCTAssertEqual(player.season, 2026)
+        XCTAssertEqual(player.playerType, "g")
+        XCTAssertEqual(player.source, "hoopR")
         XCTAssertEqual(player.seasonPhase, .regular)
+        XCTAssertEqual(player.positionGroup, .guard)
     }
 
-    func testPlayerComparisonDoesNotCrossSidesOfBall() {
-        let quarterback = Player(
-            playerId: 1, name: "Quarterback", team: "KC", position: "QB",
-            handedness: "", updatedAt: Date(), playerType: "qb",
-            metrics: [], standardStats: [], games: []
-        )
-        let receiver = Player(
-            playerId: 2, name: "Receiver", team: "KC", position: "WR",
-            handedness: "", updatedAt: Date(), playerType: "wr",
-            metrics: [], standardStats: [], games: []
-        )
-        let defender = Player(
-            playerId: 3, name: "Defender", team: "DEN", position: "LB",
-            handedness: "", updatedAt: Date(), playerType: "def",
-            metrics: [], standardStats: [], games: []
-        )
+    func testEveryPlayerTypeQualifiesForEveryCategory() {
+        for type in ["g", "f", "c", "unknown"] {
+            let p = player(type: type)
+            for category in MetricCategory.allCases {
+                XCTAssertTrue(p.matchesPlayerType(for: category), "\(type) should qualify for \(category)")
+            }
+        }
+    }
 
-        XCTAssertTrue(quarterback.canCompareHeadToHead(with: receiver))
-        XCTAssertTrue(defender.canCompareHeadToHead(with: defender))
-        XCTAssertFalse(quarterback.canCompareHeadToHead(with: defender))
+    func testPositionGroupFromPlayerTypeAndPosition() {
+        XCTAssertEqual(player(type: "g").positionGroup, .guard)
+        XCTAssertEqual(player(type: "f").positionGroup, .forward)
+        XCTAssertEqual(player(type: "c").positionGroup, .center)
+        // An unknown type reads the box score's own position, and folds into
+        // forwards when there is none.
+        XCTAssertEqual(player(position: "C", type: "unknown").positionGroup, .center)
+        XCTAssertEqual(player(position: "", type: "unknown").positionGroup, .forward)
+    }
+
+    func testAnyTwoPlayersCanBeCompared() throws {
+        // There is no offense and defense to keep apart in basketball, so the
+        // comparison catalog does not filter on position.
+        let guardPlayer = player(id: 1, type: "g")
+        let center = player(id: 2, type: "c")
+        let route = ComparisonRoute(playerA: guardPlayer, playerB: center)
+        XCTAssertEqual(route.playerA.playerId, 1)
+        XCTAssertEqual(route.playerB.playerId, 2)
     }
 
     func testInitialsHandleSuffixes() {
-        let witt = Player(playerId: 1, name: "Michael Pittman Jr.", team: "IND", position: "WR", handedness: "", updatedAt: Date(), metrics: [], standardStats: [], games: [])
-        XCTAssertEqual(witt.initials, "MP")
-
-        let harris = Player(playerId: 2, name: "Odell Beckham Jr.", team: "MIA", position: "WR", handedness: "", updatedAt: Date(), metrics: [], standardStats: [], games: [])
-        XCTAssertEqual(harris.initials, "OB")
-
-        let third = Player(playerId: 3, name: "Robert Griffin III", team: "WAS", position: "QB", handedness: "", updatedAt: Date(), metrics: [], standardStats: [], games: [])
-        XCTAssertEqual(third.initials, "RG")
+        XCTAssertEqual(player(name: "Larry Nance Jr.").initials, "LN")
+        XCTAssertEqual(player(name: "Gary Payton II").initials, "GP")
+        XCTAssertEqual(player(name: "Jaime Jaquez Jr.").initials, "JJ")
     }
 
     func testInitialsStandardNames() {
-        let mahomes = Player(playerId: 1, name: "Patrick Mahomes", team: "KC", position: "QB", handedness: "", updatedAt: Date(), metrics: [], standardStats: [], games: [])
-        XCTAssertEqual(mahomes.initials, "PM")
-
-        let chase = Player(playerId: 2, name: "Ja'Marr Chase", team: "CIN", position: "WR", handedness: "", updatedAt: Date(), metrics: [], standardStats: [], games: [])
-        XCTAssertEqual(chase.initials, "JC")
-
-        let single = Player(playerId: 3, name: "Cher", team: "KC", position: "QB", handedness: "", updatedAt: Date(), metrics: [], standardStats: [], games: [])
-        XCTAssertEqual(single.initials, "C")
+        XCTAssertEqual(player(name: "Luka Doncic").initials, "LD")
+        XCTAssertEqual(player(name: "Shai Gilgeous-Alexander").initials, "SG")
+        XCTAssertEqual(player(name: "Nene").initials, "N")
     }
 
     func testWeeklyDeltaSumsRecentGamesOnly() {
         let now = Date()
-        let player = Player(
-            playerId: 1, name: "Test", team: "KC", position: "QB",
-            handedness: "",
-            updatedAt: now, metrics: [], standardStats: [],
-            games: [
-                GameTrend(id: "recent-up", date: now.addingTimeInterval(-24 * 3600), opponent: "BUF", summary: "", percentileDelta: 5, keyMetric: "Pass Yds"),
-                GameTrend(id: "recent-down", date: now.addingTimeInterval(-2 * 24 * 3600), opponent: "DEN", summary: "", percentileDelta: -2, keyMetric: "EPA/Play"),
-                GameTrend(id: "old", date: now.addingTimeInterval(-8 * 24 * 3600), opponent: "LV", summary: "", percentileDelta: 20, keyMetric: "Rating")
-            ]
-        )
-
-        XCTAssertEqual(player.weeklyDelta, 3)
+        let games = [
+            GameTrend(id: "recent-up", date: now.addingTimeInterval(-24 * 3600), opponent: "BOS", summary: "", percentileDelta: 5, keyMetric: "TS%"),
+            GameTrend(id: "recent-down", date: now.addingTimeInterval(-2 * 24 * 3600), opponent: "DEN", summary: "", percentileDelta: -2, keyMetric: "USG%"),
+            GameTrend(id: "old", date: now.addingTimeInterval(-8 * 24 * 3600), opponent: "LAL", summary: "", percentileDelta: 20, keyMetric: "PPG")
+        ]
+        XCTAssertEqual(player(games: games).weeklyDelta, 3)
     }
 
     @MainActor
     func testRawNumericStripsThousandsSeparators() {
-        XCTAssertEqual(DashboardViewModel.rawNumeric("4,918")!, 4918, accuracy: 0.001)
-        XCTAssertEqual(DashboardViewModel.rawNumeric("68.3%")!, 68.3, accuracy: 0.001)
+        XCTAssertEqual(DashboardViewModel.rawNumeric("1,502")!, 1502, accuracy: 0.001)
+        XCTAssertEqual(DashboardViewModel.rawNumeric("61.2%")!, 61.2, accuracy: 0.001)
+        XCTAssertEqual(DashboardViewModel.rawNumeric("+6.3")!, 6.3, accuracy: 0.001)
     }
 
     func testDisplayPositionFallsBackToPlayerType() {
-        let tbd = Player(playerId: 1, name: "Test", team: "KC", position: "TBD", handedness: "", updatedAt: Date(), playerType: "def", metrics: [], standardStats: [], games: [])
-        XCTAssertEqual(tbd.displayPosition, "DEF")
+        XCTAssertEqual(player(position: "TBD", type: "c").displayPosition, "C")
+        XCTAssertEqual(player(position: "", type: "unknown").displayPosition, "")
+    }
+
+    func testVolumeCaptionIsMinutes() {
+        var p = player()
+        p = Player(
+            playerId: 1, name: "Test", team: "BOS", position: "G", handedness: "",
+            updatedAt: Date(), metrics: [],
+            standardStats: [StandardStat(id: "std-MIN", label: "MIN", value: "2,262")],
+            games: []
+        )
+        XCTAssertEqual(p.volumeCaption(for: .scoring), "2,262 min")
     }
 }
 
+final class BasketballMetricRegistryTests: XCTestCase {
+    /// The labels the backend writes, in the order the contract lists them.
+    static let contractLabels: [MetricCategory: [String]] = [
+        .scoring: ["Pts/100", "USG%", "TS%", "eFG%", "FT Rate", "3PT Rate", "PPG", "FG%", "3P%", "FT%", "3PM"],
+        .shooting: ["Rim Freq", "Rim FG%", "Short Mid Freq", "Short Mid FG%", "Long Mid Freq", "Long Mid FG%", "Corner 3%", "Non-Corner 3%", "Assisted FG%"],
+        .playmaking: ["AST%", "AST/100", "TOV%", "AST:TO", "AST:USG", "APG", "AST", "TOV/G"],
+        .rebounding: ["OREB%", "DREB%", "REB%", "RPG", "OREB", "DREB"],
+        .defense: ["STL%", "BLK%", "Stocks/100", "Fouls/100", "SPG", "BPG", "STL", "BLK"],
+        .impact: ["On-Court +/-", "On-Off", "Min%", "MPG", "GS", "+/-"],
+    ]
 
-final class FootballMetricRegistryTests: XCTestCase {
+    func testRegistryMatchesTheContractLabelForLabel() {
+        for (category, labels) in Self.contractLabels {
+            let registry = BasketballMetricRegistry.definitions
+                .filter { $0.category == category }
+                .map(\.label)
+            XCTAssertEqual(Set(registry), Set(labels), "\(category) labels drifted from the contract")
+            XCTAssertEqual(registry.count, labels.count, "\(category) has a duplicate label")
+        }
+        XCTAssertEqual(BasketballMetricRegistry.definitions.count, 48)
+    }
+
     func testAdvancedAndTraditionalClassification() {
-        let epa = Metric(id: "epa", label: "EPA/Play", value: "0.18", percentile: 90, category: .passing)
-        let yards = Metric(id: "yards", label: "Pass Yds", value: "4,000", percentile: 85, category: .passing)
-
-        XCTAssertEqual(FootballMetricRegistry.kind(for: epa), .advanced)
-        XCTAssertEqual(FootballMetricRegistry.kind(for: yards), .traditional)
+        let ts = Metric(id: "ts", label: "TS%", value: "61.0%", percentile: 90, category: .scoring)
+        let ppg = Metric(id: "ppg", label: "PPG", value: "27.1", percentile: 85, category: .scoring)
+        XCTAssertEqual(BasketballMetricRegistry.kind(for: ts), .advanced)
+        XCTAssertEqual(BasketballMetricRegistry.kind(for: ppg), .traditional)
+        // Shooting is advanced throughout.
+        XCTAssertTrue(BasketballMetricRegistry.definitions
+            .filter { $0.category == .shooting }
+            .allSatisfy { $0.kind == .advanced })
     }
 
-    /// Defence used to be traditional-only, and this test asserted that. It now
-    /// asserts the opposite, because PFR's advanced defensive table (2018+) is
-    /// merged in: pressure generated and what the defender allowed in coverage.
-    func testDefenseHasAdvancedDefinitions() {
-        let defenseDefinitions = FootballMetricRegistry.definitions.filter { $0.positions.contains(.defense) }
-        XCTAssertFalse(defenseDefinitions.isEmpty)
-        XCTAssertTrue(defenseDefinitions.contains { $0.kind == .advanced })
-        XCTAssertTrue(defenseDefinitions.contains { $0.kind == .traditional })
-    }
-
-    /// Coverage metrics describe what a defender gave up, so every one of them
-    /// has to rank ascending. Getting this backwards would put the worst corner
-    /// in the league at the top of the board.
-    func testCoverageMetricsAreLowerIsBetter() {
-        for label in ["Cmp% Allowed", "Yds/Tgt Allowed", "Rating Allowed", "Missed Tkl%"] {
-            let definition = FootballMetricRegistry.definition(for: label, category: .defense)
-            XCTAssertNotNil(definition, "missing \(label)")
-            XCTAssertEqual(definition?.higherIsBetter, false, "\(label) should rank lower-is-better")
-        }
-        // Pass-rush counting stats go the other way.
-        for label in ["Pressures", "Hurries", "QB KD"] {
-            XCTAssertEqual(
-                FootballMetricRegistry.definition(for: label, category: .defense)?.higherIsBetter,
-                true,
-                "\(label) should rank higher-is-better"
-            )
+    func testEveryCategoryHasBothAdvancedAndTraditionalExceptShooting() {
+        for category in MetricCategory.allCases where category != .shooting {
+            let definitions = BasketballMetricRegistry.definitions.filter { $0.category == category }
+            XCTAssertTrue(definitions.contains { $0.kind == .advanced }, "\(category) has no advanced metric")
+            XCTAssertTrue(definitions.contains { $0.kind == .traditional }, "\(category) has no traditional metric")
         }
     }
 
-    /// Advanced rows must sort above traditional ones inside Defense, the same
-    /// as every other category.
-    func testDefenseAdvancedMetricsLeadDisplayOrder() {
-        let order = MetricCategory.defense.metricPriorityOrder
-        guard let firstTraditional = order.firstIndex(of: "Tackles"),
-              let lastAdvanced = order.firstIndex(of: "Missed Tkl%") else {
-            return XCTFail("expected both advanced and traditional defence metrics")
-        }
-        XCTAssertLessThan(lastAdvanced, firstTraditional)
+    func testLowerIsBetterMetricsAreExactlyTheContractOnes() {
+        let lower = BasketballMetricRegistry.definitions.filter { !$0.higherIsBetter }.map(\.label)
+        XCTAssertEqual(Set(lower), ["TOV%", "Fouls/100", "TOV/G"])
     }
 
-    func testPositionHeadlinePreferences() {
-        XCTAssertEqual(PlayerPositionGroup.qb.preferredAdvancedMetrics.first, "EPA/Play")
-        XCTAssertEqual(PlayerPositionGroup.rb.preferredAdvancedMetrics.first, "EPA/Rush")
-        XCTAssertEqual(PlayerPositionGroup.wr.preferredAdvancedMetrics.first, "EPA/Tgt")
+    func testEveryDefinitionIsOpenToEveryPositionGroupWithADescription() {
+        for definition in BasketballMetricRegistry.definitions {
+            XCTAssertEqual(definition.positions, [.guard, .forward, .center], definition.label)
+            XCTAssertFalse(definition.description.isEmpty, definition.label)
+            XCTAssertFalse(definition.description.contains("\u{2014}"), "no em dashes: \(definition.label)")
+        }
+    }
+
+    func testAdvancedMetricsLeadDisplayOrder() {
+        for category in MetricCategory.allCases {
+            let order = BasketballMetricRegistry.definitions
+                .filter { $0.category == category }
+                .sorted { $0.priority < $1.priority }
+            if let firstTraditional = order.firstIndex(where: { $0.kind == .traditional }),
+               let lastAdvanced = order.lastIndex(where: { $0.kind == .advanced }) {
+                XCTAssertLessThan(lastAdvanced, firstTraditional, "\(category)")
+            }
+        }
+    }
+
+    func testPositionBoardDefaults() {
+        XCTAssertEqual(PlayerPositionGroup.guard.preferredAdvancedMetrics, ["AST%", "TS%", "USG%", "On-Off"])
+        XCTAssertEqual(PlayerPositionGroup.forward.preferredAdvancedMetrics, ["Pts/100", "TS%", "USG%", "On-Off"])
+        XCTAssertEqual(PlayerPositionGroup.center.preferredAdvancedMetrics, ["REB%", "Rim FG%", "BLK%", "On-Off"])
+        XCTAssertEqual(PlayerPositionGroup.guard.preferredTraditionalMetrics, ["APG", "PPG", "SPG"])
+        XCTAssertEqual(PlayerPositionGroup.forward.preferredTraditionalMetrics, ["PPG", "RPG", "3PM"])
+        XCTAssertEqual(PlayerPositionGroup.center.preferredTraditionalMetrics, ["RPG", "BPG", "FG%"])
+        // The All board leads with scoring.
+        XCTAssertEqual(PlayerPositionGroup.all.preferredAdvancedMetrics.first, "Pts/100")
+        XCTAssertEqual(PlayerPositionGroup.all.preferredTraditionalMetrics.first, "PPG")
+        XCTAssertEqual(PlayerPositionGroup.allCases.map(\.rawValue), ["All", "G", "F", "C"])
     }
 
     @MainActor
     func testLowerIsBetterUsesRegistry() {
-        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "INT%", category: .passing))
-        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "Fumble%", category: .rushing))
-        XCTAssertFalse(DashboardViewModel.lowerIsBetter(label: "EPA/Play", category: .passing))
+        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "TOV%", category: .playmaking))
+        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "Fouls/100", category: .defense))
+        XCTAssertFalse(DashboardViewModel.lowerIsBetter(label: "TS%", category: .scoring))
     }
 
     func testUnknownMetricIsPreserved() {
-        let unknown = Metric(id: "unknown", label: "New Metric", value: "1.0", percentile: 50, category: .passing)
-        XCTAssertEqual(FootballMetricRegistry.kind(for: unknown), .advanced)
-        XCTAssertTrue(FootballMetricRegistry.isSupported(unknown, by: .qb))
-        XCTAssertEqual(FootballMetricRegistry.sorted([unknown]), [unknown])
+        let unknown = Metric(id: "unknown", label: "New Metric", value: "1.0", percentile: 50, category: .scoring)
+        XCTAssertEqual(BasketballMetricRegistry.kind(for: unknown), .advanced)
+        XCTAssertTrue(BasketballMetricRegistry.isSupported(unknown, by: .guard))
+        XCTAssertEqual(BasketballMetricRegistry.sorted([unknown]), [unknown])
+    }
+
+    func testZeroCountIsUnrankedButZeroRateIsNot() {
+        let zeroBlocks = Metric(id: "blk", label: "BLK", value: "0", percentile: 47, category: .defense)
+        XCTAssertTrue(zeroBlocks.isUnranked)
+        let zeroOnOff = Metric(id: "oo", label: "On-Off", value: "0.0", percentile: 50, category: .impact)
+        XCTAssertFalse(zeroOnOff.isUnranked)
+    }
+
+    func testFamiliesAreBasketballOnes() {
+        XCTAssertEqual(
+            Set(MetricFamily.allCases.map(\.rawValue)),
+            ["Efficiency", "Usage", "Shooting", "Frequency", "Accuracy", "Playmaking", "Turnovers",
+             "Rebounding", "Rim Protection", "Steals", "Impact", "Playing Time", "Production"]
+        )
     }
 }

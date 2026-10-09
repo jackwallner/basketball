@@ -1,36 +1,36 @@
 import SwiftUI
 
-/// Division standings from posted finals, with each club's power rating beside
-/// its record.
+/// Conference standings from posted finals, with each team's power rating
+/// beside its record.
 struct StandingsView: View {
     @Bindable var viewModel: DashboardViewModel
-    let divisions: [(name: String, teams: [String])]
+    let conferences: [(name: String, teams: [String])]
 
     var body: some View {
         let table = viewModel.standings
         VStack(spacing: 12) {
-            ForEach(divisions, id: \.name) { division in
+            ForEach(conferences, id: \.name) { division in
                 let rows = StandingsRow.ordered(division.teams.compactMap { table[$0] })
                 VStack(spacing: 0) {
                     header(division.name)
                     ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                         NavigationLink(value: TeamDestination(abbr: row.team)) {
                             line(row)
-                                .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                                .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .background(GridironPalette.surface)
-                .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                .background(HardwoodPalette.surface)
+                .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
                 .overlay(
-                    RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                        .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                        .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
                 )
             }
-            Text("Ordered by win percentage, then point differential, not the NFL's full tiebreakers. PWR is the StatScout Power Rating: points better or worse than an average team on a neutral field.")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+            Text("Ordered by win percentage, then point differential, not the NBA's full tiebreakers. PWR is the StatScout Power Rating: points per 100 possessions better or worse than an average team, adjusted for schedule.")
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 4)
@@ -47,12 +47,12 @@ struct StandingsView: View {
             Text("STRK").frame(width: 40, alignment: .trailing)
             Text("PWR").frame(width: 48, alignment: .trailing)
         }
-        .font(GridironType.micro)
-        .foregroundStyle(GridironPalette.inkTertiary)
-        .frame(height: GridironGeo.rowHeightHeader)
-        .padding(.horizontal, GridironGeo.padInline)
-        .background(GridironPalette.surfaceAlt)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .font(HardwoodType.micro)
+        .foregroundStyle(HardwoodPalette.inkTertiary)
+        .frame(height: HardwoodGeo.rowHeightHeader)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .background(HardwoodPalette.surfaceAlt)
+        .overlay(Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline), alignment: .bottom)
     }
 
     private func line(_ row: StandingsRow) -> some View {
@@ -61,37 +61,37 @@ struct StandingsView: View {
             HStack(spacing: 8) {
                 TeamColorDot(abbr: row.team, size: 10)
                 Text(displayTeamAbbr(row.team))
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .frame(width: 40, alignment: .leading)
                 Text(teamNickname(row.team))
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Text(row.record)
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.statSmall)
+                .foregroundStyle(HardwoodPalette.ink)
                 .frame(width: 44, alignment: .trailing)
             Text(row.games == 0 ? "-" : (row.differential > 0 ? "+\(row.differential)" : "\(row.differential)"))
-                .font(GridironType.statSmall)
-                .foregroundStyle(row.differential > 0 ? GridironPalette.performanceHigh : (row.differential < 0 ? GridironPalette.performanceLow : GridironPalette.inkSecondary))
+                .font(HardwoodType.statSmall)
+                .foregroundStyle(row.differential > 0 ? HardwoodPalette.performanceHigh : (row.differential < 0 ? HardwoodPalette.performanceLow : HardwoodPalette.inkSecondary))
                 .frame(width: 44, alignment: .trailing)
             Text(row.streak ?? "-")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.statSmall)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .frame(width: 40, alignment: .trailing)
             Text(rating.map { TeamRating.signed($0.rating) } ?? "-")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.statSmall)
+                .foregroundStyle(HardwoodPalette.ink)
                 .frame(width: 48, alignment: .trailing)
         }
         .monospacedDigit()
         .frame(height: 44)
-        .padding(.horizontal, GridironGeo.padInline)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .overlay(Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline), alignment: .bottom)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
@@ -101,8 +101,8 @@ struct StandingsView: View {
     }
 }
 
-/// The league ranked by power rating, after Hawk Blogger's HB Power Rankings:
-/// what a club does minus what it allows, adjusted for who it played.
+/// The league ranked by power rating: what a team scores minus what it allows
+/// per 100 possessions, adjusted for who it played.
 struct PowerRankingsView: View {
     @Bindable var viewModel: DashboardViewModel
 
@@ -120,29 +120,29 @@ struct PowerRankingsView: View {
                 }
                 .padding(.vertical, 32)
                 .frame(maxWidth: .infinity)
-                .background(GridironPalette.surface)
-                .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                .background(HardwoodPalette.surface)
+                .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
             } else {
                 VStack(spacing: 0) {
                     header
                     ForEach(Array(ratings.enumerated()), id: \.element.id) { index, rating in
                         NavigationLink(value: TeamDestination(abbr: rating.team)) {
                             line(rating)
-                                .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                                .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .background(GridironPalette.surface)
-                .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                .background(HardwoodPalette.surface)
+                .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
                 .overlay(
-                    RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                        .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                        .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
                 )
             }
             Text(footnote)
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 4)
@@ -151,8 +151,9 @@ struct PowerRankingsView: View {
     }
 
     private var footnote: String {
-        let through = ratings.first.map { $0.throughWeek > 0 ? "Through Week \($0.throughWeek). " : "Preseason: last season's ratings, regressed. " } ?? ""
-        return through + "Points per game better or worse than an average team on a neutral field: EPA per dropback and per run plus points, for minus against, adjusted for schedule. Early in the season last year counts as five games of evidence. Read two ratings like a spread, with about two points for home field. Modeled on Hawk Blogger's HB Power Rankings."
+        let preseason = ratings.first.map { $0.games == 0 } ?? false
+        let lead = preseason ? "Preseason: last season's ratings, regressed. " : ""
+        return lead + "Points per 100 possessions better or worse than an average team: what a team scores plus what it holds opponents under, adjusted for schedule. Early in the season, last season's rating carries part of the weight. Read two ratings like a spread, with about two and a half points for home court."
     }
 
     private var header: some View {
@@ -163,54 +164,54 @@ struct PowerRankingsView: View {
             Text("DEF").frame(width: 44, alignment: .trailing)
             Text("RATING").frame(width: 60, alignment: .trailing)
         }
-        .font(GridironType.micro)
-        .foregroundStyle(GridironPalette.inkTertiary)
-        .frame(height: GridironGeo.rowHeightHeader)
-        .padding(.horizontal, GridironGeo.padInline)
-        .background(GridironPalette.surfaceAlt)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .font(HardwoodType.micro)
+        .foregroundStyle(HardwoodPalette.inkTertiary)
+        .frame(height: HardwoodGeo.rowHeightHeader)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .background(HardwoodPalette.surfaceAlt)
+        .overlay(Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline), alignment: .bottom)
     }
 
     private func line(_ rating: TeamRating) -> some View {
         let record = viewModel.standings[normalizedTeamAbbreviation(rating.team)]?.record
         return HStack(spacing: 0) {
             Text("\(rating.rank)")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.statSmall)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .frame(width: 28, alignment: .leading)
             HStack(spacing: 8) {
                 TeamColorDot(abbr: rating.team, size: 10)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(teamFullName(rating.team))
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.bodyBold)
+                        .foregroundStyle(HardwoodPalette.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                     if let record {
                         Text(record)
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(HardwoodType.micro)
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
                     }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Text(TeamRating.signed(rating.offense))
-                .font(GridironType.statSmall)
+                .font(HardwoodType.statSmall)
                 .foregroundStyle(tint(rating.offense))
                 .frame(width: 44, alignment: .trailing)
             Text(TeamRating.signed(rating.defense))
-                .font(GridironType.statSmall)
+                .font(HardwoodType.statSmall)
                 .foregroundStyle(tint(rating.defense))
                 .frame(width: 44, alignment: .trailing)
             Text(TeamRating.signed(rating.rating))
-                .font(GridironType.statMed)
+                .font(HardwoodType.statMed)
                 .foregroundStyle(tint(rating.rating))
                 .frame(width: 60, alignment: .trailing)
         }
         .monospacedDigit()
-        .frame(height: GridironGeo.rowHeight)
-        .padding(.horizontal, GridironGeo.padInline)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .frame(height: HardwoodGeo.rowHeight)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .overlay(Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline), alignment: .bottom)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
@@ -219,13 +220,13 @@ struct PowerRankingsView: View {
     }
 
     private func tint(_ value: Double) -> Color {
-        if value >= 1 { return GridironPalette.performanceHigh }
-        if value <= -1 { return GridironPalette.performanceLow }
-        return GridironPalette.inkSecondary
+        if value >= 1 { return HardwoodPalette.performanceHigh }
+        if value <= -1 { return HardwoodPalette.performanceLow }
+        return HardwoodPalette.inkSecondary
     }
 }
 
-/// "Seahawks" from "Seattle Seahawks".
+/// "Celtics" from "Boston Celtics".
 func teamNickname(_ abbr: String) -> String {
     teamFullName(abbr).split(separator: " ").last.map(String.init) ?? abbr
 }

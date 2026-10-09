@@ -1,6 +1,6 @@
 import Foundation
 
-/// The state users need to understand while a new NFL source release moves
+/// The state users need to understand while a new source release moves
 /// through the pipeline. The server may use more specific names, but the app
 /// keeps the presentation vocabulary small and stable.
 enum DataFreshnessStatus: String, Codable, CaseIterable, Sendable {
@@ -58,12 +58,13 @@ enum DataFreshnessStatus: String, Codable, CaseIterable, Sendable {
     }
 }
 
-/// Coverage describes the football included in a dataset. It is intentionally
+/// Coverage describes the games included in a dataset. It is intentionally
 /// separate from the time the database row was written.
 struct DataCoverage: Sendable, Equatable, Codable {
     /// Date of the last game included.
     let asOf: Date
-    /// NFL week number of that game, when the rollup carries one.
+    /// Calendar-week number of that game (counted from the season's October
+    /// epoch), when the rollup carries one. The app labels coverage by date.
     let week: Int?
     let phase: SeasonPhase
     /// Number of completed games included, when the publisher exposes it.
@@ -92,8 +93,10 @@ struct DataCoverage: Sendable, Equatable, Codable {
 /// active row for the requested season. The current publisher exposes
 /// `refresh_id`, `source_published_at`, `published_at`, `last_checked_at`,
 /// `max_week`, `max_game_date`, `observed_games`, `expected_games`, `status`,
-/// and `season_type`. Older names and nested coverage are accepted during
-/// rollout so the app can ship before every environment has the view.
+/// `season_type`, plus the two season columns that drive the rollover:
+/// `season` (the season the calendar names) and `published_season` (the season
+/// the live revision covers). Older names and nested coverage are accepted
+/// during rollout so the app can ship before every environment has the view.
 struct DataFreshness: Codable, Equatable, Sendable {
     let status: DataFreshnessStatus
     let revision: String?
@@ -104,14 +107,37 @@ struct DataFreshness: Codable, Equatable, Sendable {
     let message: String?
     let isCached: Bool
     /// Publisher state of the optional enrichment feeds ("ready", "pending").
-    /// A complete slate of games can still be waiting on these.
-    var nextGenStatus: String? = nil
-    var advancedDefenseStatus: String? = nil
+    /// A complete slate of games can still be waiting on these. The columns keep
+    /// the names they had before the NBA: `ngs_status` is the shot feed and
+    /// `pfr_status` is the play-by-play feed.
+    var shotsStatus: String? = nil
+    var playByPlayStatus: String? = nil
+    /// The status string as the publisher wrote it ("source_pending",
+    /// "published", ...). `status` folds several of these together, and the
+    /// season rollover needs to tell `source_pending` from a plain pending.
+    var rawStatus: String? = nil
+    /// The season the calendar names, which can be ahead of the data.
+    var season: Int? = nil
+    /// The season the live revision actually covers.
+    var publishedSeason: Int? = nil
+    var lastErrorCode: String? = nil
 
-    /// True while Next Gen Stats or PFR advanced defense has not caught up with
-    /// the games already published.
+    /// The new season has started on the calendar but has no games played yet:
+    /// the schedule exists, the box scores do not, and the last published
+    /// revision still describes the previous season. Nothing is wrong, so the
+    /// app keeps the finished season as the live one and says when the new one
+    /// starts.
+    var isSeasonPending: Bool {
+        guard rawStatus?.lowercased() == "source_pending",
+              lastErrorCode?.lowercased() == "season_pending",
+              let season, let publishedSeason else { return false }
+        return season > publishedSeason
+    }
+
+    /// True while the shot or play-by-play feed has not caught up with the
+    /// games already published.
     var isAdvancedPending: Bool {
-        [nextGenStatus, advancedDefenseStatus].contains { status in
+        [shotsStatus, playByPlayStatus].contains { status in
             guard let status = status?.lowercased() else { return false }
             return status != "ready" && status != "not_applicable" && status != "unavailable"
         }
@@ -126,8 +152,12 @@ struct DataFreshness: Codable, Equatable, Sendable {
         coverage: DataCoverage? = nil,
         message: String? = nil,
         isCached: Bool = false,
-        nextGenStatus: String? = nil,
-        advancedDefenseStatus: String? = nil
+        shotsStatus: String? = nil,
+        playByPlayStatus: String? = nil,
+        rawStatus: String? = nil,
+        season: Int? = nil,
+        publishedSeason: Int? = nil,
+        lastErrorCode: String? = nil
     ) {
         self.status = status
         self.revision = revision
@@ -137,8 +167,12 @@ struct DataFreshness: Codable, Equatable, Sendable {
         self.coverage = coverage
         self.message = message
         self.isCached = isCached
-        self.nextGenStatus = nextGenStatus
-        self.advancedDefenseStatus = advancedDefenseStatus
+        self.shotsStatus = shotsStatus
+        self.playByPlayStatus = playByPlayStatus
+        self.rawStatus = rawStatus
+        self.season = season
+        self.publishedSeason = publishedSeason
+        self.lastErrorCode = lastErrorCode
     }
 
     /// Returns a copy with local display state changed without altering the
@@ -160,8 +194,14 @@ struct DataFreshness: Codable, Equatable, Sendable {
             coverage: coverage ?? self.coverage,
             message: message ?? self.message,
             isCached: isCached ?? self.isCached,
-            nextGenStatus: nextGenStatus,
-            advancedDefenseStatus: advancedDefenseStatus
+            shotsStatus: shotsStatus,
+            playByPlayStatus: playByPlayStatus,
+            // A local display override (offline, failed) is no longer what the
+            // publisher said, so the raw string goes with it.
+            rawStatus: status == nil ? rawStatus : nil,
+            season: season,
+            publishedSeason: publishedSeason,
+            lastErrorCode: lastErrorCode
         )
     }
 
@@ -190,6 +230,9 @@ struct DataFreshness: Codable, Equatable, Sendable {
         case cached = "is_cached"
         case ngsStatus = "ngs_status"
         case pfrStatus = "pfr_status"
+        case season
+        case publishedSeason = "published_season"
+        case lastErrorCode = "last_error_code"
     }
 
     private struct CoveragePayload: Decodable {
@@ -217,6 +260,10 @@ struct DataFreshness: Codable, Equatable, Sendable {
 
         let rawStatus = try c.decodeIfPresent(String.self, forKey: .status) ?? "ready"
         status = DataFreshnessStatus(rawValue: rawStatus)
+        self.rawStatus = rawStatus
+        season = try c.decodeIfPresent(Int.self, forKey: .season)
+        publishedSeason = try c.decodeIfPresent(Int.self, forKey: .publishedSeason)
+        lastErrorCode = try c.decodeIfPresent(String.self, forKey: .lastErrorCode)
         revision = try c.decodeIfPresent(String.self, forKey: .revision)
             ?? c.decodeIfPresent(String.self, forKey: .refreshID)
             ?? c.decodeIfPresent(String.self, forKey: .sourceFingerprint)
@@ -227,8 +274,8 @@ struct DataFreshness: Codable, Equatable, Sendable {
         message = try c.decodeIfPresent(String.self, forKey: .message)
             ?? c.decodeIfPresent(String.self, forKey: .errorMessage)
         isCached = try c.decodeIfPresent(Bool.self, forKey: .cached) ?? false
-        nextGenStatus = try c.decodeIfPresent(String.self, forKey: .ngsStatus)
-        advancedDefenseStatus = try c.decodeIfPresent(String.self, forKey: .pfrStatus)
+        shotsStatus = try c.decodeIfPresent(String.self, forKey: .ngsStatus)
+        playByPlayStatus = try c.decodeIfPresent(String.self, forKey: .pfrStatus)
 
         let nestedCoverage: CoveragePayload?
         do {
@@ -271,7 +318,7 @@ struct DataFreshness: Codable, Equatable, Sendable {
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
-        try c.encode(status.rawValue, forKey: .status)
+        try c.encode(rawStatus ?? status.rawValue, forKey: .status)
         try c.encodeIfPresent(revision, forKey: .revision)
         try c.encodeIfPresent(Self.formatDate(sourcePublishedAt), forKey: .sourcePublishedAt)
         try c.encodeIfPresent(Self.formatDate(publishedAt), forKey: .publishedAt)
@@ -283,8 +330,11 @@ struct DataFreshness: Codable, Equatable, Sendable {
         try c.encodeIfPresent(coverage?.expectedGames, forKey: .expectedGames)
         try c.encodeIfPresent(message, forKey: .message)
         try c.encode(isCached, forKey: .cached)
-        try c.encodeIfPresent(nextGenStatus, forKey: .ngsStatus)
-        try c.encodeIfPresent(advancedDefenseStatus, forKey: .pfrStatus)
+        try c.encodeIfPresent(shotsStatus, forKey: .ngsStatus)
+        try c.encodeIfPresent(playByPlayStatus, forKey: .pfrStatus)
+        try c.encodeIfPresent(season, forKey: .season)
+        try c.encodeIfPresent(publishedSeason, forKey: .publishedSeason)
+        try c.encodeIfPresent(lastErrorCode, forKey: .lastErrorCode)
     }
 
     private static func decodeDate(
@@ -302,26 +352,47 @@ struct DataFreshness: Codable, Equatable, Sendable {
         return formatter.string(from: date)
     }
 
-    static func parseDate(_ raw: String) -> Date? {
-        let iso = ISO8601DateFormatter()
-        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = iso.date(from: raw) { return date }
+    // Formatters are expensive to build and this runs once per schedule row
+    // (twice a game), so they are made once. Reading from them is thread-safe.
+    nonisolated(unsafe) private static let fractionalISO: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
 
-        let plainISO = ISO8601DateFormatter()
-        plainISO.formatOptions = [.withInternetDateTime]
-        if let date = plainISO.date(from: raw) { return date }
+    nonisolated(unsafe) private static let plainISO: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
 
+    private static let easternDay: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.timeZone = TimeZone(identifier: "America/New_York")
-        return formatter.date(from: raw)
+        return formatter
+    }()
+
+    static func parseDate(_ raw: String) -> Date? {
+        if let date = fractionalISO.date(from: raw) { return date }
+        if let date = plainISO.date(from: raw) { return date }
+        if let date = easternDay.date(from: raw) { return date }
+        // Postgres writes a variable-length fraction ("...38.20338+00:00"), which
+        // the fractional formatter only accepts at exactly three digits. Drop it:
+        // the second is precise enough for every date the app shows.
+        if let dot = raw.range(of: #"\.\d+"#, options: .regularExpression) {
+            var stripped = raw
+            stripped.removeSubrange(dot)
+            return plainISO.date(from: stripped)
+        }
+        return nil
     }
 }
 
 extension DataCoverage {
     /// Game dates arrive without a time and are parsed as Eastern midnight, the
     /// league's calendar. Formatting them in the phone's zone showed the day
-    /// before anywhere west of New York (Sep 10 games read "Sep 9" in Seattle).
+    /// before anywhere west of New York (Oct 21 games read "Oct 20" in Seattle).
     static var gameDayStyle: Date.FormatStyle {
         var style = Date.FormatStyle.dateTime.month(.abbreviated).day()
         style.timeZone = TimeZone(identifier: "America/New_York") ?? .current

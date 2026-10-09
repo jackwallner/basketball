@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum GridironPalette {
+enum HardwoodPalette {
     static let canvas       = Color(red: 0.94, green: 0.93, blue: 0.89)
     static let surface      = Color(red: 0.99, green: 0.98, blue: 0.94)
     static let surfaceAlt   = Color(red: 0.96, green: 0.95, blue: 0.90)
@@ -12,7 +12,7 @@ enum GridironPalette {
     static let inkTertiary  = Color(red: 0.39, green: 0.41, blue: 0.38)
     static let inkOnDark    = Color(red: 0.99, green: 0.98, blue: 0.94)
     static let midnight     = Color(red: 0.035, green: 0.08, blue: 0.07)
-    static let turf         = Color(red: 0.08, green: 0.36, blue: 0.20)
+    static let court         = Color(red: 0.08, green: 0.36, blue: 0.20)
     static let leather      = Color(red: 0.48, green: 0.23, blue: 0.10)
     static let gold         = Color(red: 0.84, green: 0.63, blue: 0.19)
     static let linkBlue     = Color(red: 0.05, green: 0.32, blue: 0.45)
@@ -65,7 +65,7 @@ enum GridironPalette {
     }
 }
 
-enum GridironType {
+enum HardwoodType {
     // SF Pro is the single language face throughout the app. Semantic styles
     // keep the hierarchy coherent and participate in Dynamic Type.
     //
@@ -94,7 +94,7 @@ enum GridironType {
     static let statSmall = Font.system(.caption, design: .default, weight: .medium).monospacedDigit()
 }
 
-enum GridironGeo {
+enum HardwoodGeo {
     static let radiusCard: CGFloat = 4
     static let radiusBadge: CGFloat = 2
     static let hairline: CGFloat = 0.5
@@ -113,57 +113,62 @@ enum GridironGeo {
     static let controlRowGap: CGFloat = 10
 }
 
-/// NFL team primary colors, keyed by nflverse abbreviation.
-enum NFLTeamColor {
+/// NBA team primary colors, keyed by the app's team code. Historical codes
+/// (SEA, NJN, NOH, NOK, VAN) carry the colors the franchise wore then.
+enum NBATeamColor {
     static let primary: [String: Color] = [
-        "ARI": Color(red: 0.59, green: 0.14, blue: 0.25),
-        "ATL": Color(red: 0.65, green: 0.10, blue: 0.19),
-        "BAL": Color(red: 0.14, green: 0.09, blue: 0.45),
-        "BUF": Color(red: 0.00, green: 0.20, blue: 0.55),
-        "CAR": Color(red: 0.00, green: 0.52, blue: 0.79),
-        "CHI": Color(red: 0.04, green: 0.09, blue: 0.16),
-        "CIN": Color(red: 0.98, green: 0.31, blue: 0.08),
-        "CLE": Color(red: 0.34, green: 0.18, blue: 0.05),
-        "DAL": Color(red: 0.02, green: 0.12, blue: 0.26),
-        "DEN": Color(red: 0.98, green: 0.31, blue: 0.08),
-        "DET": Color(red: 0.00, green: 0.46, blue: 0.71),
-        "GB":  Color(red: 0.13, green: 0.22, blue: 0.19),
-        "HOU": Color(red: 0.01, green: 0.13, blue: 0.18),
-        "IND": Color(red: 0.00, green: 0.17, blue: 0.37),
-        "JAX": Color(red: 0.00, green: 0.40, blue: 0.47),
-        "KC":  Color(red: 0.89, green: 0.09, blue: 0.22),
-        "LA":  Color(red: 0.00, green: 0.21, blue: 0.58),
-        "LAC": Color(red: 0.00, green: 0.50, blue: 0.78),
-        "LV":  Color(red: 0.10, green: 0.10, blue: 0.11),
-        "MIA": Color(red: 0.00, green: 0.56, blue: 0.59),
-        "MIN": Color(red: 0.31, green: 0.15, blue: 0.51),
-        "NE":  Color(red: 0.00, green: 0.13, blue: 0.27),
-        "NO":  Color(red: 0.62, green: 0.53, blue: 0.36),
-        "NYG": Color(red: 0.04, green: 0.13, blue: 0.40),
-        "NYJ": Color(red: 0.07, green: 0.34, blue: 0.25),
-        "PHI": Color(red: 0.00, green: 0.30, blue: 0.33),
-        "PIT": Color(red: 0.98, green: 0.71, blue: 0.07),
-        "SEA": Color(red: 0.00, green: 0.13, blue: 0.27),
-        "SF":  Color(red: 0.67, green: 0.00, blue: 0.00),
-        "TB":  Color(red: 0.84, green: 0.04, blue: 0.04),
-        "TEN": Color(red: 0.05, green: 0.14, blue: 0.25),
-        "WAS": Color(red: 0.35, green: 0.08, blue: 0.08)
+        "ATL": Color(red: 0.88, green: 0.23, blue: 0.19),
+        "BKN": Color(red: 0.10, green: 0.10, blue: 0.11),
+        "BOS": Color(red: 0.00, green: 0.48, blue: 0.20),
+        "CHA": Color(red: 0.00, green: 0.47, blue: 0.55),
+        "CHI": Color(red: 0.81, green: 0.07, blue: 0.25),
+        "CLE": Color(red: 0.52, green: 0.00, blue: 0.22),
+        "DAL": Color(red: 0.00, green: 0.33, blue: 0.55),
+        "DEN": Color(red: 0.05, green: 0.13, blue: 0.25),
+        "DET": Color(red: 0.11, green: 0.26, blue: 0.73),
+        "GSW": Color(red: 0.11, green: 0.26, blue: 0.54),
+        "HOU": Color(red: 0.81, green: 0.07, blue: 0.25),
+        "IND": Color(red: 0.00, green: 0.18, blue: 0.38),
+        "LAC": Color(red: 0.78, green: 0.06, blue: 0.18),
+        "LAL": Color(red: 0.33, green: 0.15, blue: 0.51),
+        "MEM": Color(red: 0.36, green: 0.46, blue: 0.66),
+        "MIA": Color(red: 0.60, green: 0.00, blue: 0.18),
+        "MIL": Color(red: 0.00, green: 0.28, blue: 0.11),
+        "MIN": Color(red: 0.05, green: 0.14, blue: 0.25),
+        "NOP": Color(red: 0.05, green: 0.14, blue: 0.25),
+        "NYK": Color(red: 0.00, green: 0.42, blue: 0.71),
+        "OKC": Color(red: 0.00, green: 0.48, blue: 0.76),
+        "ORL": Color(red: 0.00, green: 0.47, blue: 0.75),
+        "PHI": Color(red: 0.00, green: 0.42, blue: 0.71),
+        "PHX": Color(red: 0.11, green: 0.07, blue: 0.38),
+        "POR": Color(red: 0.88, green: 0.23, blue: 0.19),
+        "SAC": Color(red: 0.35, green: 0.18, blue: 0.51),
+        "SAS": Color(red: 0.15, green: 0.16, blue: 0.17),
+        "TOR": Color(red: 0.81, green: 0.07, blue: 0.25),
+        "UTA": Color(red: 0.00, green: 0.17, blue: 0.36),
+        "WAS": Color(red: 0.00, green: 0.17, blue: 0.36),
+        // Franchises that played under another code in the seasons the app covers.
+        "SEA": Color(red: 0.00, green: 0.40, blue: 0.20),
+        "NJN": Color(red: 0.00, green: 0.16, blue: 0.38),
+        "NOH": Color(red: 0.00, green: 0.47, blue: 0.55),
+        "NOK": Color(red: 0.00, green: 0.47, blue: 0.55),
+        "VAN": Color(red: 0.00, green: 0.70, blue: 0.66),
     ]
-    static func color(_ abbr: String) -> Color { primary[normalizedTeamAbbreviation(abbr)] ?? GridironPalette.inkTertiary }
+    static func color(_ abbr: String) -> Color { primary[normalizedTeamAbbreviation(abbr)] ?? HardwoodPalette.inkTertiary }
 }
 
-/// NFL team abbreviations in nflverse form. Shared by the Teams grid and switcher.
-let nflTeamAbbreviations: [String] = [
-    "ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN",
-    "DET", "GB", "HOU", "IND", "JAX", "KC", "LA", "LAC", "LV", "MIA",
-    "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SEA", "SF", "TB",
-    "TEN", "WAS"
+/// The 30 current NBA teams in the app's team codes. Shared by the Teams grid
+/// and switcher.
+let nbaTeamAbbreviations: [String] = [
+    "ATL", "BKN", "BOS", "CHA", "CHI", "CLE", "DAL", "DEN", "DET", "GSW",
+    "HOU", "IND", "LAC", "LAL", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK",
+    "OKC", "ORL", "PHI", "PHX", "POR", "SAC", "SAS", "TOR", "UTA", "WAS",
 ]
 
-enum NFLConference: String, CaseIterable, Identifiable, Hashable, Sendable {
+enum NBAConference: String, CaseIterable, Identifiable, Hashable, Sendable {
     case all = "All"
-    case afc = "AFC"
-    case nfc = "NFC"
+    case east = "East"
+    case west = "West"
 
     var id: String { rawValue }
 
@@ -172,78 +177,74 @@ enum NFLConference: String, CaseIterable, Identifiable, Hashable, Sendable {
         switch self {
         case .all:
             return true
-        case .afc:
-            return Self.afcTeams.contains(abbr)
-        case .nfc:
-            return Self.nfcTeams.contains(abbr)
+        case .east:
+            return Self.eastTeams.contains(abbr)
+        case .west:
+            return Self.westTeams.contains(abbr)
         }
     }
 
-    private static let afcTeams: Set<String> = [
-        "BAL", "BUF", "CIN", "CLE", "DEN", "HOU", "IND", "JAX",
-        "KC", "LAC", "LV", "MIA", "NE", "NYJ", "PIT", "TEN",
+    private static let eastTeams: Set<String> = [
+        "ATL", "BKN", "BOS", "CHA", "CHI", "CLE", "DET", "IND",
+        "MIA", "MIL", "NYK", "ORL", "PHI", "TOR", "WAS", "NJN",
     ]
 
-    private static let nfcTeams: Set<String> = [
-        "ARI", "ATL", "CAR", "CHI", "DAL", "DET", "GB", "LA",
-        "MIN", "NO", "NYG", "PHI", "SEA", "SF", "TB", "WAS",
+    private static let westTeams: Set<String> = [
+        "DAL", "DEN", "GSW", "HOU", "LAC", "LAL", "MEM", "MIN",
+        "NOP", "OKC", "PHX", "POR", "SAC", "SAS", "UTA",
+        "SEA", "NOH", "NOK", "VAN",
     ]
 }
+
+private let teamNames: [String: String] = [
+    "ATL": "Atlanta Hawks", "BKN": "Brooklyn Nets", "BOS": "Boston Celtics",
+    "CHA": "Charlotte Hornets", "CHI": "Chicago Bulls", "CLE": "Cleveland Cavaliers",
+    "DAL": "Dallas Mavericks", "DEN": "Denver Nuggets", "DET": "Detroit Pistons",
+    "GSW": "Golden State Warriors", "HOU": "Houston Rockets", "IND": "Indiana Pacers",
+    "LAC": "Los Angeles Clippers", "LAL": "Los Angeles Lakers", "MEM": "Memphis Grizzlies",
+    "MIA": "Miami Heat", "MIL": "Milwaukee Bucks", "MIN": "Minnesota Timberwolves",
+    "NOP": "New Orleans Pelicans", "NYK": "New York Knicks", "OKC": "Oklahoma City Thunder",
+    "ORL": "Orlando Magic", "PHI": "Philadelphia 76ers", "PHX": "Phoenix Suns",
+    "POR": "Portland Trail Blazers", "SAC": "Sacramento Kings", "SAS": "San Antonio Spurs",
+    "TOR": "Toronto Raptors", "UTA": "Utah Jazz", "WAS": "Washington Wizards",
+    // Historical franchises.
+    "SEA": "Seattle SuperSonics", "NJN": "New Jersey Nets", "NOH": "New Orleans Hornets",
+    "NOK": "New Orleans/Oklahoma City Hornets", "VAN": "Vancouver Grizzlies",
+]
+
+private let teamCodesByName: [String: String] = Dictionary(
+    uniqueKeysWithValues: teamNames.map { ($0.value.uppercased(), $0.key) }
+)
 
 func normalizedTeamAbbreviation(_ team: String) -> String {
     let key = team.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
     let aliases: [String: String] = [
-        // Legacy / alternate abbreviations that map to the current nflverse code.
-        "OAK": "LV", "LVR": "LV", "SD": "LAC", "SDG": "LAC", "STL": "LA",
-        "LAR": "LA", "WSH": "WAS", "WFT": "WAS", "JAC": "JAX", "GNB": "GB",
-        "KAN": "KC", "NWE": "NE", "NOR": "NO", "SFO": "SF", "TAM": "TB",
-        "ARZ": "ARI", "CLV": "CLE", "HST": "HOU", "BLT": "BAL",
-        // Full names → abbreviation.
-        "ARIZONA CARDINALS": "ARI", "ATLANTA FALCONS": "ATL", "BALTIMORE RAVENS": "BAL",
-        "BUFFALO BILLS": "BUF", "CAROLINA PANTHERS": "CAR", "CHICAGO BEARS": "CHI",
-        "CINCINNATI BENGALS": "CIN", "CLEVELAND BROWNS": "CLE", "DALLAS COWBOYS": "DAL",
-        "DENVER BRONCOS": "DEN", "DETROIT LIONS": "DET", "GREEN BAY PACKERS": "GB",
-        "HOUSTON TEXANS": "HOU", "INDIANAPOLIS COLTS": "IND", "JACKSONVILLE JAGUARS": "JAX",
-        "KANSAS CITY CHIEFS": "KC", "LOS ANGELES RAMS": "LA", "LOS ANGELES CHARGERS": "LAC",
-        "LAS VEGAS RAIDERS": "LV", "MIAMI DOLPHINS": "MIA", "MINNESOTA VIKINGS": "MIN",
-        "NEW ENGLAND PATRIOTS": "NE", "NEW ORLEANS SAINTS": "NO", "NEW YORK GIANTS": "NYG",
-        "NEW YORK JETS": "NYJ", "PHILADELPHIA EAGLES": "PHI", "PITTSBURGH STEELERS": "PIT",
-        "SEATTLE SEAHAWKS": "SEA", "SAN FRANCISCO 49ERS": "SF", "TAMPA BAY BUCCANEERS": "TB",
-        "TENNESSEE TITANS": "TEN", "WASHINGTON COMMANDERS": "WAS"
+        // ESPN's short forms and the usual fan variants map to the app's codes.
+        "GS": "GSW", "NO": "NOP", "NY": "NYK", "SA": "SAS", "UTAH": "UTA",
+        "WSH": "WAS", "NJ": "NJN", "BRK": "BKN", "PHO": "PHX", "CHO": "CHA",
     ]
-    return aliases[key] ?? key
+    if let alias = aliases[key] { return alias }
+    // Full names → abbreviation.
+    return teamCodesByName[key] ?? key
 }
 
 func teamFullName(_ abbr: String) -> String {
-    let map: [String: String] = [
-        "ARI": "Arizona Cardinals", "ATL": "Atlanta Falcons", "BAL": "Baltimore Ravens",
-        "BUF": "Buffalo Bills", "CAR": "Carolina Panthers", "CHI": "Chicago Bears",
-        "CIN": "Cincinnati Bengals", "CLE": "Cleveland Browns", "DAL": "Dallas Cowboys",
-        "DEN": "Denver Broncos", "DET": "Detroit Lions", "GB": "Green Bay Packers",
-        "HOU": "Houston Texans", "IND": "Indianapolis Colts", "JAX": "Jacksonville Jaguars",
-        "KC": "Kansas City Chiefs", "LA": "Los Angeles Rams", "LAC": "Los Angeles Chargers",
-        "LV": "Las Vegas Raiders", "MIA": "Miami Dolphins", "MIN": "Minnesota Vikings",
-        "NE": "New England Patriots", "NO": "New Orleans Saints", "NYG": "New York Giants",
-        "NYJ": "New York Jets", "PHI": "Philadelphia Eagles", "PIT": "Pittsburgh Steelers",
-        "SEA": "Seattle Seahawks", "SF": "San Francisco 49ers", "TB": "Tampa Bay Buccaneers",
-        "TEN": "Tennessee Titans", "WAS": "Washington Commanders"
-    ]
     let normalized = normalizedTeamAbbreviation(abbr)
-    return map[normalized] ?? abbr
+    return teamNames[normalized] ?? abbr
 }
 
 struct StatScoutTheme {
-    static let background = LinearGradient(colors: [GridironPalette.canvas, GridironPalette.canvas], startPoint: .top, endPoint: .bottom)
-    static let card       = GridironPalette.surface
-    static let stroke     = GridironPalette.hairline
-    static let accent     = GridironPalette.turf
-    static let hot        = GridironPalette.performanceHigh
-    static let performanceLow = GridironPalette.performanceLow
-    static let turf       = GridironPalette.turf
-    static let leather    = GridironPalette.leather
+    static let background = LinearGradient(colors: [HardwoodPalette.canvas, HardwoodPalette.canvas], startPoint: .top, endPoint: .bottom)
+    static let card       = HardwoodPalette.surface
+    static let stroke     = HardwoodPalette.hairline
+    static let accent     = HardwoodPalette.court
+    static let hot        = HardwoodPalette.performanceHigh
+    static let performanceLow = HardwoodPalette.performanceLow
+    static let court      = HardwoodPalette.court
+    static let leather    = HardwoodPalette.leather
     static let sky        = Color(red: 0.30, green: 0.55, blue: 0.85)
 
     static func percentileColor(_ percentile: Int) -> Color {
-        GridironPalette.color(forPercentile: percentile)
+        HardwoodPalette.color(forPercentile: percentile)
     }
 }

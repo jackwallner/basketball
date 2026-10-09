@@ -4,33 +4,57 @@ struct TeamScheduleRoute: Hashable {
     let team: String
 }
 
-/// A team's game this week, on its team page: the result, the next kickoff, or
-/// the bye. It sits above the roster cards so the first thing a team page says
-/// is what happened on the field. Under it: follow the club, open its schedule.
-struct TeamWeekGameCard: View {
+/// The game a team page leads with: the live one, last night's result, the next
+/// tip-off, or, in the offseason, how the team's season ended. It sits above the
+/// roster cards so the first thing a team page says is what happened on the
+/// court. Under it: follow the team, open its schedule.
+struct TeamGameCard: View {
     @Bindable var viewModel: DashboardViewModel
     let team: String
     @State private var favorites = FavoritesStore.shared
 
-    var body: some View {
-        if let week = viewModel.currentGameWeek {
-            VStack(spacing: 8) {
-                if let game = viewModel.currentGame(forTeam: team) {
-                    NavigationLink(value: GameRoute(gameId: game.id)) {
-                        content(week: week, game: game)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Opens the game")
-                } else if week.phase == .regular {
-                    shell(week: week) {
-                        Text("Bye week")
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
-                        Spacer(minLength: 0)
-                    }
-                }
-                actions
+    /// Which game, and why it is the one shown.
+    enum Kind {
+        case live, last, next
+
+        var title: String {
+            switch self {
+            case .live: return "Live"
+            case .last: return "Last game"
+            case .next: return "Next game"
             }
+        }
+    }
+
+    /// In progress beats everything; a final from the last day beats the next
+    /// game (the result is what people open the page for the morning after);
+    /// otherwise the next tip-off, or the latest final once the schedule runs out.
+    private var featured: (kind: Kind, game: Game)? {
+        let games = viewModel.schedule(forTeam: team)
+        let now = Date()
+        if let live = games.first(where: { [.inProgress, .awaitingScore].contains($0.status(now: now)) }) {
+            return (.live, live)
+        }
+        let finals = games.filter { $0.status(now: now) == .final }
+        if let last = finals.last, let tip = last.tipoff, now.timeIntervalSince(tip) < 24 * 3_600 {
+            return (.last, last)
+        }
+        if let next = games.first(where: { $0.status(now: now) == .upcoming }) {
+            return (.next, next)
+        }
+        return finals.last.map { (.last, $0) }
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            if let featured {
+                NavigationLink(value: GameRoute(gameId: featured.game.id)) {
+                    content(kind: featured.kind, game: featured.game)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Opens the game")
+            }
+            actions
         }
     }
 
@@ -41,7 +65,7 @@ struct TeamWeekGameCard: View {
                 favorites.setFavorite(team: following ? nil : normalizedTeamAbbreviation(team))
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
-                GridironChip(
+                HardwoodChip(
                     title: following ? "Your team" : "Follow team",
                     systemImage: following ? "star.fill" : "star",
                     isActive: following
@@ -51,201 +75,187 @@ struct TeamWeekGameCard: View {
             .accessibilityHint(following ? "Stops pinning this team's games" : "Pins this team's games at the top of Games")
 
             NavigationLink(value: TeamScheduleRoute(team: normalizedTeamAbbreviation(team))) {
-                GridironChip(title: "Schedule", systemImage: "calendar")
+                HardwoodChip(title: "Schedule", systemImage: "calendar")
             }
             .buttonStyle(.plain)
             Spacer(minLength: 0)
         }
     }
 
-    private func content(week: GameWeek, game: Game) -> some View {
-        shell(week: week) {
+    private func content(kind: Kind, game: Game) -> some View {
+        shell(kind: kind, game: game) {
             TeamColorDot(abbr: game.opponent(of: team), size: 10)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(game.matchupLabel(for: team)) · \(teamFullName(game.opponent(of: team)))")
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                 Text(detail(game))
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
             Spacer(minLength: 8)
             if let line = game.resultLine(for: team) {
                 Text(line)
-                    .font(GridironType.statMed)
-                    .foregroundStyle(game.result(for: team) == "L" ? GridironPalette.performanceLow : GridironPalette.performanceHigh)
+                    .font(HardwoodType.statMed)
+                    .foregroundStyle(game.result(for: team) == "L" ? HardwoodPalette.performanceLow : HardwoodPalette.performanceHigh)
             }
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
         }
     }
 
     private func detail(_ game: Game) -> String {
         switch game.status() {
         case .final:
-            return viewModel.hasStats(game) ? "Final · box score" : "Final · stats arriving"
+            return "\(game.dayLabel) · " + (viewModel.hasStats(game) ? "box score" : "stats arriving")
         case .inProgress, .awaitingScore:
             return "In progress"
         case .upcoming:
-            return "\(game.dayLabel), \(game.kickoff?.formatted(date: .omitted, time: .shortened) ?? "time TBD")"
+            return "\(game.dayLabel), \(game.tipoff?.formatted(date: .omitted, time: .shortened) ?? "time TBD")"
         }
     }
 
-    private func shell<Content: View>(week: GameWeek, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(([week.label] + [viewModel.record(forTeam: team)].compactMap { $0 }).joined(separator: " · ").uppercased())
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+    private func shell<Content: View>(kind: Kind, game: Game, @ViewBuilder content: () -> Content) -> some View {
+        // The record belongs to the live season; a 2026-27 game has none yet.
+        let record = game.season == viewModel.freeSeason ? viewModel.record(forTeam: team) : nil
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(([kind.title, SeasonLabel.text(game.season)] + [record].compactMap { $0 }).joined(separator: " · ").uppercased())
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
             HStack(spacing: 10) {
                 content()
             }
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, HardwoodGeo.padInline)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .contentShape(Rectangle())
     }
 }
 
-/// One club's season: every week, the opponent, the result or the kickoff.
+/// One team's schedule: every game, the opponent, the result or the tip-off.
 struct TeamScheduleView: View {
     @Bindable var viewModel: DashboardViewModel
     let team: String
 
+    /// One season's games for the team, in tip-off order.
+    private struct SeasonBlock: Identifiable {
+        let season: Int
+        let games: [Game]
+        var id: Int { season }
+    }
+
+    /// The live season, then the upcoming one while it is pending. Newest first
+    /// would bury this season's results under a list of games not yet played, so
+    /// the order is the order they happen in.
+    private var sections: [SeasonBlock] {
+        Dictionary(grouping: viewModel.schedule(forTeam: team), by: \.season)
+            .map { SeasonBlock(season: $0.key, games: $0.value) }
+            .sorted { $0.season < $1.season }
+    }
+
     var body: some View {
-        let games = viewModel.schedule(forTeam: team)
         ScrollView {
-            LazyVStack(spacing: 0) {
-                VStack(spacing: 0) {
-                    GridironSectionBar(
-                        title: "\(String(viewModel.freeSeason)) schedule",
-                        trailing: viewModel.record(forTeam: team).map {
-                            AnyView(Text($0).font(GridironType.statSmall).foregroundStyle(GridironPalette.inkSecondary))
-                        }
-                    )
-                    ForEach(Array(entries(games).enumerated()), id: \.element.id) { index, entry in
-                        let background = index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt
-                        switch entry {
-                        case .game(let game):
-                            NavigationLink(value: GameRoute(gameId: game.id)) {
-                                row(game).background(background)
-                            }
-                            .buttonStyle(.plain)
-                        case .bye(let week):
-                            byeRow(week).background(background)
-                        }
-                    }
-                    if games.isEmpty {
-                        Text(viewModel.isGamesLoading ? "Loading schedule" : "Schedule not published yet")
-                            .font(GridironType.small)
-                            .foregroundStyle(GridironPalette.inkTertiary)
-                            .padding(.vertical, 32)
-                    }
+            LazyVStack(spacing: 12) {
+                ForEach(sections) { section in
+                    card(section)
                 }
-                .background(GridironPalette.surface)
-                .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
-                .overlay(
-                    RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                        .stroke(GridironPalette.hairline, lineWidth: 0.5)
-                )
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
+                if sections.isEmpty {
+                    Text(viewModel.isGamesLoading ? "Loading schedule" : "Schedule not published yet")
+                        .font(HardwoodType.small)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
+                        .padding(.vertical, 32)
+                }
                 Color.clear.frame(height: 88)
             }
+            .padding(.horizontal, 12)
+            .padding(.top, 12)
         }
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(HardwoodPalette.canvas.ignoresSafeArea())
         .navigationTitle(teamFullName(team))
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.loadGames() }
     }
 
-    enum Entry: Identifiable {
-        case game(Game)
-        case bye(Int)
-
-        var id: String {
-            switch self {
-            case .game(let game): return game.id
-            case .bye(let week): return "bye-\(week)"
+    private func card(_ section: SeasonBlock) -> some View {
+        let isLive = section.season == viewModel.freeSeason
+        return VStack(spacing: 0) {
+            HardwoodSectionBar(
+                title: "\(SeasonLabel.text(section.season)) schedule",
+                trailing: (isLive ? viewModel.record(forTeam: team) : nil).map {
+                    AnyView(Text($0).font(HardwoodType.statSmall).foregroundStyle(HardwoodPalette.inkSecondary))
+                }
+            )
+            ForEach(Array(numbered(section.games).enumerated()), id: \.element.game.id) { index, entry in
+                NavigationLink(value: GameRoute(gameId: entry.game.id)) {
+                    row(entry.game, number: entry.number)
+                        .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
+                }
+                .buttonStyle(.plain)
             }
         }
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
+        )
     }
 
-    /// The schedule with the bye week slotted in where the club has no game.
-    private func entries(_ games: [Game]) -> [Entry] {
-        let regularWeeks = Set(viewModel.games.filter { $0.seasonPhase == .regular }.map(\.week))
-        let played = Set(games.filter { $0.seasonPhase == .regular }.map(\.week))
-        var result: [Entry] = []
-        for week in regularWeeks.sorted() {
-            if let game = games.first(where: { $0.seasonPhase == .regular && $0.week == week }) {
-                result.append(.game(game))
-            } else if !played.contains(week) {
-                result.append(.bye(week))
-            }
+    /// Games numbered within their phase: 1 to 82 for the regular season, then
+    /// "P1", "P2"... for the playoffs.
+    private func numbered(_ games: [Game]) -> [(game: Game, number: String)] {
+        var counts: [SeasonPhase: Int] = [:]
+        return games.map { game in
+            counts[game.seasonPhase, default: 0] += 1
+            let n = counts[game.seasonPhase] ?? 0
+            return (game, game.seasonPhase == .regular ? "\(n)" : "P\(n)")
         }
-        result += games.filter { $0.seasonPhase != .regular }.map(Entry.game)
-        return result
     }
 
-    private func byeRow(_ week: Int) -> some View {
+    private func row(_ game: Game, number: String) -> some View {
         HStack(spacing: 10) {
-            Text("\(week)")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkTertiary)
-                .frame(width: 30, alignment: .leading)
-            Text("Bye week")
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.inkTertiary)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, GridironGeo.padInline)
-        .frame(minHeight: 44)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
-    }
-
-    private func row(_ game: Game) -> some View {
-        HStack(spacing: 10) {
-            Text(game.seasonPhase == .regular ? "\(game.week)" : game.gameType)
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkTertiary)
+            Text(number)
+                .font(HardwoodType.statSmall)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
                 .frame(width: 30, alignment: .leading)
             TeamColorDot(abbr: game.opponent(of: team), size: 10)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(game.matchupLabel(for: team)) · \(teamFullName(game.opponent(of: team)))")
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                 Text(game.dayLabel)
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
             Spacer(minLength: 8)
             if let line = game.resultLine(for: team) {
                 Text(line)
-                    .font(GridironType.statMed)
-                    .foregroundStyle(game.result(for: team) == "L" ? GridironPalette.performanceLow : GridironPalette.performanceHigh)
+                    .font(HardwoodType.statMed)
+                    .foregroundStyle(game.result(for: team) == "L" ? HardwoodPalette.performanceLow : HardwoodPalette.performanceHigh)
             } else {
-                Text(game.status() == .upcoming ? (game.kickoff?.formatted(date: .omitted, time: .shortened) ?? "TBD") : "In progress")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                Text(game.status() == .upcoming ? (game.tipoff?.formatted(date: .omitted, time: .shortened) ?? "TBD") : "In progress")
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
             }
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, HardwoodGeo.padInline)
         .frame(minHeight: 52)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .overlay(Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline), alignment: .bottom)
         .contentShape(Rectangle())
     }
 }
@@ -301,46 +311,46 @@ struct PlayerLastGameCard: View {
         let content = VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Text(title(log).uppercased())
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                 Spacer(minLength: 0)
                 if game != nil {
                     Text("Box score")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.turf)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.court)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(GridironPalette.turf)
+                        .foregroundStyle(HardwoodPalette.court)
                 }
             }
             HStack(spacing: 8) {
                 Text(matchup(log, team: team))
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.bodyBold)
+                    .foregroundStyle(HardwoodPalette.ink)
                     .lineLimit(1)
                 if let result = game?.resultLine(for: team) {
                     Text(result)
-                        .font(GridironType.statSmall)
-                        .foregroundStyle(game?.result(for: team) == "L" ? GridironPalette.performanceLow : GridironPalette.performanceHigh)
+                        .font(HardwoodType.statSmall)
+                        .foregroundStyle(game?.result(for: team) == "L" ? HardwoodPalette.performanceLow : HardwoodPalette.performanceHigh)
                 }
                 Spacer(minLength: 0)
             }
             if !summary.isEmpty {
                 Text(summary)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                     .monospacedDigit()
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, HardwoodGeo.padInline)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .contentShape(Rectangle())
 
@@ -354,19 +364,19 @@ struct PlayerLastGameCard: View {
     }
 
     private func title(_ log: PlayerGameLog) -> String {
-        if let game { return "Last game · \(game.roundLabel)" }
+        if let game { return "Last game · \(game.dayLabel)" }
         return "Last game · \(log.gameDate.formatted(DataCoverage.gameDayStyle))"
     }
 
     private func matchup(_ log: PlayerGameLog, team: String) -> String {
-        if let game { return "\(game.matchupLabel(for: team)) · \(game.dayLabel)" }
+        if let game { return game.matchupLabel(for: team) }
         return "vs \(displayTeamAbbr(log.opponent ?? ""))"
     }
 }
 
-/// Every game this season, newest first: week, opponent, result, and the
-/// player's line. The week-by-week view a 17-game sport is read in, free, and
-/// the natural companion to the Pro rolling windows.
+/// Every game this season, newest first: opponent, result, and the player's
+/// line. The night-by-night view an 82-game season is read in, free, and the
+/// natural companion to the Pro rolling windows.
 struct PlayerGameLogCard: View {
     @Bindable var viewModel: DashboardViewModel
     let player: Player
@@ -392,25 +402,25 @@ struct PlayerGameLogCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "GAME LOG")
+            HardwoodSectionBar(title: "GAME LOG")
             if entries.isEmpty {
                 Text(failed ? "Couldn't load games. Pull to refresh." : (loadedKey == nil ? "Loading games…" : "No games yet this season."))
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 20)
             } else {
                 ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                     row(entry)
-                        .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                        .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
         .task(id: key) { await load() }
     }
@@ -427,8 +437,8 @@ struct PlayerGameLogCard: View {
         }
     }
 
-    /// One entry per game; a player with two roles in a game (a rushing QB is
-    /// one row, a two-way player two) reads as one line.
+    /// One entry per game; a player with two rows in a game (a player ranked in
+    /// two position cohorts) reads as one line.
     static func entries(from logs: [PlayerGameLog], fallbackTeam: String) -> [Entry] {
         let grouped = Dictionary(grouping: logs) { $0.gameId ?? ISO8601DateFormatter().string(from: $0.gameDate) }
         return grouped.map { id, rows in
@@ -453,37 +463,33 @@ struct PlayerGameLogCard: View {
     private func row(_ entry: Entry) -> some View {
         let game = entry.gameId.flatMap { viewModel.game(id: $0) }
         let content = HStack(alignment: .top, spacing: 10) {
-            Text(game.map { $0.seasonPhase == .regular ? "\($0.week)" : $0.gameType } ?? "-")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkTertiary)
-                .frame(width: 28, alignment: .leading)
-                .monospacedDigit()
+            Text(entry.gameDate.formatted(DataCoverage.gameDayStyle))
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
+                .frame(width: 44, alignment: .leading)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(game?.matchupLabel(for: entry.team) ?? "vs \(displayTeamAbbr(entry.opponent ?? ""))")
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.bodyBold)
+                        .foregroundStyle(HardwoodPalette.ink)
                     if let line = game?.resultLine(for: entry.team) {
                         Text(line)
-                            .font(GridironType.statSmall)
-                            .foregroundStyle(game?.result(for: entry.team) == "L" ? GridironPalette.performanceLow : GridironPalette.performanceHigh)
+                            .font(HardwoodType.statSmall)
+                            .foregroundStyle(game?.result(for: entry.team) == "L" ? HardwoodPalette.performanceLow : HardwoodPalette.performanceHigh)
                     }
                     Spacer(minLength: 0)
-                    Text(entry.gameDate.formatted(DataCoverage.gameDayStyle))
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
                 }
                 Text(entry.summary.isEmpty ? "No box score line" : entry.summary)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(HardwoodType.small)
+                    .foregroundStyle(HardwoodPalette.inkSecondary)
                     .monospacedDigit()
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, HardwoodGeo.padInline)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .overlay(Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline), alignment: .bottom)
         .contentShape(Rectangle())
 
         if let game {

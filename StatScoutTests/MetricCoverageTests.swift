@@ -1,81 +1,106 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Hardwood_StatScout
 
 /// The coverage notes exist so a gap in an old season reads as a limit of the
 /// public record rather than as a broken app. These tests pin the boundaries to
-/// the same years the pipeline uses.
+/// the same years the pipeline uses (`handoff/NBA_CONTRACT.md`).
 final class MetricCoverageTests: XCTestCase {
-    func testCurrentSeasonHasNoCoverageCaveat() {
-        XCTAssertNil(MetricCoverage.note(for: StatScoutSeason.current))
+    func testRecentSeasonHasNoCoverageCaveat() {
+        XCTAssertNil(MetricCoverage.note(for: 2026))
+        XCTAssertNil(MetricCoverage.note(for: 2026, phase: .playoffs))
+        XCTAssertNil(MetricCoverage.note(for: 2026, category: .impact))
     }
 
-    func testPreNextGenSeasonIsExplained() {
-        let note = MetricCoverage.note(for: 2012)
-        XCTAssertNotNil(note)
-        XCTAssertTrue(note?.contains("2016") == true)
+    func testShotZonesStartIn2004() {
+        XCTAssertNotNil(MetricCoverage.note(for: 2003, category: .shooting))
+        XCTAssertNil(MetricCoverage.note(for: 2004, category: .shooting))
+        XCTAssertTrue(MetricCoverage.note(for: 2003, category: .shooting)?.contains("2003-04") == true)
     }
 
-    func testPreCpoeSeasonNamesTheOlderLimit() {
-        let note = MetricCoverage.note(for: 2001)
-        XCTAssertNotNil(note)
-        XCTAssertTrue(note?.contains("2006") == true)
+    func testPlusMinusStartsIn2009() {
+        let note = MetricCoverage.note(for: 2008, category: .impact)
+        XCTAssertTrue(note?.contains("2008-09") == true, note ?? "nil")
+        XCTAssertFalse(MetricCoverage.isTracked("On-Court +/-", in: 2008))
+        XCTAssertTrue(MetricCoverage.isTracked("On-Court +/-", in: 2009))
+        XCTAssertFalse(MetricCoverage.isTracked("+/-", in: 2008))
     }
 
-    func testMissingTargetSeasonsAreCalledOut() {
-        for season in 2003...2008 {
-            let note = MetricCoverage.note(for: season, category: .receiving)
-            XCTAssertNotNil(note, "\(season) should carry a note")
-            XCTAssertTrue(
-                note?.contains("target") == true,
-                "\(season) note should mention targets: \(note ?? "nil")"
-            )
+    func testOnOffFollowsThePerSeasonAndPhaseTable() {
+        // Regular season: 2013-14, 2014-15, then 2020-21 onward.
+        for season in [2014, 2015] + Array(2021...2027) {
+            XCTAssertTrue(MetricCoverage.hasOnOff(season: season, phase: .regular), "REG \(season)")
         }
-        // 2009 has targets again. It still predates Next Gen Stats, so it keeps a
-        // note - just not one about targets.
-        let note2009 = MetricCoverage.note(for: 2009, category: .receiving)
-        XCTAssertFalse(note2009?.contains("target") == true, "2009 has targets: \(note2009 ?? "nil")")
-        // And a modern season has no caveat at all.
-        XCTAssertNil(MetricCoverage.note(for: 2024, category: .receiving))
+        for season in [2009, 2010, 2011, 2012, 2013, 2016, 2017, 2018, 2019, 2020] {
+            XCTAssertFalse(MetricCoverage.hasOnOff(season: season, phase: .regular), "REG \(season)")
+        }
+        // Postseason: 2009, 2010, 2012-2015, then 2021 onward.
+        for season in [2009, 2010, 2012, 2013, 2014, 2015] + Array(2021...2026) {
+            XCTAssertTrue(MetricCoverage.hasOnOff(season: season, phase: .playoffs), "POST \(season)")
+        }
+        for season in [2011, 2016, 2017, 2018, 2019, 2020] {
+            XCTAssertFalse(MetricCoverage.hasOnOff(season: season, phase: .playoffs), "POST \(season)")
+        }
+        // Career On-Off is never published.
+        XCTAssertFalse(MetricCoverage.hasOnOff(season: StatScoutSeason.allTime))
     }
 
-    func testDefenseNoteTracksPfrStart() {
-        XCTAssertNotNil(MetricCoverage.note(for: 2017, category: .defense))
-        XCTAssertNil(MetricCoverage.note(for: 2018, category: .defense))
+    func testImpactNoteNamesAMissingOnOff() {
+        XCTAssertNotNil(MetricCoverage.note(for: 2019, category: .impact))
+        XCTAssertNil(MetricCoverage.note(for: 2021, category: .impact))
+        // 2011 has it for neither phase's bar except where the table says so.
+        XCTAssertNotNil(MetricCoverage.note(for: 2011, category: .impact, phase: .playoffs))
+        XCTAssertNotNil(MetricCoverage.note(for: 2011, category: .impact, phase: .regular))
+        XCTAssertNil(MetricCoverage.note(for: 2012, category: .impact, phase: .playoffs))
+    }
+
+    func testEarliestSeasonsCarryTheOldestAndMostSweepingLimit() {
+        XCTAssertTrue(MetricCoverage.note(for: 2003)?.contains("2003-04") == true)
+        XCTAssertTrue(MetricCoverage.note(for: 2006)?.contains("2008-09") == true)
     }
 
     func testAllTimeExplainsItSpansEras() {
         let note = MetricCoverage.note(for: StatScoutSeason.allTime)
         XCTAssertNotNil(note)
         XCTAssertTrue(note?.contains("Career") == true)
+        XCTAssertTrue(note?.contains("On-Off is not published") == true || note?.contains("not published") == true)
+    }
+
+    // MARK: - pendingNote
+
+    func testPendingNotesNameTheFeedThatIsBehind() {
+        XCTAssertEqual(
+            MetricCoverage.pendingNote(category: .shooting, shotsStatus: "pending", playByPlayStatus: "ready"),
+            "Shot-zone numbers for the latest games are still arriving."
+        )
+        XCTAssertEqual(
+            MetricCoverage.pendingNote(category: .impact, shotsStatus: "ready", playByPlayStatus: "pending"),
+            "On/off numbers for the latest games are still arriving."
+        )
+        XCTAssertNil(MetricCoverage.pendingNote(category: .shooting, shotsStatus: "ready", playByPlayStatus: "pending"))
+        XCTAssertNil(MetricCoverage.pendingNote(category: .scoring, shotsStatus: "pending", playByPlayStatus: "pending"))
+        XCTAssertNil(MetricCoverage.pendingNote(category: nil, shotsStatus: "ready", playByPlayStatus: "not_applicable"))
+        // The whole-board form says both when both are behind.
+        let both = MetricCoverage.pendingNote(category: nil, shotsStatus: "pending", playByPlayStatus: "degraded")
+        XCTAssertTrue(both?.contains("Shot-zone") == true && both?.contains("On/off") == true)
     }
 
     // MARK: - isTracked
 
     func testIsTrackedMatchesSourceStartYears() {
-        XCTAssertFalse(MetricCoverage.isTracked("Separation", in: 2015))
-        XCTAssertTrue(MetricCoverage.isTracked("Separation", in: 2016))
-
-        XCTAssertFalse(MetricCoverage.isTracked("RYOE", in: 2017))
-        XCTAssertTrue(MetricCoverage.isTracked("RYOE", in: 2018))
-
-        XCTAssertFalse(MetricCoverage.isTracked("CPOE", in: 2005))
-        XCTAssertTrue(MetricCoverage.isTracked("CPOE", in: 2006))
-
-        XCTAssertFalse(MetricCoverage.isTracked("Pressures", in: 2017))
-        XCTAssertTrue(MetricCoverage.isTracked("Pressures", in: 2018))
+        XCTAssertFalse(MetricCoverage.isTracked("Rim FG%", in: 2003))
+        XCTAssertTrue(MetricCoverage.isTracked("Rim FG%", in: 2004))
+        XCTAssertFalse(MetricCoverage.isTracked("Corner 3%", in: 2003))
+        XCTAssertTrue(MetricCoverage.isTracked("Assisted FG%", in: 2004))
+        XCTAssertFalse(MetricCoverage.isTracked("On-Off", in: 2020))
+        XCTAssertTrue(MetricCoverage.isTracked("On-Off", in: 2021))
     }
 
-    func testTargetDerivedMetricsAreUntrackedInTheGapOnly() {
-        XCTAssertTrue(MetricCoverage.isTracked("Target Share", in: 2002))
-        XCTAssertFalse(MetricCoverage.isTracked("Target Share", in: 2005))
-        XCTAssertTrue(MetricCoverage.isTracked("Target Share", in: 2009))
-    }
-
-    /// Stats with no source limit are tracked everywhere, including the career
-    /// rollup, which spans every era by definition.
+    /// Box-score metrics reach every bundled season, and the career rollup has
+    /// everything but On-Off.
     func testUnboundedMetricsAreAlwaysTracked() {
-        XCTAssertTrue(MetricCoverage.isTracked("EPA/Play", in: 2000))
-        XCTAssertTrue(MetricCoverage.isTracked("Pass Yds", in: 2000))
-        XCTAssertTrue(MetricCoverage.isTracked("Separation", in: StatScoutSeason.allTime))
+        XCTAssertTrue(MetricCoverage.isTracked("TS%", in: StatScoutSeason.earliest))
+        XCTAssertTrue(MetricCoverage.isTracked("PPG", in: StatScoutSeason.earliest))
+        XCTAssertTrue(MetricCoverage.isTracked("Rim FG%", in: StatScoutSeason.allTime))
+        XCTAssertFalse(MetricCoverage.isTracked("On-Off", in: StatScoutSeason.allTime))
     }
 }

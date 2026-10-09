@@ -12,15 +12,11 @@ enum FanStatsSelection {
         }
     }
 
+    /// Scoring, rebounding and playmaking: the three lines a fan checks first.
+    static let summaryLabels = ["PPG", "RPG", "APG"]
+
     static func summary(for player: Player) -> [StandardStat] {
-        let labels: [String]
-        switch player.positionGroup {
-        case .qb: labels = ["Pass Yds", "Pass TD", "INT"]
-        case .rb: labels = ["Rush Yds", "Rush TD", "Rec Yds"]
-        case .wr, .te: labels = ["Rec Yds", "Rec TD", "Rec/Tgt"]
-        case .defense: labels = ["Tackles", "Sacks", "Def INT"]
-        }
-        return labels.compactMap { label in
+        summaryLabels.compactMap { label in
             player.standardStats?.first { $0.label == label }
         }
     }

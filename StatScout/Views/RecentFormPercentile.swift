@@ -1,7 +1,7 @@
 import Foundation
 
 /// Maps a raw metric value onto the league's full-season percentile scale by
-/// reusing Gridiron's own value→percentile calibration. Built entirely from the
+/// reusing Hardwood's own value→percentile calibration. Built entirely from the
 /// in-memory league pool: for each metric we collect every qualified player's
 /// (raw season value, season percentile) pair, sort by value, and interpolate.
 ///
@@ -41,7 +41,7 @@ struct LeaguePercentileCurve {
 }
 
 /// A set of per-metric curves for one player population, keyed by the season
-/// metric label ("Pass Yds", "Rush Yds", …).
+/// metric label ("TS%", "PPG", …).
 struct LeaguePercentileCurves {
     private let byLabel: [String: LeaguePercentileCurve]
 

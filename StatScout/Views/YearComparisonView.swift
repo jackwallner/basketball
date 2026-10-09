@@ -10,7 +10,7 @@ struct YearComparisonView: View {
     private var priorYear: Int { min(yearA, yearB) }
 
     private var availableYears: [Int] {
-        history.compactMap(\.season).uniqued().sorted(by: >)
+        history.compactMap(\.season).filter { !StatScoutSeason.isAllTime($0) }.uniqued().sorted(by: >)
     }
 
     private var playerYearA: Player? {
@@ -51,15 +51,15 @@ struct YearComparisonView: View {
         } description: {
             Text(availableYears.isEmpty
                  ? "No historical data is available for this player."
-                 : "Data for \(String(recentYear)) or \(String(priorYear)) is not available.")
+                 : "Data for \(SeasonLabel.text(recentYear)) or \(SeasonLabel.text(priorYear)) is not available.")
         }
         .padding(.vertical, 48)
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -68,19 +68,19 @@ struct YearComparisonView: View {
     private var yearPickerCard: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
-                yearButton(year: $yearB, otherYear: yearA, label: yearB > 0 ? String(yearB) : "Select")
+                yearButton(year: $yearB, otherYear: yearA, label: yearB > 0 ? SeasonLabel.text(yearB) : "Select")
                 Image(systemName: "arrow.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(GridironPalette.inkTertiary)
-                yearButton(year: $yearA, otherYear: yearB, label: yearA > 0 ? String(yearA) : "Select")
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
+                yearButton(year: $yearA, otherYear: yearB, label: yearA > 0 ? SeasonLabel.text(yearA) : "Select")
             }
         }
         .padding(16)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -91,7 +91,7 @@ struct YearComparisonView: View {
                     year.wrappedValue = y
                 } label: {
                     HStack {
-                        Text(String(y))
+                        Text(SeasonLabel.text(y))
                         if year.wrappedValue == y {
                             Image(systemName: "checkmark")
                         }
@@ -101,22 +101,22 @@ struct YearComparisonView: View {
         } label: {
             VStack(spacing: 2) {
                 Text(label)
-                    .font(GridironType.statLarge)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(HardwoodType.statLarge)
+                    .foregroundStyle(HardwoodPalette.ink)
                 Text(year.wrappedValue == recentYear ? "Recent" : "Prior")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(GridironPalette.surfaceAlt)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(HardwoodPalette.surfaceAlt)
+            .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
             .overlay(
                 HStack {
                     Spacer()
                     Image(systemName: "chevron.down")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
                         .padding(.trailing, 8)
                 },
                 alignment: .trailing
@@ -157,11 +157,11 @@ struct YearComparisonView: View {
         }
         .padding(.vertical, 48)
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -169,7 +169,7 @@ struct YearComparisonView: View {
 
     private func categoryCard(category: MetricCategory, items: [MetricComparison]) -> some View {
         VStack(spacing: 0) {
-            GridironSubSectionBar(title: "ADVANCED · " + category.rawValue.uppercased())
+            HardwoodSubSectionBar(title: "ADVANCED · " + category.rawValue.uppercased())
 
             columnHeader
 
@@ -177,43 +177,43 @@ struct YearComparisonView: View {
                 comparisonRow(item: item, isAlt: idx % 2 == 1)
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
     private var columnHeader: some View {
         HStack(spacing: 0) {
             Text("STAT")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(String(priorYear))
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+            Text(SeasonLabel.text(priorYear))
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .frame(width: 72)
 
-            Text(String(recentYear))
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+            Text(SeasonLabel.text(recentYear))
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
                 .frame(width: 72)
 
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, HardwoodGeo.padInline)
         .frame(height: 28)
-        .background(GridironPalette.surfaceAlt)
+        .background(HardwoodPalette.surfaceAlt)
     }
 
     private func comparisonRow(item: MetricComparison, isAlt: Bool) -> some View {
         return HStack(spacing: 0) {
             // Metric label
             Text(item.metricLabel)
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.ink)
+                .font(HardwoodType.body)
+                .foregroundStyle(HardwoodPalette.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .lineLimit(1)
 
@@ -239,12 +239,12 @@ struct YearComparisonView: View {
                 + "\(recentYear) \(item.percentileA.ordinalString) percentile"
         )
         .frame(height: 48)
-        .padding(.horizontal, GridironGeo.padInline)
-        .background(isAlt ? GridironPalette.surfaceAlt : GridironPalette.surface)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .background(isAlt ? HardwoodPalette.surfaceAlt : HardwoodPalette.surface)
         .overlay(
             Rectangle()
-                .fill(GridironPalette.divider)
-                .frame(height: GridironGeo.hairline),
+                .fill(HardwoodPalette.divider)
+                .frame(height: HardwoodGeo.hairline),
             alignment: .bottom
         )
     }
@@ -259,15 +259,15 @@ struct YearComparisonView: View {
                         .accessibilityHidden(true)
                 }
                 Text(value.isEmpty ? String(percentile) : value)
-                    .font(GridironType.statSmall)
-                    .foregroundStyle(isWinner ? GridironPalette.turf : GridironPalette.inkSecondary)
+                    .font(HardwoodType.statSmall)
+                    .foregroundStyle(isWinner ? HardwoodPalette.court : HardwoodPalette.inkSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
             if value.isEmpty {
                 Text("PCTL")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
             }
         }
     }
@@ -276,7 +276,7 @@ struct YearComparisonView: View {
         items: [(label: String, prior: String?, recent: String?)]
     ) -> some View {
         VStack(spacing: 0) {
-            GridironSubSectionBar(title: "SEASON TOTALS")
+            HardwoodSubSectionBar(title: "STANDARD STATS")
             columnHeader
             ForEach(Array(items.enumerated()), id: \.element.label) { index, item in
                 let winner = StandardStatSemantics.winner(
@@ -286,8 +286,8 @@ struct YearComparisonView: View {
                 )
                 HStack(spacing: 0) {
                     Text(item.label)
-                        .font(GridironType.body)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(HardwoodType.body)
+                        .foregroundStyle(HardwoodPalette.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     rawValue(item.prior, isWinner: winner == .left)
                         .frame(width: 72)
@@ -304,21 +304,21 @@ struct YearComparisonView: View {
                     )
                 )
                 .frame(height: 48)
-                .padding(.horizontal, GridironGeo.padInline)
-                .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .padding(.horizontal, HardwoodGeo.padInline)
+                .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                 .overlay(
                     Rectangle()
-                        .fill(GridironPalette.divider)
-                        .frame(height: GridironGeo.hairline),
+                        .fill(HardwoodPalette.divider)
+                        .frame(height: HardwoodGeo.hairline),
                     alignment: .bottom
                 )
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(HardwoodPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard)
+                .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -350,11 +350,11 @@ struct YearComparisonView: View {
                     .accessibilityHidden(true)
             }
             Text(value ?? "-")
-                .font(GridironType.statSmall)
+                .font(HardwoodType.statSmall)
                 .foregroundStyle(
                     value == nil
-                        ? GridironPalette.inkTertiary
-                        : (isWinner ? GridironPalette.turf : GridironPalette.inkSecondary)
+                        ? HardwoodPalette.inkTertiary
+                        : (isWinner ? HardwoodPalette.court : HardwoodPalette.inkSecondary)
                 )
                 .monospacedDigit()
         }
@@ -395,9 +395,8 @@ struct YearComparisonView: View {
             uniqueKeysWithValues: (p2.standardStats ?? []).map { ($0.label, $0.value) }
         )
         let preferredOrder = [
-            "G", "Cmp/Att", "Pass Yds", "Pass TD", "INT",
-            "Car", "Rush Yds", "Rush TD", "Rec/Tgt", "Rec Yds", "Rec TD",
-            "Tackles", "Sacks", "Def INT",
+            "G", "GS", "MPG", "PPG", "RPG", "APG", "SPG", "BPG",
+            "FG", "3P", "FT", "TOV", "PF", "+/-", "MIN",
         ]
         return Set(recent.keys).union(prior.keys)
             .sorted {
