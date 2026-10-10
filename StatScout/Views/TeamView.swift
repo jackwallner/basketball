@@ -13,8 +13,9 @@ struct TeamView: View {
     @State private var selectedTab: TeamTab = .advanced
     @State private var searchText = ""
     @State private var isSearching = false
-    // Default to Scoring so the roster always shows a meaningful sort metric.
-    @State private var selectedCategory: MetricCategory? = .scoring
+    // Default to Impact so the roster opens on On-Off, the same all-in-one
+    // number the Stats board opens on.
+    @State private var selectedCategory: MetricCategory? = .impact
     @State private var sortDescending = true
     @State private var lastDefaultedSortKey: String? = nil
     @State private var showingTrial = false

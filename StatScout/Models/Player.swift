@@ -564,12 +564,18 @@ enum PlayerPositionGroup: String, CaseIterable, Identifiable, Hashable, Sendable
         }
     }
 
+    /// Every board opens on On-Off, the one number that counts offense and
+    /// defense together and nets out the team around the player (the Cleaning
+    /// the Glass headline). Seasons without the play-by-play replay fall back to
+    /// On-Court +/-, and pre-2009 seasons, which have neither, to the cohort's
+    /// own lead stat.
     var preferredAdvancedMetrics: [String] {
+        let impact = ["On-Off", "On-Court +/-"]
         switch self {
-        case .all: return ["Pts/100", "TS%", "USG%", "On-Off"]
-        case .guard: return ["AST%", "TS%", "USG%", "On-Off"]
-        case .forward: return ["Pts/100", "TS%", "USG%", "On-Off"]
-        case .center: return ["REB%", "Rim FG%", "BLK%", "On-Off"]
+        case .all: return impact + ["Pts/100", "TS%", "USG%"]
+        case .guard: return impact + ["AST%", "TS%", "USG%"]
+        case .forward: return impact + ["Pts/100", "TS%", "USG%"]
+        case .center: return impact + ["REB%", "Rim FG%", "BLK%"]
         }
     }
 

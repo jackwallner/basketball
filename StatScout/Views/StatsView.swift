@@ -6,7 +6,7 @@ struct StatsView: View {
     let viewModel: DashboardViewModel
     @EnvironmentObject private var store: StoreService
 
-    @AppStorage("stats.board") private var board: StatsBoard = .standard
+    @AppStorage("stats.board") private var board: StatsBoard = .advanced
     @State private var showingFollowing = false
     @State private var standardStat = "PPG"
     @State private var standardSortDescending = true
@@ -22,7 +22,7 @@ struct StatsView: View {
         )
     }
 
-    var body: some View { let _ = TabProbe.hit("StatsView") // TABPROBE
+    var body: some View {
         VStack(spacing: 0) {
             if viewModel.selectedSeason == viewModel.freeSeason && viewModel.selectedPhase == .regular {
                 DataFreshnessView(viewModel: viewModel)
