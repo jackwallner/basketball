@@ -1,6 +1,6 @@
 # NBA Conversion Contract (shared between backend + iOS)
 
-App: **Hardwood StatScout** (product name), App Store name **Basketball Next: StatScout**.
+App: **Hardwood StatScout** (product name), App Store name **Hardwood: Basketball StatScout**.
 NBA analytics/percentiles app forked from the Gridiron (NFL) StatScout codebase, which was
 itself forked from the Baseball Savant StatScout app. Same architecture: Python ingest on
 GitHub Actions, Supabase (PostgREST), SwiftUI iOS app reading `player_snapshots`,

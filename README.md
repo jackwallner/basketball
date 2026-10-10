@@ -1,6 +1,6 @@
 # Hardwood StatScout
 
-Hardwood StatScout ("Basketball Next: StatScout" on the App Store) is a native SwiftUI iOS app for NBA fans who want the numbers analysts use: percentile rankings within a position group for scoring, shooting by zone, playmaking, rebounding, defense and on-court impact, refreshed soon after every game. Unaffiliated with the NBA.
+Hardwood StatScout ("Hardwood: Basketball StatScout" on the App Store) is a native SwiftUI iOS app for NBA fans who want the numbers analysts use: percentile rankings within a position group for scoring, shooting by zone, playmaking, rebounding, defense and on-court impact, refreshed soon after every game. Unaffiliated with the NBA.
 
 ## Stack
 

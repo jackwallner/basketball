@@ -1,4 +1,4 @@
-# Astro ASO setup — Basketball Next: StatScout
+# Astro ASO setup — Hardwood: Basketball StatScout
 
 > Playbook: `~/ios/archive/aso/2026-05/astro-global-aso-go-2026.md` · say **"go"** to run the
 > full 91-store / 50-locale pipeline.
@@ -10,9 +10,9 @@ Astro synced across stores. Pending Jack's approval, then build attach + submit.
 
 | Field | Value |
 |-------|-------|
-| App Store name | Basketball Next: StatScout |
+| App Store name | Hardwood: Basketball StatScout |
 | ASC app ID | `6820647074` |
-| Astro app ID | `119` (temporary placeholder — Astro has not indexed the real listing) |
+| Astro app ID | `137` (temporary placeholder, "Basketball StatScout (prelaunch)"; Astro has not indexed the real listing) |
 | Bundle ID | `com.jackwallner.basketball` |
 | Draft ASC version | **1.0** (`PREPARE_FOR_SUBMISSION`) |
 | Live ASC version | none — never released |
@@ -27,9 +27,9 @@ word-sense corrections found in review: [`../project-docs/marketing/aso-plan.md`
 
 | Field | Value | Count |
 |-------|-------|------:|
-| **Name** | Basketball Next: StatScout | 24/30 |
-| **Subtitle** | Advanced NFL Stats & Analytics | 30/30 |
-| **Keywords** | `gen,epa,cpoe,yac,statistics,compare,player,passing,rushing,receiving,defense,qb,fantasy,teams,trends` | 100/100 |
+| **Name** | Hardwood: Basketball StatScout | 30/30 |
+| **Subtitle** | Advanced NBA Stats & Analytics | 30/30 |
+| **Keywords** | `percentile,usage,true shooting,compare,player,rankings,teams,fantasy,standings,box score,leaders` | 99/100 |
 | **Screenshots** | 8 frames, 1320x2868, RGB | |
 | **IAP** | StatScout+ Monthly $1.99 · Yearly $9.99 (7-day trial) · Lifetime $19.99 | |
 

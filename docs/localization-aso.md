@@ -1,4 +1,4 @@
-# Localization ASO — Basketball Next: StatScout
+# Localization ASO — Hardwood: Basketball StatScout
 
 ## Current state (2026-07-29)
 

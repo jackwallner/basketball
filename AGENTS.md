@@ -5,9 +5,11 @@ forked from the Football (NFL) StatScout repo, which was forked from Baseball.
 XcodeGen project/scheme: `StatScout` (names kept to minimize churn), sim lease
 owner `basketball`. Bundle id `com.jackwallner.basketball`, product name "Hardwood StatScout".
 
-**App Store name:** **"Basketball Next: StatScout"**, chosen for ASO. In-app it is
+**App Store name:** **"Hardwood: Basketball StatScout"** (renamed from "Basketball Next"
+on 2026-10-10; "Next" only made sense for football's Next Gen Stats). In-app it is
 `PRODUCT_NAME: "Hardwood StatScout"`, home-screen `StatScout`, paid tier `StatScout+`.
-ASO plan: none yet; write `project-docs/marketing/aso-plan.md` once the listing is live.
+Name research: `project-docs/marketing/naming-2026-10-10.md`. Full ASO plan: none yet;
+write `project-docs/marketing/aso-plan.md` once the listing is live.
 
 **The web reference is Cleaning the Glass**: percentiles within a position group
 (G / F / C), points and rates per 100 possessions, shooting split into zone
