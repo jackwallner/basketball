@@ -1,4 +1,4 @@
-# Astro ASO setup — Hardwood: Basketball StatScout
+# Astro ASO setup — Basketball: Hardwood StatScout
 
 > Playbook: `~/ios/archive/aso/2026-05/astro-global-aso-go-2026.md` · say **"go"** to run the
 > full 91-store / 50-locale pipeline.
@@ -10,7 +10,7 @@ Astro synced across stores. Pending Jack's approval, then build attach + submit.
 
 | Field | Value |
 |-------|-------|
-| App Store name | Hardwood: Basketball StatScout |
+| App Store name | Basketball: Hardwood StatScout |
 | ASC app ID | `6820647074` |
 | Astro app ID | `137` (temporary placeholder, "Basketball StatScout (prelaunch)"; Astro has not indexed the real listing) |
 | Bundle ID | `com.jackwallner.basketball` |
@@ -27,7 +27,7 @@ word-sense corrections found in review: [`../project-docs/marketing/aso-plan.md`
 
 | Field | Value | Count |
 |-------|-------|------:|
-| **Name** | Hardwood: Basketball StatScout | 30/30 |
+| **Name** | Basketball: Hardwood StatScout | 30/30 |
 | **Subtitle** | Advanced NBA Stats & Analytics | 30/30 |
 | **Keywords** | `percentile,usage,true shooting,compare,player,rankings,teams,fantasy,standings,box score,leaders` | 99/100 |
 | **Screenshots** | 8 frames, 1320x2868, RGB | |

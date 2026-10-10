@@ -5,7 +5,7 @@ forked from the Football (NFL) StatScout repo, which was forked from Baseball.
 XcodeGen project/scheme: `StatScout` (names kept to minimize churn), sim lease
 owner `basketball`. Bundle id `com.jackwallner.basketball`, product name "Hardwood StatScout".
 
-**App Store name:** **"Hardwood: Basketball StatScout"** (renamed from "Basketball Next"
+**App Store name:** **"Basketball: Hardwood StatScout"** (renamed from "Basketball Next"
 on 2026-10-10; "Next" only made sense for football's Next Gen Stats). In-app it is
 `PRODUCT_NAME: "Hardwood StatScout"`, home-screen `StatScout`, paid tier `StatScout+`.
 Name research: `project-docs/marketing/naming-2026-10-10.md`. Full ASO plan: none yet;

@@ -1,8 +1,8 @@
-# Hardwood: Basketball StatScout Privacy Policy
+# Basketball: Hardwood StatScout Privacy Policy
 
 Last updated: August 17, 2026
 
-Hardwood: Basketball StatScout is a read-only NBA statistics app. It does not require an account.
+Basketball: Hardwood StatScout is a read-only NBA statistics app. It does not require an account.
 
 ## Data used by the app
 
@@ -20,7 +20,7 @@ We do not sell personal information or share it for advertising. Local preferenc
 
 ## Children and changes
 
-Hardwood: Basketball StatScout is not directed to children under 13 and does not knowingly collect personal information from children. We may update this policy when the app or its services change.
+Basketball: Hardwood StatScout is not directed to children under 13 and does not knowingly collect personal information from children. We may update this policy when the app or its services change.
 
 ## Terms
 

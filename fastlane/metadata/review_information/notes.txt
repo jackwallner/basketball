@@ -1,4 +1,4 @@
-The App Store name is Hardwood: Basketball StatScout. The app is named Hardwood StatScout in-app and StatScout on the Home Screen. It is a read-only NBA statistics viewer with no accounts or sign-in.
+The App Store name is Basketball: Hardwood StatScout. The app is named Hardwood StatScout in-app and StatScout on the Home Screen. It is a read-only NBA statistics viewer with no accounts or sign-in.
 
 Core flow:
 1. Launch the app and open the Stats tab for current-season player rankings.

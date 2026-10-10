@@ -12,7 +12,7 @@ paths:
 
 ## Current state, 2026-10-09
 
-- App Store Connect app `6820647074` ("Hardwood: Basketball StatScout", SKU
+- App Store Connect app `6820647074` ("Basketball: Hardwood StatScout", SKU
   `basketball-statscout`, bundle id `com.jackwallner.basketball`, portal id
   `69QDVP4NJT`), created 2026-10-08.
 - Version 1.0 is `PREPARE_FOR_SUBMISSION` with build 2 attached and release
