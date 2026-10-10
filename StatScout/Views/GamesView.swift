@@ -40,7 +40,7 @@ struct GamesView: View {
         return slate.first { $0.involves(team) }
     }
 
-    var body: some View { let _ = TabProbe.hit("GamesView") // TABPROBE
+    var body: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 if viewModel.slateGames.isEmpty {

@@ -40,7 +40,7 @@ struct StandardStatsLeadersView: View {
             .map(\.player)
     }
 
-    var body: some View { let _ = TabProbe.hit("StandardStatsLeadersView") // TABPROBE
+    var body: some View {
         VStack(spacing: 0) {
             positionSelector
             controlRow

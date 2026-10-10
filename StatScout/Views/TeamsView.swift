@@ -95,7 +95,7 @@ struct TeamsView: View {
         viewModel.isLoading && viewModel.teamsWithData.isEmpty
     }
 
-    var body: some View { let _ = TabProbe.hit("TeamsView") // TABPROBE
+    var body: some View {
         ScrollView {
             VStack(spacing: 0) {
                 if viewModel.selectedSeason == viewModel.freeSeason && viewModel.selectedPhase == .regular {

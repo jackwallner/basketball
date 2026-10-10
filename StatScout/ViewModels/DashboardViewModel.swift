@@ -121,7 +121,10 @@ final class DashboardViewModel {
     /// status (`StatScoutSeason.resolveLive`). Between October 1 and opening
     /// night this is still the finished season; when the status flips to the new
     /// one every screen follows, with no release.
-    private(set) var live: StatScoutSeason.Live
+    private(set) var live: StatScoutSeason.Live {
+        // The slate switches schedules when the live season moves.
+        didSet { scheduleCache = ScheduleCache() }
+    }
 
     /// The season a free user gets: the live season, whatever has loaded. The
     /// moment a season is live it is the free, default year, and every season

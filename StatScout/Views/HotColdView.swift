@@ -119,7 +119,7 @@ struct HotColdView: View {
     /// big phone, so the card stopped mid-screen with canvas under it and the
     /// unlock panel floating in the middle of nothing. There is also nothing
     /// below the fold to scroll *to* when the rows are a teaser.
-    var body: some View { let _ = TabProbe.hit("HotColdView") // TABPROBE
+    var body: some View {
         Group {
             if store.isPro {
                 ScrollView {

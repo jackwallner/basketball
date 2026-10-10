@@ -180,7 +180,7 @@ struct CompareView: View {
         .sorted()
     }
 
-    var body: some View { let _ = TabProbe.hit("CompareView") // TABPROBE
+    var body: some View {
         ScrollView {
             VStack(spacing: 12) {
                 yourPlayersCard

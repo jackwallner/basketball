@@ -92,9 +92,9 @@ struct RootTabView: View {
                 }
                 .equatable()
                 .frame(maxWidth: 900, maxHeight: .infinity)
-                    .opacity(selection == tab.rawValue ? 1 : 0)
-                    .allowsHitTesting(selection == tab.rawValue)
-                    .accessibilityHidden(selection != tab.rawValue)
+                .opacity(selection == tab.rawValue ? 1 : 0)
+                .allowsHitTesting(selection == tab.rawValue)
+                .accessibilityHidden(selection != tab.rawValue)
             }
 
             floatingTabBar
@@ -105,10 +105,6 @@ struct RootTabView: View {
         #if DEBUG
         .onAppear {
             if let tab = Tab.launchArgument { selection = tab.rawValue }
-        }
-        .task {
-            guard ProcessInfo.processInfo.arguments.contains("-TabSwitchBenchmark") else { return }
-            await TabSwitchBenchmark.run(isReady: { viewModel.isReady }) { selection = $0 }
         }
         #endif
     }
@@ -292,72 +288,6 @@ struct RootTabView: View {
     }
 
 }
-
-#if DEBUG
-@MainActor
-enum TabProbe {
-    static var counts: [String: Int] = [:]
-    static func hit(_ name: String) -> Bool { counts[name, default: 0] += 1; return true }
-}
-
-/// `-TabSwitchBenchmark`: once data is in, walks every tab several times and
-/// logs the longest stretch the main thread stays blocked after each switch.
-@MainActor
-enum TabSwitchBenchmark {
-    /// Ticks a 1 ms timer on the main run loop and keeps the longest gap
-    /// between ticks: how long the main thread was busy in one stretch.
-    private final class GapMeter {
-        private var timer: Timer?
-        private var last = CACurrentMediaTime()
-        private var longest: CFTimeInterval = 0
-
-        func start() {
-            last = CACurrentMediaTime()
-            longest = 0
-            let timer = Timer(timeInterval: 0.001, repeats: true) { [weak self] _ in
-                guard let self else { return }
-                let now = CACurrentMediaTime()
-                longest = max(longest, now - last)
-                last = now
-            }
-            RunLoop.main.add(timer, forMode: .common)
-            self.timer = timer
-        }
-
-        func stop() -> Double {
-            timer?.invalidate()
-            timer = nil
-            return max(longest, CACurrentMediaTime() - last) * 1000
-        }
-    }
-
-    static func run(isReady: () -> Bool, select: (Int) -> Void) async {
-        NSLog("%@", "TABBENCH waiting for data")
-        while !isReady() { try? await Task.sleep(for: .milliseconds(250)) }
-        try? await Task.sleep(for: .seconds(4))
-        NSLog("%@", "TABBENCH start")
-        let meter = GapMeter()
-        var samples: [Int: [Double]] = [:]
-        for _ in 0..<6 {
-            for tab in [1, 2, 3, 4, 0] {
-                TabProbe.counts = [:]
-                meter.start()
-                select(tab)
-                try? await Task.sleep(for: .milliseconds(800))
-                let gap = meter.stop()
-                samples[tab, default: []].append(gap)
-                NSLog("%@", "TABBENCH switch tab=\(tab) gap=\(Int(gap)) bodies=\(TabProbe.counts.sorted { $0.key < $1.key })")
-            }
-        }
-        for tab in samples.keys.sorted() {
-            let values = samples[tab, default: []].sorted()
-            let median = values[values.count / 2]
-            NSLog("%@", "TABBENCH tab=\(tab) median=\(Int(median))ms max=\(Int(values.last ?? 0))ms all=\(values.map { Int($0) })")
-        }
-        NSLog("%@", "TABBENCH done")
-    }
-}
-#endif
 
 /// One tab's screen, which the root re-renders only when the tab's own
 /// on-screen state flips.
