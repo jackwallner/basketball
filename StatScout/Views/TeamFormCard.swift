@@ -226,9 +226,9 @@ struct TeamRankingsCard: View {
     private func recentMetric(label: String) -> Metric? {
         guard let key = RecentMetricKey.key(for: label),
               !RecentMetricKey.isSeasonTotal(label),
-              let own = TeamAggregation.recentValue(key: key, rows: teamRows) else { return nil }
+              let own = TeamAggregation.recentValue(key: key, rows: teamRows, label: label) else { return nil }
         let others = TeamAggregation.recentRosters(from: leagueRows).values.compactMap {
-            TeamAggregation.recentValue(key: key, rows: $0)
+            TeamAggregation.recentValue(key: key, rows: $0, label: label)
         }
         return Metric(
             id: "team-recent-\(key)",

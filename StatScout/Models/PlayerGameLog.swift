@@ -50,9 +50,7 @@ struct PlayerGameLog: Codable, Hashable, Sendable {
 
         // game_date arrives as "YYYY-MM-DD" from Supabase (date column, not timestamptz).
         let raw = try c.decode(String.self, forKey: .gameDate)
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "America/New_York")
+        let formatter = DataFreshness.makeEasternDayFormatter()
         guard let parsed = formatter.date(from: raw) else {
             throw DecodingError.dataCorruptedError(forKey: .gameDate, in: c, debugDescription: "Invalid game_date: \(raw)")
         }
@@ -78,9 +76,7 @@ struct PlayerGameLog: Codable, Hashable, Sendable {
         try c.encode(plays, forKey: .plays)
         try c.encode(touches, forKey: .touches)
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "America/New_York")
+        let formatter = DataFreshness.makeEasternDayFormatter()
         try c.encode(formatter.string(from: gameDate), forKey: .gameDate)
         try c.encode(metrics, forKey: .metrics)
     }

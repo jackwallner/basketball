@@ -8,7 +8,9 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
     let id: String
     let season: Int
     let seasonPhase: SeasonPhase
-    /// REG or POST.
+    /// `REG`; `CUP` for the NBA Cup final (outside the standings and season
+    /// stats); `PPD` for a postponed game, whose makeup is its own row; a
+    /// playoff round `R1`, `R2`, `CF`, `FIN` (or plain `POST`).
     let gameType: String
     /// Calendar weeks since the season's October epoch (see
     /// `backend/nbacodes.py::game_week`). Not a league week: the NBA has none.
@@ -109,6 +111,29 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
 
     var isFinal: Bool { awayScore != nil && homeScore != nil }
 
+    /// Postponed or cancelled. Its makeup is a separate game, so this row is
+    /// never shown.
+    var isPostponed: Bool { gameType == "PPD" }
+
+    var isCupFinal: Bool { gameType == "CUP" }
+
+    /// Counts toward a team's record: a regular-season game that isn't the
+    /// NBA Cup final.
+    var countsInStandings: Bool { seasonPhase == .regular && !isCupFinal && !isPostponed }
+
+    /// "West 1st Round", "East Finals", "NBA Finals"; nil outside the playoffs
+    /// or for a round the feed didn't name.
+    var playoffRoundName: String? {
+        let conference = NBAConference.east.contains(team: homeTeam) ? "East" : "West"
+        switch gameType {
+        case "R1": return "\(conference) 1st Round"
+        case "R2": return "\(conference) Semifinals"
+        case "CF": return "\(conference) Finals"
+        case "FIN": return "NBA Finals"
+        default: return nil
+        }
+    }
+
     func involves(_ team: String) -> Bool {
         let abbr = normalizedTeamAbbreviation(team)
         return normalizedTeamAbbreviation(awayTeam) == abbr || normalizedTeamAbbreviation(homeTeam) == abbr
@@ -188,9 +213,7 @@ struct GameDay: Hashable, Identifiable, Sendable {
     }
 
     private static let dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "America/New_York")
+        let formatter = DataFreshness.makeEasternDayFormatter()
         return formatter
     }()
 
@@ -233,6 +256,48 @@ struct GameDay: Hashable, Identifiable, Sendable {
     }
 }
 
+/// Where a playoff series stood after one of its games.
+struct SeriesStatus: Hashable, Sendable {
+    let round: String
+    let gameNumber: Int
+    /// Wins through this game, keyed by normalized team.
+    let wins: [String: Int]
+
+    /// "NBA Finals · Game 5".
+    var gameLabel: String { "\(round) · Game \(gameNumber)" }
+
+    /// "NYK wins 4-1", "NYK leads 3-2", "Series tied 2-2"; "Series tied 0-0"
+    /// reads as nothing, so a first game says nothing.
+    var standingLabel: String? {
+        let sorted = wins.sorted { $0.value == $1.value ? $0.key < $1.key : $0.value > $1.value }
+        guard let leader = sorted.first, sorted.count == 2, leader.value > 0 else { return nil }
+        let trailer = sorted[1]
+        if leader.value == trailer.value { return "Series tied \(leader.value)-\(trailer.value)" }
+        let verb = leader.value == 4 ? "wins" : "leads"
+        return "\(displayTeamAbbr(leader.key)) \(verb) \(leader.value)-\(trailer.value)"
+    }
+
+    /// The series a playoff game belongs to, from every game of the season.
+    /// Nil for anything but a named playoff round.
+    static func of(_ game: Game, in games: [Game]) -> SeriesStatus? {
+        guard let round = game.playoffRoundName else { return nil }
+        let pair = Set([normalizedTeamAbbreviation(game.homeTeam), normalizedTeamAbbreviation(game.awayTeam)])
+        let series = games
+            .filter {
+                $0.season == game.season && $0.gameType == game.gameType
+                    && Set([normalizedTeamAbbreviation($0.homeTeam), normalizedTeamAbbreviation($0.awayTeam)]) == pair
+            }
+            .sorted { ($0.tipoff ?? $0.gameDate, $0.id) < ($1.tipoff ?? $1.gameDate, $1.id) }
+        guard let index = series.firstIndex(where: { $0.id == game.id }) else { return nil }
+        var wins = Dictionary(uniqueKeysWithValues: pair.map { ($0, 0) })
+        for played in series[...index] {
+            guard let winner = [played.homeTeam, played.awayTeam].first(where: { played.result(for: $0) == "W" }) else { continue }
+            wins[normalizedTeamAbbreviation(winner), default: 0] += 1
+        }
+        return SeriesStatus(round: round, gameNumber: index + 1, wins: wins)
+    }
+}
+
 extension Game {
     /// Orders a slate: in progress, then finals, then upcoming, each by tip-off.
     static func slateOrder(_ games: [Game], now: Date = .now) -> [Game] {
@@ -242,6 +307,14 @@ extension Game {
             if a != b { return a < b }
             return ($0.tipoff ?? $0.gameDate, $0.id) < ($1.tipoff ?? $1.gameDate, $1.id)
         }
+    }
+
+    /// What makes the game more than a date: "NBA Finals · Game 5 · NYK wins
+    /// 4-1", "NBA Cup Final". Nil for an ordinary regular-season game.
+    func contextLine(series: SeriesStatus?) -> String? {
+        if isCupFinal { return "NBA Cup Final" }
+        guard let series else { return nil }
+        return ([series.gameLabel] + [series.standingLabel].compactMap { $0 }).joined(separator: " · ")
     }
 
     /// "Tue 7:30 PM" in the phone's zone.

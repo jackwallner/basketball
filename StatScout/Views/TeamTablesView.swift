@@ -11,12 +11,21 @@ struct StandingsView: View {
         VStack(spacing: 12) {
             ForEach(conferences, id: \.name) { division in
                 let rows = StandingsRow.ordered(division.teams.compactMap { table[$0] })
+                // Games back counts from the best win-loss gap, so it is never
+                // negative when a team with more games sits behind on percentage.
+                let leader = rows.max { ($0.wins - $0.losses) < ($1.wins - $1.losses) }
                 VStack(spacing: 0) {
                     header(division.name)
                     ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                         NavigationLink(value: TeamDestination(abbr: row.team)) {
-                            line(row)
+                            line(row, seed: index + 1, leader: leader)
                                 .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
+                                .overlay(alignment: .bottom) {
+                                    // The playoff line under 6th and the play-in line under 10th.
+                                    if index == 5 || index == 9 {
+                                        Rectangle().fill(HardwoodPalette.inkTertiary).frame(height: 1.5)
+                                    }
+                                }
                         }
                         .buttonStyle(.plain)
                     }
@@ -28,7 +37,7 @@ struct StandingsView: View {
                         .stroke(HardwoodPalette.hairline, lineWidth: 0.5)
                 )
             }
-            Text("Ordered by win percentage, then point differential, not the NBA's full tiebreakers. PWR is the StatScout Power Rating: points per 100 possessions better or worse than an average team, adjusted for schedule.")
+            Text("Lines mark the top six, who go straight to the playoffs, and the play-in through 10th. GB is games behind the conference leader; DIFF is average scoring margin. Ordered by win percentage, then point differential, not the NBA's full tiebreakers. PWR is the StatScout Power Rating: points per 100 possessions better or worse than an average team, adjusted for schedule.")
                 .font(HardwoodType.micro)
                 .foregroundStyle(HardwoodPalette.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -41,11 +50,14 @@ struct StandingsView: View {
     private func header(_ title: String) -> some View {
         HStack(spacing: 0) {
             Text(title.uppercased())
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text("W-L").frame(width: 44, alignment: .trailing)
-            Text("DIFF").frame(width: 44, alignment: .trailing)
-            Text("STRK").frame(width: 40, alignment: .trailing)
-            Text("PWR").frame(width: 48, alignment: .trailing)
+            Text("GB").frame(width: 34, alignment: .trailing)
+            Text("DIFF").frame(width: 40, alignment: .trailing)
+            Text("STRK").frame(width: 36, alignment: .trailing)
+            Text("PWR").frame(width: 40, alignment: .trailing)
         }
         .font(HardwoodType.micro)
         .foregroundStyle(HardwoodPalette.inkTertiary)
@@ -55,10 +67,15 @@ struct StandingsView: View {
         .overlay(Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline), alignment: .bottom)
     }
 
-    private func line(_ row: StandingsRow) -> some View {
+    private func line(_ row: StandingsRow, seed: Int, leader: StandingsRow?) -> some View {
         let rating = viewModel.teamRating(row.team)
+        let gamesBack = leader.map { row.gamesBack(of: $0) } ?? 0
         return HStack(spacing: 0) {
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Text("\(seed)")
+                    .font(HardwoodType.statSmall)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
+                    .frame(width: 18, alignment: .trailing)
                 TeamColorDot(abbr: row.team, size: 10)
                 Text(displayTeamAbbr(row.team))
                     .font(HardwoodType.bodyBold)
@@ -68,25 +85,29 @@ struct StandingsView: View {
                     .font(HardwoodType.small)
                     .foregroundStyle(HardwoodPalette.inkTertiary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.7)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Text(row.record)
                 .font(HardwoodType.statSmall)
                 .foregroundStyle(HardwoodPalette.ink)
                 .frame(width: 44, alignment: .trailing)
-            Text(row.games == 0 ? "-" : (row.differential > 0 ? "+\(row.differential)" : "\(row.differential)"))
+            Text(gamesBack == 0 ? "-" : StandingsRow.formatGamesBack(gamesBack))
+                .font(HardwoodType.statSmall)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
+                .frame(width: 34, alignment: .trailing)
+            Text(row.marginLabel ?? "-")
                 .font(HardwoodType.statSmall)
                 .foregroundStyle(row.differential > 0 ? HardwoodPalette.performanceHigh : (row.differential < 0 ? HardwoodPalette.performanceLow : HardwoodPalette.inkSecondary))
-                .frame(width: 44, alignment: .trailing)
+                .frame(width: 40, alignment: .trailing)
             Text(row.streak ?? "-")
                 .font(HardwoodType.statSmall)
                 .foregroundStyle(HardwoodPalette.inkSecondary)
-                .frame(width: 40, alignment: .trailing)
+                .frame(width: 36, alignment: .trailing)
             Text(rating.map { TeamRating.signed($0.rating) } ?? "-")
                 .font(HardwoodType.statSmall)
                 .foregroundStyle(HardwoodPalette.ink)
-                .frame(width: 48, alignment: .trailing)
+                .frame(width: 40, alignment: .trailing)
         }
         .monospacedDigit()
         .frame(height: 44)
@@ -95,7 +116,9 @@ struct StandingsView: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(teamFullName(row.team)), \(row.record), point differential \(row.differential)"
+            "\(seed). \(teamFullName(row.team)), \(row.record)"
+                + (gamesBack == 0 ? "" : ", \(StandingsRow.formatGamesBack(gamesBack)) games back")
+                + (row.marginLabel.map { ", average margin \($0)" } ?? "")
                 + (rating.map { ", power rating \(TeamRating.signed($0.rating))" } ?? "")
         )
     }

@@ -366,12 +366,19 @@ struct DataFreshness: Codable, Equatable, Sendable {
         return formatter
     }()
 
-    private static let easternDay: DateFormatter = {
+    private static let easternDay = makeEasternDayFormatter()
+
+    /// "2026-10-20" as midnight Eastern, the league's calendar. Fixed to the
+    /// Gregorian calendar and POSIX locale: on a phone set to the Buddhist or
+    /// Japanese calendar a plain formatter reads "2026" as that era's year.
+    static func makeEasternDayFormatter() -> DateFormatter {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.timeZone = TimeZone(identifier: "America/New_York")
         return formatter
-    }()
+    }
 
     static func parseDate(_ raw: String) -> Date? {
         if let date = fractionalISO.date(from: raw) { return date }

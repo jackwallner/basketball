@@ -52,7 +52,8 @@ struct DashboardView: View {
             NavigationStack {
                 AboutView(
                     lastUpdated: viewModel.lastUpdated,
-                    dataCoverage: viewModel.dataCoverage
+                    dataCoverage: viewModel.dataCoverage,
+                    freshness: viewModel.dataFreshness
                 )
                     .navigationTitle("About")
                     .navigationBarTitleDisplayMode(.inline)

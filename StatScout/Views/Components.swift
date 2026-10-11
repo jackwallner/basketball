@@ -174,6 +174,12 @@ struct MetricBar: View {
         .accessibilityLabel(accessibilityLabel)
     }
 
+    /// Good-to-bad colour, except for a shot-profile stat, where a rank says
+    /// how a player plays and not how well.
+    private func fill(_ percentile: Int) -> Color {
+        metric.isShotProfile ? HardwoodPalette.linkBlue : HardwoodPalette.color(forPercentile: percentile)
+    }
+
     private var percentileTrack: some View {
             let percentileValue = max(0, min(100, metric.percentile))
             return GeometryReader { proxy in
@@ -187,12 +193,12 @@ struct MetricBar: View {
                         .frame(height: 10)
 
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(HardwoodPalette.color(forPercentile: percentileValue))
+                        .fill(fill(percentileValue))
                         .frame(width: offset, height: 10)
 
                     ZStack {
                         Circle()
-                            .fill(HardwoodPalette.color(forPercentile: percentileValue))
+                            .fill(fill(percentileValue))
                             .frame(width: circleSize, height: circleSize)
 
                         Text("\(percentileValue)")
@@ -666,9 +672,8 @@ struct LeaderboardTableRow: View {
 
     private var displayValueColor: Color {
         if isSmallSample || displayMetric?.isUnranked == true { return HardwoodPalette.inkTertiary }
-        return valueOverride == nil
-            ? HardwoodPalette.textColor(forPercentile: displayPercentile)
-            : HardwoodPalette.ink
+        guard valueOverride == nil, displayMetric?.isShotProfile != true else { return HardwoodPalette.ink }
+        return HardwoodPalette.textColor(forPercentile: displayPercentile)
     }
 
     private var subtitle: String {
@@ -723,7 +728,10 @@ struct LeaderboardTableRow: View {
                         if displayMetric?.isUnranked == true {
                             Color.clear.frame(width: 40, height: 7)
                         } else {
-                            PercentileBarMini(percentile: displayPercentile)
+                            PercentileBarMini(
+                                percentile: displayPercentile,
+                                tint: displayMetric?.isShotProfile == true ? HardwoodPalette.linkBlue : nil
+                            )
                                 .frame(width: 40)
                                 .opacity(isSmallSample ? 0.35 : 1)
                         }
@@ -746,7 +754,11 @@ struct LeaderboardTableRow: View {
             .frame(width: trendDelta == nil ? 92 : 56, alignment: .trailing)
 
             if let trendDelta {
-                TrendArrow(delta: trendDelta, decimals: trendDecimals)
+                TrendArrow(
+                    delta: trendDelta,
+                    decimals: trendDecimals,
+                    lowerIsBetter: metricLabel.map(RecentMetricKey.lowerIsBetter) ?? false
+                )
                     .frame(width: 46, alignment: .trailing)
             }
         }
@@ -1056,4 +1068,11 @@ extension Int {
         default: return "\(self)th"
         }
     }
+}
+
+/// A player picker row's second line: "DEN · C · 27.7 PPG".
+func pickerSubtitle(_ player: Player) -> String {
+    let points = player.metrics.first { $0.label == "PPG" }?.value
+    return ([displayTeamAbbr(player.team), player.displayPosition] + [points.map { "\($0) PPG" }].compactMap { $0 })
+        .joined(separator: " · ")
 }

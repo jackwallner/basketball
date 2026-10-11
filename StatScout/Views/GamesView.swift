@@ -177,13 +177,16 @@ struct GamesView: View {
             HardwoodSectionBar(title: title)
             ForEach(Array(games.enumerated()), id: \.element.id) { index, game in
                 NavigationLink(value: GameRoute(gameId: game.id)) {
+                    // A playoff game reads by its series, not the regular-season record.
+                    let series = viewModel.seriesStatus(for: game)
                     GameRow(
                         game: game,
                         hasStats: viewModel.hasStats(game),
                         highlight: favorites.team,
-                        awayRecord: viewModel.record(forTeam: game.awayTeam, through: game),
-                        homeRecord: viewModel.record(forTeam: game.homeTeam, through: game),
-                        projection: viewModel.projection(for: game)
+                        awayRecord: series == nil ? viewModel.record(forTeam: game.awayTeam, through: game) : nil,
+                        homeRecord: series == nil ? viewModel.record(forTeam: game.homeTeam, through: game) : nil,
+                        projection: viewModel.projection(for: game),
+                        context: game.contextLine(series: series)
                     )
                         .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                 }
@@ -239,9 +242,35 @@ struct GameRow: View {
     var homeRecord: String? = nil
     /// The power ratings' projected margin, upcoming games only.
     var projection: GameProjection? = nil
+    /// "NBA Finals · Game 5 · NYK wins 4-1" above the teams, for a game that
+    /// is more than a date on the calendar.
+    var context: String? = nil
 
     var body: some View {
         let status = game.status()
+        VStack(alignment: .leading, spacing: 6) {
+            if let context {
+                Text(context.uppercased())
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.court)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            rowBody(status)
+        }
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .padding(.vertical, 10)
+        .overlay(
+            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline),
+            alignment: .bottom
+        )
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(([context].compactMap { $0 } + [accessibilityText(status)]).joined(separator: ", "))
+        .accessibilityHint("Opens the game")
+    }
+
+    private func rowBody(_ status: GameStatus) -> some View {
         HStack(spacing: 12) {
             VStack(spacing: 6) {
                 teamLine(game.awayTeam, score: game.awayScore, status: status, record: awayRecord)
@@ -265,16 +294,6 @@ struct GameRow: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(HardwoodPalette.inkTertiary)
         }
-        .padding(.horizontal, HardwoodGeo.padInline)
-        .padding(.vertical, 10)
-        .overlay(
-            Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline),
-            alignment: .bottom
-        )
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText(status))
-        .accessibilityHint("Opens the game")
     }
 
     private func teamLine(_ team: String, score: Int?, status: GameStatus, record: String?) -> some View {

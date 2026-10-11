@@ -559,7 +559,7 @@ struct PlayerProfileView: View {
                 historicalLoadingCard
             } else if !hasLoadedHistorical, loadHistorical != nil {
                 loadHistoricalCard
-            } else if history.count < 2 {
+            } else if Set(phaseHistory.compactMap(\.season).filter { !StatScoutSeason.isAllTime($0) }).count < 2 {
                 ContentUnavailableView {
                     Label("Not enough history", systemImage: "calendar.badge.clock")
                 } description: {
@@ -1281,7 +1281,14 @@ struct PercentileInfoSheet: View {
                         Label("Below Average (0-25): Rust bars", systemImage: "snowflake")
                             .font(HardwoodType.bodyBold)
                             .foregroundStyle(HardwoodPalette.performanceLow)
+                        Label("Shot profile: Blue bars", systemImage: "circle.lefthalf.filled")
+                            .font(HardwoodType.bodyBold)
+                            .foregroundStyle(HardwoodPalette.linkBlue)
                     }
+
+                    Text("Shot profile stats (3PT Rate, the Rim, Short Mid and Long Mid frequencies, Assisted FG%) describe how a player plays rather than how well, so a high or low rank is neither good nor bad.")
+                        .font(HardwoodType.small)
+                        .foregroundStyle(HardwoodPalette.inkSecondary)
                     .padding(.vertical, 8)
 
                     Text("Stats update after new source data is validated. Advanced metrics may arrive later than game totals. Not every metric is tracked for every player.")
@@ -1304,11 +1311,9 @@ private struct PlayerPickerSheet: View {
     @State private var searchText = ""
 
     var filteredPlayers: [Player] {
-        guard !searchText.isEmpty else { return players }
-        return players.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            $0.team.localizedCaseInsensitiveContains(searchText)
-        }
+        players
+            .filter { $0.matchesSearch(searchText) }
+            .sorted { $0.minutesPlayed == $1.minutesPlayed ? $0.name < $1.name : $0.minutesPlayed > $1.minutesPlayed }
     }
 
     var body: some View {
@@ -1324,7 +1329,7 @@ private struct PlayerPickerSheet: View {
                             Text(player.name)
                                 .font(HardwoodType.bodyBold)
                                 .foregroundStyle(HardwoodPalette.ink)
-                            Text("\(player.team) · \(player.displayPosition)")
+                            Text(pickerSubtitle(player))
                                 .font(HardwoodType.small)
                                 .foregroundStyle(HardwoodPalette.inkTertiary)
                         }

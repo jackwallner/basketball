@@ -26,10 +26,15 @@ struct StandardStatsLeadersView: View {
 
     /// Each player's sort keys are read once, not on every comparison: reading
     /// one means a case-insensitive search of the stat line and parsing it.
+    ///
+    /// Players under the bar sort below everyone over it, the Advanced board's
+    /// rule: otherwise a 1-for-1 shooter leads 3P at 100% and the fewest
+    /// turnovers belong to whoever barely played.
     private var sortedPlayers: [Player] {
         filteredPlayers
-            .map { (player: $0, value: numericStat(for: $0) ?? 0, games: games(for: $0)) }
+            .map { (player: $0, value: numericStat(for: $0) ?? 0, games: games(for: $0), counts: countsForBoard($0)) }
             .sorted { first, second in
+                if first.counts != second.counts { return first.counts }
                 if first.value != second.value {
                     return sortDescending
                         ? first.value > second.value
@@ -251,9 +256,7 @@ struct StandardStatsLeadersView: View {
             } else {
                 let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
                 let ranked = Array(sortedPlayers.enumerated()).filter { _, player in
-                    query.isEmpty || player.name.localizedCaseInsensitiveContains(query)
-                        || player.team.localizedCaseInsensitiveContains(query)
-                        || teamFullName(player.team).localizedCaseInsensitiveContains(query)
+                    player.matchesSearch(query)
                 }
                 let peerValues = filteredPlayers.compactMap { standardStat(for: $0)?.value }
                 if ranked.isEmpty {
@@ -366,6 +369,16 @@ struct StandardStatsLeadersView: View {
     /// a fact about the league rather than a mismatch between two strings. The
     /// route now passes the data's own spelling, and this makes a future one
     /// harmless instead of silent.
+    /// Over the playing-time bar, and for a shooting line over its attempts
+    /// bar too (the 3P% and FT% rows carry the prorated attempt gate).
+    private func countsForBoard(_ player: Player) -> Bool {
+        let gate = ["FG": "FG%", "3P": "3P%", "FT": "FT%"][selectedStat.uppercased()]
+        if let gate {
+            return player.metrics.contains { $0.label == gate && $0.qualified != false }
+        }
+        return DashboardViewModel.hasQualifyingMetric(player, in: nil)
+    }
+
     private func standardStat(for player: Player) -> StandardStat? {
         player.standardStats?.first {
             $0.label.compare(selectedStat, options: .caseInsensitive) == .orderedSame

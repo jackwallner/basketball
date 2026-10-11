@@ -69,6 +69,15 @@ struct PlayerIdentityStrip: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
+                if let slash = player.perGameSlashLine {
+                    Text(slash)
+                        .font(HardwoodType.bodyBold)
+                        .foregroundStyle(HardwoodPalette.inkOnDark)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .padding(.top, 2)
+                }
             }
             Spacer(minLength: 8)
             if showOverallBadge {

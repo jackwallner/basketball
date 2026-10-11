@@ -120,8 +120,15 @@ struct GameDetailView: View {
                 teamColumn(game.homeTeam, game: game, label: "Home")
             }
 
+            if let context = game.contextLine(series: viewModel.seriesStatus(for: game)) {
+                Text(context.uppercased())
+                    .font(HardwoodType.smallBold)
+                    .foregroundStyle(HardwoodPalette.court)
+                    .multilineTextAlignment(.center)
+            }
+
             Text([
-                game.seasonPhase == .playoffs ? "Playoffs" : nil,
+                game.seasonPhase == .playoffs && game.playoffRoundName == nil ? "Playoffs" : nil,
                 SeasonLabel.text(game.season),
                 game.dayLabel,
                 game.stadium,
@@ -160,7 +167,7 @@ struct GameDetailView: View {
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.85)
-                Text(([label] + [game.seasonPhase == .regular ? viewModel.record(forTeam: team, through: game) : nil].compactMap { $0 }).joined(separator: " · "))
+                Text(([label] + [game.countsInStandings ? viewModel.record(forTeam: team, through: game) : nil].compactMap { $0 }).joined(separator: " · "))
                     .font(HardwoodType.micro)
                     .foregroundStyle(HardwoodPalette.inkTertiary)
             }
@@ -750,16 +757,79 @@ struct GameDetailView: View {
             }
 
             card(title: "\(teamFullName(team)) box score") {
-                tableHeader(["MIN", "PTS", "REB", "AST", "FG", "3P", "+/-"], width: 40, fgWidth: 52)
-                ForEach(Array(boxScore.rotation(for: team).enumerated()), id: \.element.id) { index, line in
-                    tableRow(line, index: index, width: 40, values: [
-                        "\(line.minutes)", "\(line.int("pts"))", "\(line.int("reb"))", "\(line.int("ast"))",
-                        line.made("fgm", of: "fga"), line.made("fg3m", of: "fg3a"), line.plusMinusText,
-                    ], wideColumn: 4)
-                }
-                footnoteRow("Starters first, then the bench by minutes. Plus/minus is missing in seasons before 2008-09.")
+                fullBoxScore(boxScore.rotation(for: team))
+                footnoteRow(
+                    "Starters first, then the bench by minutes. Swipe the table for steals, blocks, turnovers and fouls."
+                        + (boxScore.rotation(for: team).contains { $0.metrics["plus_minus"] != nil } ? "" : " Plus/minus starts in 2008-09.")
+                )
             }
         }
+    }
+
+    /// Every box-score column, the way a box score reads: names pinned on the
+    /// left, the counts scrolling sideways beside them.
+    private func fullBoxScore(_ lines: [GameBoxScore.PlayerLine]) -> some View {
+        let columns: [(title: String, width: CGFloat, value: (GameBoxScore.PlayerLine) -> String)] = [
+            ("MIN", 34, { "\($0.minutes)" }),
+            ("PTS", 34, { "\($0.int("pts"))" }),
+            ("REB", 34, { "\($0.int("reb"))" }),
+            ("AST", 34, { "\($0.int("ast"))" }),
+            ("FG", 50, { $0.made("fgm", of: "fga") }),
+            ("3P", 44, { $0.made("fg3m", of: "fg3a") }),
+            ("FT", 44, { $0.made("ftm", of: "fta") }),
+            ("STL", 34, { "\($0.int("stl"))" }),
+            ("BLK", 34, { "\($0.int("blk"))" }),
+            ("TO", 30, { "\($0.int("tov"))" }),
+            ("PF", 30, { "\($0.int("pf"))" }),
+            ("+/-", 40, { $0.plusMinusText }),
+        ]
+        let rowHeight: CGFloat = 40
+        return HStack(alignment: .top, spacing: 0) {
+            VStack(spacing: 0) {
+                Text("PLAYER")
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(height: 26)
+                    .padding(.leading, HardwoodGeo.padInline)
+                    .background(HardwoodPalette.surfaceAlt)
+                ForEach(Array(lines.enumerated()), id: \.element.id) { index, line in
+                    playerRow(line: line, index: index, height: rowHeight) {
+                        nameText(line)
+                    }
+                }
+            }
+            .frame(width: 108)
+            ScrollView(.horizontal, showsIndicators: false) {
+                VStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        ForEach(columns, id: \.title) { column in
+                            Text(column.title).frame(width: column.width, alignment: .trailing)
+                        }
+                    }
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
+                    .padding(.trailing, HardwoodGeo.padInline)
+                    .frame(height: 26)
+                    .background(HardwoodPalette.surfaceAlt)
+                    ForEach(Array(lines.enumerated()), id: \.element.id) { index, line in
+                        HStack(spacing: 0) {
+                            ForEach(columns, id: \.title) { column in
+                                Text(column.value(line))
+                                    .frame(width: column.width, alignment: .trailing)
+                            }
+                        }
+                        .font(HardwoodType.statSmall)
+                        .foregroundStyle(HardwoodPalette.ink)
+                        .lineLimit(1)
+                        .padding(.trailing, HardwoodGeo.padInline)
+                        .frame(height: rowHeight)
+                        .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
+                    }
+                }
+            }
+        }
+        .monospacedDigit()
     }
 
     private func upcomingCard(_ game: Game) -> some View {
@@ -787,15 +857,15 @@ struct GameDetailView: View {
         .padding(.top, 12)
     }
 
-    private func tableHeader(_ columns: [String], width: CGFloat = 46, fgWidth: CGFloat? = nil) -> some View {
+    private func tableHeader(_ columns: [String], width: CGFloat = 46) -> some View {
         HStack(spacing: 0) {
             Text("PLAYER")
                 .frame(maxWidth: .infinity, alignment: .leading)
-            ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
+            ForEach(Array(columns.enumerated()), id: \.offset) { _, column in
                 Text(column)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                    .frame(width: index == 4 ? (fgWidth ?? width) : width, alignment: .trailing)
+                    .frame(width: width, alignment: .trailing)
             }
         }
         .font(HardwoodType.micro)
@@ -805,31 +875,15 @@ struct GameDetailView: View {
         .background(HardwoodPalette.surfaceAlt)
     }
 
-    private func tableRow(_ line: GameBoxScore.PlayerLine, index: Int, width: CGFloat = 46, values: [String], wideColumn: Int? = nil) -> some View {
-        playerRow(line: line, index: index) {
-            HStack(spacing: 0) {
-                nameText(line)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                ForEach(Array(values.enumerated()), id: \.offset) { offset, value in
-                    Text(value)
-                        .font(HardwoodType.statSmall)
-                        .foregroundStyle(HardwoodPalette.ink)
-                        .frame(width: offset == wideColumn ? 52 : width, alignment: .trailing)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-            }
-        }
-    }
-
     /// A tappable row when the player is in the live dataset, a plain one if not.
     @ViewBuilder
-    private func playerRow<Content: View>(line: GameBoxScore.PlayerLine, index: Int, @ViewBuilder content: () -> Content) -> some View {
+    private func playerRow<Content: View>(line: GameBoxScore.PlayerLine, index: Int, height: CGFloat? = nil, @ViewBuilder content: () -> Content) -> some View {
         let row = content()
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, HardwoodGeo.padInline)
-            .padding(.vertical, 8)
-            .frame(minHeight: 40)
+            .padding(.vertical, height == nil ? 8 : 0)
+            .frame(minHeight: height ?? 40)
+            .frame(height: height)
             .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
             .contentShape(Rectangle())
         if let player = player(for: line) {

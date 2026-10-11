@@ -100,6 +100,7 @@
 		C2B134691749FA08C2DFDA6A /* CompareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924C787B5EA5949F5BB19DF5 /* CompareView.swift */; };
 		C5718F0C8435928CBF995DE5 /* StatcastAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15914E954BD86B91C09E5C88 /* StatcastAPI.swift */; };
 		C64B05F3EB69506B8B001A4B /* Enrichment.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7AAAEB37D6699D3286E855 /* Enrichment.swift */; };
+		C8E1DFC3C6D6DA0489411AD7 /* SeriesAndStandingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DAEE17C5C25AD45C7B36AF0 /* SeriesAndStandingsTests.swift */; };
 		CAF73AB9C8F670C5ECDED67C /* SeasonResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9CF3E5FC4A0989FB84D1DDD /* SeasonResolverTests.swift */; };
 		CAF8B7DDD2BFFDE89C2DCE58 /* SavantMenus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F9C4B1F4674E2DABB9CF60 /* SavantMenus.swift */; };
 		CDA064F24B601616E69CC6CF /* FavoritesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E07A772C0BC9828B22A7CE51 /* FavoritesStore.swift */; };
@@ -206,6 +207,7 @@
 		64FD4BEDB1362FDBDFB0EF5A /* GameBoxScore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBoxScore.swift; sourceTree = "<group>"; };
 		651F39025F6839FC272B2181 /* StatDirectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatDirectionTests.swift; sourceTree = "<group>"; };
 		6B189C7733E3BCAD6D2789BE /* players-historical-2022.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "players-historical-2022.plist"; sourceTree = "<group>"; };
+		6DAEE17C5C25AD45C7B36AF0 /* SeriesAndStandingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeriesAndStandingsTests.swift; sourceTree = "<group>"; };
 		6E057C00732D6D26EF3AFFEB /* StoreKitPurchaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitPurchaseTests.swift; sourceTree = "<group>"; };
 		6F145A82B62823673B7E930D /* StoreKitTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKitTest.framework; path = System/Library/Frameworks/StoreKitTest.framework; sourceTree = SDKROOT; };
 		700D5472E58D809AD7C969D6 /* HotColdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotColdView.swift; sourceTree = "<group>"; };
@@ -352,6 +354,7 @@
 				348129804486AD22EB3D6517 /* RecentFormWindowTests.swift */,
 				ABD86AFA956A34A31F84B507 /* ReviewPromptTrackerTests.swift */,
 				D9CF3E5FC4A0989FB84D1DDD /* SeasonResolverTests.swift */,
+				6DAEE17C5C25AD45C7B36AF0 /* SeriesAndStandingsTests.swift */,
 				B2EAE4FBE4CF576F735F06C7 /* StandardStatsTests.swift */,
 				651F39025F6839FC272B2181 /* StatDirectionTests.swift */,
 				6E057C00732D6D26EF3AFFEB /* StoreKitPurchaseTests.swift */,
@@ -745,6 +748,7 @@
 				F87783F707F9A9C7CD06AD7F /* RecentFormWindowTests.swift in Sources */,
 				8D59F7C29E73159B2CC488A4 /* ReviewPromptTrackerTests.swift in Sources */,
 				CAF73AB9C8F670C5ECDED67C /* SeasonResolverTests.swift in Sources */,
+				C8E1DFC3C6D6DA0489411AD7 /* SeriesAndStandingsTests.swift in Sources */,
 				13627AAB67147D0AE5954433 /* StandardStatsTests.swift in Sources */,
 				A211C246D1B8BD2A42CF97B0 /* StatDirectionTests.swift in Sources */,
 				285963B438317EEC3C0D84D0 /* StoreKitPurchaseTests.swift in Sources */,

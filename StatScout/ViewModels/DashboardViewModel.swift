@@ -635,10 +635,10 @@ final class DashboardViewModel {
             let (loadedGames, loadedIds) = try await (schedule, withStats)
             StartupTrace.mark("games fetched (\(loadedGames.count) rows)")
             if !loadedGames.isEmpty || games.isEmpty {
-                games = loadedGames
+                games = loadedGames.filter { !$0.isPostponed }
             }
             if upcoming != nil {
-                upcomingGames = (await nextSchedule) ?? upcomingGames
+                upcomingGames = (await nextSchedule)?.filter { !$0.isPostponed } ?? upcomingGames
             } else {
                 upcomingGames = []
             }
@@ -674,6 +674,12 @@ final class DashboardViewModel {
         return try? await provider.fetchGames(season: season)
     }
 
+    /// Round, game number and series score for a playoff game.
+    func seriesStatus(for game: Game) -> SeriesStatus? {
+        guard game.playoffRoundName != nil else { return nil }
+        return SeriesStatus.of(game, in: game.season == freeSeason ? games : upcomingGames)
+    }
+
     func game(id: String) -> Game? {
         games.first { $0.id == id } ?? upcomingGames.first { $0.id == id }
     }
@@ -699,9 +705,9 @@ final class DashboardViewModel {
     }
 
     private func computeRecord(forTeam team: String, through game: Game?) -> String? {
-        let cutoff = game?.tipoff ?? .distantFuture
+        let cutoff = game.map { $0.tipoff ?? $0.gameDate } ?? .distantFuture
         let finals = games.filter {
-            $0.seasonPhase == .regular && $0.isFinal && $0.involves(team)
+            $0.countsInStandings && $0.isFinal && $0.involves(team)
                 && ($0.tipoff ?? $0.gameDate) <= cutoff
         }
         guard !finals.isEmpty else { return nil }
@@ -968,10 +974,7 @@ final class DashboardViewModel {
         // Resolved once: it walks every metric in the season.
         let gateLabel = qualifierLevel == .qualified ? currentSortMetricLabelForGate : nil
         return seasonPlayers.filter { player in
-            let matchesSearch = searchText.isEmpty
-                || player.name.localizedCaseInsensitiveContains(searchText)
-                || player.team.localizedCaseInsensitiveContains(searchText)
-                || teamFullName(player.team).localizedCaseInsensitiveContains(searchText)
+            let matchesSearch = player.matchesSearch(searchText)
             let matchesPosition = selectedPosition.includes(player)
             let matchesConference = matchesSelectedConference(player)
             let matchingMetrics = player.metrics.filter {
@@ -1240,7 +1243,19 @@ final class DashboardViewModel {
             // goodness - already direction-correct (it inverts for pitchers),
             // so highest = best, lowest = worst with no per-metric polarity
             // table needed.
-            let byPercentile = data.values.sorted { $0.percentile < $1.percentile }
+            //
+            // Percentiles are ranked within a position group, though, so across
+            // guards, forwards and centers the raw value decides when every
+            // entry has one: a center's 99th-percentile AST% is not the
+            // league's best passer.
+            let lowerBetter = Self.lowerIsBetter(label: label, category: data.category)
+            let numeric = data.values.compactMap { Self.rawNumeric($0.actualValue) }
+            let byPercentile = numeric.count == data.values.count
+                ? data.values.sorted {
+                    let a = Self.rawNumeric($0.actualValue) ?? 0, b = Self.rawNumeric($1.actualValue) ?? 0
+                    return lowerBetter ? a > b : a < b
+                }
+                : data.values.sorted { $0.percentile < $1.percentile }
             guard let best = byPercentile.last else { return nil }
             let worst = byPercentile.first
             // Single qualifier (or every qualifier tied): the same player can't
@@ -1536,7 +1551,10 @@ final class DashboardViewModel {
                 )
             }
         } else if !playersToIngest.isEmpty, !drewLeaderboardEarly {
-            ingestPlayers(playersToIngest)
+            // Merge again rather than installing the list built before the
+            // coverage and status round trips: the past-season archive can
+            // land in between, and the older list would drop it for the session.
+            ingestPlayers(acceptedCurrent.isEmpty ? playersToIngest : mergePlayers(replacing: acceptedCurrent))
             StartupTrace.mark("live players on screen")
         }
         if loadedCurrentData {

@@ -92,7 +92,7 @@ struct TeamsView: View {
     }
 
     private var isInitiallyLoading: Bool {
-        viewModel.isLoading && viewModel.teamsWithData.isEmpty
+        (viewModel.isLoading || viewModel.isHistoricalLoading) && viewModel.teamsWithData.isEmpty
     }
 
     var body: some View {
@@ -344,6 +344,18 @@ struct TeamsView: View {
         }
     }
 
+    /// The franchise's code in the season on screen: the 2007-08 Thunder
+    /// played as the SuperSonics, and their rows say SEA.
+    private func seasonCode(_ abbr: String) -> String {
+        let present = Set(viewModel.teamsWithData)
+        guard !present.contains(abbr) else { return abbr }
+        return Self.predecessors[abbr]?.first(where: present.contains) ?? abbr
+    }
+
+    private static let predecessors: [String: [String]] = [
+        "OKC": ["SEA"], "BKN": ["NJN"], "NOP": ["NOH", "NOK"], "MEM": ["VAN"],
+    ]
+
     /// Six labelled rows of five. Sized so the whole league sits on one
     /// screen.
     private var divisionGrid: some View {
@@ -358,7 +370,7 @@ struct TeamsView: View {
                     }
                     HStack(spacing: 8) {
                         ForEach(division.teams, id: \.self) { abbr in
-                            teamDot(abbr)
+                            teamDot(seasonCode(abbr))
                         }
                     }
                 }

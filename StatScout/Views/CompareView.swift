@@ -114,7 +114,8 @@ struct CompareView: View {
     }
 
     private func players(forSeason season: Int, phase: SeasonPhase) -> [Player] {
-        viewModel.players(forSeason: season, phase: phase).sorted { $0.name < $1.name }
+        viewModel.players(forSeason: season, phase: phase)
+            .sorted { $0.minutesPlayed == $1.minutesPlayed ? $0.name < $1.name : $0.minutesPlayed > $1.minutesPlayed }
     }
 
     private func resolved(
@@ -1067,11 +1068,7 @@ struct ComparePlayerPicker: View {
     @State private var searchText = ""
 
     private var filtered: [Player] {
-        guard !searchText.isEmpty else { return players }
-        return players.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            $0.team.localizedCaseInsensitiveContains(searchText)
-        }
+        players.filter { $0.matchesSearch(searchText) }
     }
 
     var body: some View {
@@ -1087,7 +1084,7 @@ struct ComparePlayerPicker: View {
                             Text(player.name)
                                 .font(HardwoodType.bodyBold)
                                 .foregroundStyle(HardwoodPalette.ink)
-                            Text("\(player.team) · \(player.displayPosition)")
+                            Text(pickerSubtitle(player))
                                 .font(HardwoodType.small)
                                 .foregroundStyle(HardwoodPalette.inkTertiary)
                         }
@@ -1293,6 +1290,7 @@ struct TeamComparisonView: View {
                 totalRow(label: "APG", rosterA: rosterA, rosterB: rosterB),
                 totalRow(
                     label: "TOV",
+                    title: "TOV/G",
                     rosterA: rosterA,
                     rosterB: rosterB,
                     higherIsBetter: false
@@ -1308,6 +1306,7 @@ struct TeamComparisonView: View {
                 totalRow(label: "BPG", rosterA: rosterA, rosterB: rosterB),
                 totalRow(
                     label: "PF",
+                    title: "PF/G",
                     rosterA: rosterA,
                     rosterB: rosterB,
                     higherIsBetter: false
@@ -1315,7 +1314,7 @@ struct TeamComparisonView: View {
             ]
         case .impact:
             return [
-                totalRow(label: "+/-", rosterA: rosterA, rosterB: rosterB),
+                totalRow(label: "+/-", title: "Margin/G", rosterA: rosterA, rosterB: rosterB),
             ]
         }
     }
@@ -1474,6 +1473,7 @@ struct TeamComparisonView: View {
     /// one screen whose whole job is saying which team is better.
     private func totalRow(
         label: String,
+        title: String? = nil,
         rosterA: [Player],
         rosterB: [Player],
         higherIsBetter: Bool = true
@@ -1483,7 +1483,7 @@ struct TeamComparisonView: View {
         let sign: Double = higherIsBetter ? 1 : -1
         return StatRow(
             id: label,
-            label: label,
+            label: title ?? label,
             aText: format(a, label: label),
             bText: format(b, label: label),
             aValue: a.map { $0 * sign },
@@ -1518,15 +1518,30 @@ struct TeamComparisonView: View {
         return pairs.reduce(0) { $0 + $1.0 } / attempts
     }
 
+    /// The team's per-game line for one stat. Player averages can't simply be
+    /// added: a starter who missed half the season would count in full on top
+    /// of the man who replaced him. Each average is weighted by his games and
+    /// divided by the team's (the most any player on the roster played).
+    /// Season totals become per game the same way, and since five players
+    /// share every point of margin, summed plus/minus over five is the team's.
     private func total(label: String, roster: [Player]) -> Double? {
-        let values = roster.compactMap { player in
-            player.standardStats?
-                .first { $0.label == label }
-                .flatMap { DashboardViewModel.rawNumeric($0.value) }
+        var sum = 0.0
+        var found = false
+        var teamGames = 0.0
+        for player in roster {
+            let stats = player.standardStats ?? []
+            let games = stats.first { $0.label == "G" }.flatMap { DashboardViewModel.rawNumeric($0.value) } ?? 0
+            teamGames = max(teamGames, games)
+            guard let value = stats.first(where: { $0.label == label }).flatMap({ DashboardViewModel.rawNumeric($0.value) })
+            else { continue }
+            found = true
+            sum += Self.perGameLabels.contains(label) ? value * games : value
         }
-        guard !values.isEmpty else { return nil }
-        return values.reduce(0, +)
+        guard found, teamGames > 0 else { return nil }
+        return (label == "+/-" ? sum / 5 : sum) / teamGames
     }
+
+    private static let perGameLabels: Set<String> = ["PPG", "RPG", "APG", "SPG", "BPG"]
 
     private func pairedTotal(label: String, roster: [Player]) -> String {
         let pairs = roster.compactMap { player -> (Double, Double)? in
@@ -1548,12 +1563,12 @@ struct TeamComparisonView: View {
 
     private func format(_ value: Double?, label: String) -> String {
         guard let value else { return "-" }
-        if ["PPG", "RPG", "APG", "SPG", "BPG"].contains(label) {
+        if Self.perGameLabels.contains(label) || label == "TOV" || label == "PF" {
             return String(format: "%.1f", value)
         }
         if label == "+/-" {
-            let whole = Int(value.rounded())
-            return whole > 0 ? "+\(whole)" : "\(whole)"
+            let text = String(format: "%.1f", value)
+            return value > 0.05 ? "+\(text)" : text
         }
         return Int(value.rounded()).formatted(.number.grouping(.automatic))
     }

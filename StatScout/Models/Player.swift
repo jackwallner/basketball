@@ -133,8 +133,12 @@ struct Player: Identifiable, Codable, Hashable, Sendable {
     /// Metrics that carry a real rank. See `Metric.isUnranked`.
     var rankedMetrics: [Metric] { metrics.filter { !$0.isUnranked } }
 
+    /// Ranked metrics where higher means better: the shot-profile stats say
+    /// how he plays, so they stay out of any grade.
+    var gradedMetrics: [Metric] { rankedMetrics.filter { !$0.isShotProfile } }
+
     var overallPercentile: Int {
-        let metrics = rankedMetrics
+        let metrics = gradedMetrics
         guard !metrics.isEmpty else { return 0 }
         // A rim protector's scoring bars shouldn't drag down his defense: the
         // headline number is the best category average, not the mean of
@@ -153,7 +157,7 @@ struct Player: Identifiable, Codable, Hashable, Sendable {
     }
 
     var headlineMetric: Metric? {
-        rankedMetrics.sorted { $0.percentile > $1.percentile }.first
+        gradedMetrics.sorted { $0.percentile > $1.percentile }.first
     }
 
     var latestGame: GameTrend? {
@@ -180,7 +184,7 @@ struct Player: Identifiable, Codable, Hashable, Sendable {
     }
 
     func percentile(for category: MetricCategory) -> Int? {
-        let categoryMetrics = rankedMetrics.filter { $0.category == category }
+        let categoryMetrics = gradedMetrics.filter { $0.category == category }
         guard !categoryMetrics.isEmpty else { return nil }
         let total = categoryMetrics.map(\.percentile).reduce(0, +)
         return Int(round(Double(total) / Double(categoryMetrics.count)))
@@ -232,6 +236,18 @@ struct Metric: Identifiable, Codable, Hashable, Sendable {
     /// when most of the league is tied at zero there is no honest rank at all.
     /// The value still shows; the bar, the number and the player's overall
     /// average leave it out.
+    /// Describes a player's shot diet rather than grading it: where his shots
+    /// come from and how many are assisted. A 90th-percentile long-mid
+    /// frequency is a style, not an achievement, so these draw in a neutral
+    /// colour.
+    var isShotProfile: Bool {
+        Self.shotProfileLabels.contains(label)
+    }
+
+    static let shotProfileLabels: Set<String> = [
+        "3PT Rate", "Rim Freq", "Short Mid Freq", "Long Mid Freq", "Assisted FG%",
+    ]
+
     var isUnranked: Bool {
         if rankable == false { return true }
         guard let definition = BasketballMetricRegistry.definition(for: label, category: category),
@@ -827,6 +843,38 @@ extension Player {
     /// "1,820 min". Nil when the line has none.
     func volumeCaption(for category: MetricCategory) -> String? {
         MetricWeight.minutes.value(for: self).map { "\(Int($0).formatted(.number.grouping(.automatic))) min" }
+    }
+
+    /// Season minutes, the order a player list reads in when nobody has typed
+    /// anything: the regulars before the two-way call-ups.
+    var minutesPlayed: Double { MetricWeight.minutes.value(for: self) ?? 0 }
+
+    /// Name or team search that ignores case, accents and punctuation ("tj
+    /// mcconnell" finds "T.J. McConnell", "deaaron" finds "De'Aaron") and knows
+    /// a team by name as well as code ("Lakers").
+    func matchesSearch(_ query: String, includingTeam: Bool = true) -> Bool {
+        let text = Self.searchKey(query)
+        guard !text.isEmpty else { return true }
+        return Self.searchKey(name).localizedStandardContains(text)
+            || includingTeam && team.localizedStandardContains(text)
+            || includingTeam && teamFullName(team).localizedStandardContains(text)
+    }
+
+    private static func searchKey(_ text: String) -> String {
+        text.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: ".", with: "")
+            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: "’", with: "")
+    }
+
+    /// The line every fan quotes first: "27.7 PTS · 12.9 REB · 10.7 AST".
+    /// Nil when the season carries none of the three.
+    var perGameSlashLine: String? {
+        let parts = [("PPG", "PTS"), ("RPG", "REB"), ("APG", "AST")].compactMap { label, short -> String? in
+            guard let value = metrics.first(where: { $0.label == label })?.value, !value.isEmpty else { return nil }
+            return "\(value) \(short)"
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
     func metrics(kind: MetricKind) -> [Metric] {

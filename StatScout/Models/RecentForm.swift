@@ -59,6 +59,8 @@ struct RecentForm: Codable, Hashable, Sendable, Identifiable {
         case delta
     }
 
+    private static let asOfFormatter = DataFreshness.makeEasternDayFormatter()
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         playerId = try c.decode(Int.self, forKey: .playerId)
@@ -76,18 +78,10 @@ struct RecentForm: Codable, Hashable, Sendable, Identifiable {
 
         // as_of is a Postgres `date`, so it arrives as "YYYY-MM-DD" and won't
         // parse with the ISO8601 strategy the rest of the payload uses.
-        if let raw = try c.decodeIfPresent(String.self, forKey: .asOf) {
-            var parts = DateComponents()
-            let bits = raw.split(separator: "-").compactMap { Int($0) }
-            if bits.count == 3 {
-                parts.year = bits[0]; parts.month = bits[1]; parts.day = bits[2]
-                asOf = Calendar.current.date(from: parts)
-            } else {
-                asOf = nil
-            }
-        } else {
-            asOf = nil
-        }
+        // Eastern midnight on the Gregorian calendar, like every other game
+        // date: the board prints it in Eastern time, and the phone's own zone
+        // put it a day early anywhere east of New York.
+        asOf = try c.decodeIfPresent(String.self, forKey: .asOf).flatMap { Self.asOfFormatter.date(from: $0) }
 
         // Null metric values mean "no data in this window" (see the rollup's
         // omit-rather-than-zero rule), so they're dropped rather than coerced.

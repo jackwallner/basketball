@@ -163,6 +163,17 @@ struct GameBoxScore: Sendable {
         "\(line.int("ast")) ast, \(line.int("tov")) tov, \(line.int("pts")) pts"
     }
 
+    /// Minutes and shooting under the summary: "36 min · 11/19 FG · 2/5 3P ·
+    /// 4/4 FT". Empty attempts drop out.
+    static func shootingLine(_ line: PlayerLine) -> String {
+        var parts = ["\(line.minutes) min"]
+        if line.int("fga") > 0 { parts.append("\(line.made("fgm", of: "fga")) FG") }
+        if line.int("fg3a") > 0 { parts.append("\(line.made("fg3m", of: "fg3a")) 3P") }
+        if line.int("fta") > 0 { parts.append("\(line.made("ftm", of: "fta")) FT") }
+        if line.metrics["plus_minus"] != nil { parts.append(line.plusMinusText) }
+        return parts.joined(separator: " · ")
+    }
+
     /// A player's one-line game summary: "24 pts, 8 reb, 6 ast".
     static func summary(_ line: PlayerLine) -> String {
         var parts = ["\(line.int("pts")) pts"]

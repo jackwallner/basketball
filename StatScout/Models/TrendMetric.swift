@@ -48,7 +48,7 @@ struct TrendMetric: Identifiable, Hashable, Sendable {
     /// players are judged on: guards on creation, forwards on scoring
     /// efficiency, centers on rim work and the glass.
     static let guardAdvanced: [TrendMetric] = [
-        "AST%", "Pts/100", "TS%", "USG%", "TOV%", "AST:TO", "STL%", "On-Off",
+        "Pts/100", "TS%", "AST%", "USG%", "TOV%", "AST:TO", "STL%", "On-Off",
     ].map(make)
 
     static let forwardAdvanced: [TrendMetric] = [
@@ -63,9 +63,10 @@ struct TrendMetric: Identifiable, Hashable, Sendable {
 
     /// The traditional line. Per-game averages over the window answer a
     /// different question from the advanced rates: what he did, not how
-    /// efficiently.
+    /// efficiently. No window totals (3PM, +/-): two windows rarely hold the
+    /// same number of games, so a player back from injury topped those boards.
     static let standard: [TrendMetric] = [
-        "PPG", "RPG", "APG", "SPG", "BPG", "FG%", "3P%", "FT%", "3PM", "TOV/G", "MPG", "+/-",
+        "PPG", "RPG", "APG", "SPG", "BPG", "FG%", "3P%", "FT%", "TOV/G", "MPG",
     ].map(make)
 
     static func advanced(for side: TrendSide) -> [TrendMetric] {

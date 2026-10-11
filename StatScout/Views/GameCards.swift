@@ -119,10 +119,12 @@ struct TeamGameCard: View {
     }
 
     private func shell<Content: View>(kind: Kind, game: Game, @ViewBuilder content: () -> Content) -> some View {
-        // The record belongs to the live season; a 2026-27 game has none yet.
+        // The record belongs to the live season; a 2026-27 game has none yet. A
+        // playoff game says where its series stands instead.
         let record = game.season == viewModel.freeSeason ? viewModel.record(forTeam: team) : nil
+        let context = game.contextLine(series: viewModel.seriesStatus(for: game))
         return VStack(alignment: .leading, spacing: 6) {
-            Text(([kind.title, SeasonLabel.text(game.season)] + [record].compactMap { $0 }).joined(separator: " · ").uppercased())
+            Text(([kind.title, SeasonLabel.text(game.season)] + [context ?? record].compactMap { $0 }).joined(separator: " · ").uppercased())
                 .font(HardwoodType.micro)
                 .foregroundStyle(HardwoodPalette.inkSecondary)
             HStack(spacing: 10) {
@@ -216,6 +218,8 @@ struct TeamScheduleView: View {
     private func numbered(_ games: [Game]) -> [(game: Game, number: String)] {
         var counts: [SeasonPhase: Int] = [:]
         return games.map { game in
+            // The Cup final counts toward no record, so it takes no number.
+            if game.isCupFinal { return (game, "Cup") }
             counts[game.seasonPhase, default: 0] += 1
             let n = counts[game.seasonPhase] ?? 0
             return (game, game.seasonPhase == .regular ? "\(n)" : "P\(n)")
@@ -235,9 +239,11 @@ struct TeamScheduleView: View {
                     .foregroundStyle(HardwoodPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
-                Text(game.dayLabel)
+                Text(([game.dayLabel] + [viewModel.seriesStatus(for: game)?.gameLabel].compactMap { $0 }).joined(separator: " · "))
                     .font(HardwoodType.micro)
                     .foregroundStyle(HardwoodPalette.inkTertiary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
             Spacer(minLength: 8)
             if let line = game.resultLine(for: team) {
@@ -341,6 +347,12 @@ struct PlayerLastGameCard: View {
                     .foregroundStyle(HardwoodPalette.inkSecondary)
                     .monospacedDigit()
                     .fixedSize(horizontal: false, vertical: true)
+                Text(GameBoxScore.shootingLine(line))
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
         }
         .padding(.horizontal, HardwoodGeo.padInline)
@@ -364,6 +376,7 @@ struct PlayerLastGameCard: View {
     }
 
     private func title(_ log: PlayerGameLog) -> String {
+        if let game, let series = viewModel.seriesStatus(for: game) { return "Last game · \(series.gameLabel)" }
         if let game { return "Last game · \(game.dayLabel)" }
         return "Last game · \(log.gameDate.formatted(DataCoverage.gameDayStyle))"
     }
@@ -394,6 +407,7 @@ struct PlayerGameLogCard: View {
         let team: String
         let opponent: String?
         let summary: String
+        let shooting: String
     }
 
     private var key: String {
@@ -438,22 +452,21 @@ struct PlayerGameLogCard: View {
     }
 
     /// One entry per game; a player with two rows in a game (a player ranked in
-    /// two position cohorts) reads as one line.
+    /// two position cohorts) reads as one line. Both rows carry the same box
+    /// score, so the first one speaks for the game.
     static func entries(from logs: [PlayerGameLog], fallbackTeam: String) -> [Entry] {
         let grouped = Dictionary(grouping: logs) { $0.gameId ?? ISO8601DateFormatter().string(from: $0.gameDate) }
         return grouped.map { id, rows in
             let first = rows[0]
-            let summary = GameBoxScore(logs: rows).lines
-                .map(GameBoxScore.summary)
-                .filter { !$0.isEmpty }
-                .joined(separator: " · ")
+            let line = GameBoxScore(logs: [first]).lines.first
             return Entry(
                 id: id,
                 gameId: first.gameId,
                 gameDate: first.gameDate,
                 team: first.team ?? fallbackTeam,
                 opponent: first.opponent,
-                summary: summary
+                summary: line.map(GameBoxScore.summary) ?? "",
+                shooting: line.map(GameBoxScore.shootingLine) ?? ""
             )
         }
         .sorted { $0.gameDate > $1.gameDate }
@@ -484,6 +497,14 @@ struct PlayerGameLogCard: View {
                     .foregroundStyle(HardwoodPalette.inkSecondary)
                     .monospacedDigit()
                     .fixedSize(horizontal: false, vertical: true)
+                if !entry.shooting.isEmpty {
+                    Text(entry.shooting)
+                        .font(HardwoodType.micro)
+                        .foregroundStyle(HardwoodPalette.inkTertiary)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
             }
         }
         .padding(.horizontal, HardwoodGeo.padInline)

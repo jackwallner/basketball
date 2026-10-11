@@ -32,7 +32,8 @@ struct MetricRankingView: View {
                 by: DashboardViewModel.metricComparator(
                     label: metricLabel,
                     category: metricCategory,
-                    descending: sortDescending
+                    descending: sortDescending,
+                    acrossCohorts: Set(players.map(\.positionGroup)).count > 1
                 )
             )
         // Same rule as the Stats board: small samples stay listed, below.

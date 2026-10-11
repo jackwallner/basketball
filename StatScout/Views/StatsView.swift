@@ -139,6 +139,7 @@ private struct BestWorstBoard: View {
                     MetricLeadersView(metrics: viewModel.allMetrics)
                         .blur(radius: 8)
                         .allowsHitTesting(false)
+                        .accessibilityHidden(true)
                     BlurGateUnlock(
                         headline: "See who leads and who trails on every metric in the league",
                         trigger: .bestWorst

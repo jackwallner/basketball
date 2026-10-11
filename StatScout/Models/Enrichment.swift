@@ -164,11 +164,30 @@ struct StandingsRow: Hashable, Sendable, Identifiable {
 
     var record: String { "\(wins)-\(losses)" }
 
+    /// Average scoring margin, "+8.2"; nil before a game.
+    var marginLabel: String? {
+        guard games > 0 else { return nil }
+        let margin = Double(differential) / Double(games)
+        let text = String(format: "%.1f", abs(margin))
+        return margin > 0.05 ? "+\(text)" : (margin < -0.05 ? "-\(text)" : "0.0")
+    }
+
+    /// Games behind `leader` (the best win-loss gap), in halves:
+    /// ((W gap) + (L gap)) / 2.
+    func gamesBack(of leader: StandingsRow) -> Double {
+        Double((leader.wins - wins) + (losses - leader.losses)) / 2
+    }
+
+    /// "3.5", "12"; whole numbers drop the decimal.
+    static func formatGamesBack(_ value: Double) -> String {
+        value == value.rounded() ? String(Int(value)) : String(format: "%.1f", value)
+    }
+
     /// Regular-season finals only, oldest first so the streak reads off the end.
     static func build(from games: [Game], teams: [String]) -> [String: StandingsRow] {
         var rows = Dictionary(uniqueKeysWithValues: teams.map { ($0, StandingsRow(team: $0)) })
         let finals = games
-            .filter { $0.seasonPhase == .regular && $0.isFinal }
+            .filter { $0.countsInStandings && $0.isFinal }
             .sorted { ($0.tipoff ?? $0.gameDate) < ($1.tipoff ?? $1.gameDate) }
         var results: [String: [String]] = [:]
         for game in finals {

@@ -140,6 +140,7 @@ struct PlayerComparisonView: View {
                 ZStack(alignment: .bottom) {
                     comparisonContent
                         .blur(radius: 8)
+                        .accessibilityHidden(true)
                         .overlay(
                             LinearGradient(
                                 colors: [.clear, HardwoodPalette.canvas.opacity(0.9)],
@@ -583,12 +584,25 @@ struct PlayerComparisonView: View {
         )
     }
 
+    /// Who takes the trophy. The two may sit in different position pools,
+    /// where percentiles don't compare, so the value decides when both carry
+    /// one. A shot-profile stat is a style, so nobody wins it.
+    static func beats(_ metric: Metric, _ other: Metric) -> Bool {
+        if metric.isShotProfile { return false }
+        if let mine = metricNumericValue(metric.value), let theirs = metricNumericValue(other.value) {
+            guard mine != theirs else { return false }
+            let higherIsBetter = BasketballMetricRegistry.definition(for: metric.label, category: metric.category)?.higherIsBetter ?? true
+            return higherIsBetter ? mine > theirs : mine < theirs
+        }
+        return metric.percentile > other.percentile
+    }
+
     private func metricValueCell(metric: Metric?, other: Metric?) -> some View {
         Group {
             if let m = metric, m.percentile > 0 || !m.value.isEmpty {
                 let hasValue = !m.value.isEmpty
                 let comparable = other.map { $0.percentile > 0 || !$0.value.isEmpty } ?? false
-                let isWinner = comparable && (other.map { m.percentile > $0.percentile } ?? false)
+                let isWinner = comparable && (other.map { Self.beats(m, $0) } ?? false)
                 let pctTextColor = HardwoodPalette.textColor(forPercentile: m.percentile)
                 VStack(spacing: 4) {
                     HStack(spacing: 4) {

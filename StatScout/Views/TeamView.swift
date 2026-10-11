@@ -161,7 +161,7 @@ struct TeamView: View {
 
     private var filteredPlayers: [Player] {
         let bySearch = searchText.isEmpty ? players : players.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText)
+            $0.matchesSearch(searchText, includingTeam: false)
                 || $0.displayPosition.localizedCaseInsensitiveContains(searchText)
         }
         let byCategory = bySearch.filter { player in
@@ -181,10 +181,13 @@ struct TeamView: View {
                 sortDescending ? fallbackPercentile($0) > fallbackPercentile($1) : fallbackPercentile($0) < fallbackPercentile($1)
             }
         }
+        // A roster mixes guards, forwards and centers, whose percentiles come
+        // from different pools: order by the value itself.
         return byQualifier.sorted(by: DashboardViewModel.metricComparator(
             label: sortMetric.label,
             category: sortMetric.category,
-            descending: sortDescending
+            descending: sortDescending,
+            acrossCohorts: true
         ))
     }
 
@@ -195,6 +198,23 @@ struct TeamView: View {
         case .qualified:
             return DashboardViewModel.hasQualifyingMetric(player, in: selectedCategory)
         }
+    }
+
+    /// "56-26 · 2nd in the East · Power +5.3, 2nd": where the team stands,
+    /// the first thing a fan wants from a team page.
+    private func seasonSummary(_ viewModel: DashboardViewModel) -> String? {
+        let abbr = normalizedTeamAbbreviation(team)
+        let table = viewModel.standings
+        guard let row = table[abbr], row.games > 0 else { return nil }
+        var parts = [row.record]
+        if let conference = TeamsView.conferences.first(where: { $0.teams.contains(abbr) }),
+           let seed = StandingsRow.ordered(conference.teams.compactMap { table[$0] }).firstIndex(where: { $0.team == abbr }) {
+            parts.append("\((seed + 1).ordinalString) in the \(conference.name.hasPrefix("East") ? "East" : "West")")
+        }
+        if let rating = viewModel.teamRating(abbr) {
+            parts.append("Power \(TeamRating.signed(rating.rating)), \(rating.rank.ordinalString)")
+        }
+        return parts.joined(separator: " · ")
     }
 
     var body: some View {
@@ -208,6 +228,15 @@ struct TeamView: View {
                     )
                         .padding(.horizontal, 12)
                         .padding(.top, 10)
+                    if displaySeason == viewModel.freeSeason, let summary = seasonSummary(viewModel) {
+                        Text(summary)
+                            .font(HardwoodType.bodyBold)
+                            .foregroundStyle(HardwoodPalette.ink)
+                            .monospacedDigit()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 10)
+                    }
                     if displaySeason == viewModel.freeSeason {
                         TeamGameCard(viewModel: viewModel, team: team)
                             .padding(.horizontal, 12)
@@ -693,7 +722,7 @@ struct TeamView: View {
                 if viewModel.isSeasonLocked(season) {
                     trialTrigger = .lockedSeason(season)
                 } else {
-                    viewModel.selectedSeason = season
+                    viewModel.selectSeason(season)
                 }
             },
             onSelectPhase: { viewModel.selectedPhase = $0 }
