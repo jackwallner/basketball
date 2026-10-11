@@ -59,6 +59,19 @@ def _read(loader: Loader, kind: str, season: int) -> Optional[pl.DataFrame]:
         return None
 
 
+def cup_final_ids(loader: Loader, season: int) -> set[int]:
+    """Game ids of the NBA Cup final from the schedule (empty when it is missing)."""
+    try:
+        schedule = _read(loader, "schedule", season)
+    except Exception:  # noqa: BLE001 - without a schedule the build keeps every game
+        logger.warning("No schedule for %s; the NBA Cup final cannot be excluded", season)
+        return set()
+    if schedule is None or "type_abbreviation" not in schedule.columns:
+        return set()
+    finals = schedule.filter(pl.col("type_abbreviation") == hoopr.CUP_FINAL_TYPE)
+    return {int(g) for g in finals["game_id"].to_list() if g is not None}
+
+
 def add_zone_counts(
     frame: pd.DataFrame,
     shots: pl.DataFrame,
@@ -116,6 +129,7 @@ def build_player_games(
     on_off: bool = True,
     loader: Loader = hoopr.read_asset,
     strict: bool = True,
+    include_cup_final: bool = False,
 ) -> PlayerGames:
     """Build the per-game table for one hoopR season (REG and POST rows).
 
@@ -124,6 +138,10 @@ def build_player_games(
     and the table was built without it; only when ``strict`` is False, which is
     how the publisher runs so a late optional feed cannot block core stats) or
     ``not_applicable`` (the season predates the source or the caller skipped it).
+
+    The NBA Cup final is dropped unless ``include_cup_final``: ESPN files it as
+    a regular-season game, but it counts toward no standings or season stats.
+    Only the game pages keep it.
     """
     diagnostics: dict[str, Any] = {
         "season": season,
@@ -134,6 +152,13 @@ def build_player_games(
     team_box = _read(loader, "team_box", season)
     if player_box is None or team_box is None:
         return PlayerGames(pd.DataFrame(), diagnostics)
+
+    if not include_cup_final:
+        cup_finals = cup_final_ids(loader, season)
+        if cup_finals:
+            player_box = player_box.filter(~pl.col("game_id").cast(pl.Int64).is_in(list(cup_finals)))
+            team_box = team_box.filter(~pl.col("game_id").cast(pl.Int64).is_in(list(cup_finals)))
+            diagnostics["cup_final_games"] = sorted(cup_finals)
 
     players = boxscore.clean_player_box(player_box)
     teams = boxscore.team_game_table(team_box, players)

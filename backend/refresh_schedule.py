@@ -43,6 +43,7 @@ from urllib.request import Request, urlopen
 
 from nbacodes import (
     PHASE_BY_ESPN_TYPE,
+    game_type_code,
     game_week,
     is_nba_team,
     normalize_team,
@@ -96,6 +97,10 @@ class Game:
     @property
     def is_final(self) -> bool:
         return self.away_score is not None and self.home_score is not None
+
+    @property
+    def is_postponed(self) -> bool:
+        return self.game_type == "PPD"
 
     def as_row(self, synced_at: datetime) -> dict[str, Any]:
         return {
@@ -184,7 +189,7 @@ def parse_schedule_records(records: Iterable[Mapping[str, Any]], seasons: Iterab
             game_id=str(game_id),
             season=season,
             season_type=phase,
-            game_type=phase,
+            game_type=game_type_code(phase, row.get("type_abbreviation"), row.get("status_type_name")),
             week=game_week(game_date, season),
             game_date=game_date,
             kickoff_at=tip_off_utc(row.get("date")),
@@ -204,9 +209,10 @@ def parse_schedule_parquet(payload: bytes, seasons: Iterable[int]) -> list[Game]
     columns = [
         "game_id", "season", "season_type", "game_date", "date", "home_abbreviation",
         "away_abbreviation", "home_score", "away_score", "status_type_completed",
-        "status_period", "venue_full_name",
+        "status_period", "venue_full_name", "type_abbreviation", "status_type_name",
     ]
-    table = pq.read_table(io.BytesIO(payload), columns=columns)
+    available = set(pq.read_schema(io.BytesIO(payload)).names)
+    table = pq.read_table(io.BytesIO(payload), columns=[c for c in columns if c in available])
     return parse_schedule_records(table.to_pylist(), seasons)
 
 
@@ -256,7 +262,7 @@ def probe_cadence(
     """The shortest cadence any game currently asks for, with its reason."""
     best = baseline_cadence(now)
     for game in games:
-        if game.kickoff_at is None:
+        if game.kickoff_at is None or game.is_postponed:
             continue
         since = now - game.kickoff_at
         if since < timedelta(0):
@@ -282,7 +288,7 @@ def probe_cadence(
 def sync_cadence(games: Iterable[Game], now: datetime) -> tuple[str, timedelta]:
     best = _cadence("daily schedule sync", OFFSEASON)
     for game in games:
-        if game.kickoff_at is None or game.is_final:
+        if game.kickoff_at is None or game.is_final or game.is_postponed:
             continue
         since = now - game.kickoff_at
         if LIVE_SCORE_START <= since < LIVE_SCORE_END:

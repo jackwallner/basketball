@@ -128,6 +128,8 @@ def _coverage(frame: pd.DataFrame, schedule: pd.DataFrame, season: int, now: dat
             continue
         if not (is_nba_team(row.get("home_abbreviation")) and is_nba_team(row.get("away_abbreviation"))):
             continue
+        if row.get("type_abbreviation") == hoopr.CUP_FINAL_TYPE:
+            continue    # kept out of the season build, so never expected in it
         key = str(int(game_id))
         dates[key] = game_date
         completed = row.get("status_type_completed")

@@ -58,6 +58,21 @@ def test_schedule_records_map_codes_phases_and_scores():
     assert first.as_row(TIP)["game_date"] == "2026-01-12"
 
 
+def test_game_type_marks_playoff_rounds_the_cup_final_and_postponements():
+    games = parse_schedule_records([
+        record(type_abbreviation="STD"),
+        record(game_id=2, season_type=3, type_abbreviation="RD16"),
+        record(game_id=3, season_type=3, type_abbreviation="FINAL"),
+        record(game_id=4, type_abbreviation="CC"),
+        record(game_id=5, type_abbreviation="STD", status_type_name="STATUS_POSTPONED",
+               status_type_completed=False),
+    ], [2026])
+    kinds = {g.game_id: g.game_type for g in games}
+    assert kinds == {"401800001": "REG", "2": "R1", "3": "FIN", "4": "CUP", "5": "PPD"}
+    postponed = next(g for g in games if g.game_id == "5")
+    assert postponed.is_postponed and not postponed.is_final
+
+
 def test_quiet_stretch_checks_every_six_hours_in_season():
     now = TIP + timedelta(days=5)
     games = [game(away=104, home=110)]

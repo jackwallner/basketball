@@ -48,6 +48,17 @@ games are **excluded** from both phases (they are neither). 1 = preseason, exclu
 All-Star rows (team abbreviations `STARS`, `STRIPES`, `WORLD`, `GIANNIS`, `LEBRON` etc.,
 i.e. any team not in the 30-team table) are dropped.
 
+The **NBA Cup final** (schedule `type_abbreviation` `CC`) is filed by ESPN as a
+regular-season game, but the league counts it toward no standings or season stats.
+`playergames.build_player_games` drops it from every season build (snapshots, game logs,
+Recent Form, team ratings); only `game_details` keeps it, so its game page still exists.
+Seasons published before 2026-10-10 (2024 through 2026) still carry it in player stats.
+
+`games.game_type`: `REG`; `CUP` for the Cup final; `PPD` for a postponed or cancelled
+game (its makeup is a separate row; the app hides it); playoff rounds from the schedule's
+`type_abbreviation`: `R1` (RD16), `R2` (QTR), `CF` (SEMI), `FIN` (FINAL), else `POST`.
+The app derives the game number and series score from the games themselves.
+
 Row counts for a scale check: 2025-26 regular season is 32,294 player-game rows, 2,460
 team-game rows (1,230 games), about 300k shots.
 

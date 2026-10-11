@@ -375,7 +375,7 @@ def main() -> int:
     except hoopr.AssetUnavailable:
         logger.info("No play-by-play for %s yet", season)
         return 0
-    built = playergames.build_player_games(season, zones=False, on_off=False)
+    built = playergames.build_player_games(season, zones=False, on_off=False, include_cup_final=True)
     if built.frame.empty:
         logger.info("No box scores for %s yet", season)
         return 0

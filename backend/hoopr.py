@@ -36,6 +36,7 @@ from urllib.request import Request, urlopen
 import polars as pl
 
 from nbacodes import (  # noqa: F401 - re-exported for the loaders and tests
+    CUP_FINAL_TYPE,
     CURRENT_TEAMS,
     ESPN_POST,
     ESPN_REG,

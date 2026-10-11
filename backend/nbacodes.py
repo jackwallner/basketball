@@ -44,6 +44,29 @@ ESPN_REG = 2
 ESPN_POST = 3
 PHASE_BY_ESPN_TYPE = {ESPN_REG: "REG", ESPN_POST: "POST"}
 
+# ESPN's schedule ``type_abbreviation`` for the NBA Cup championship. ESPN files
+# it as a regular-season game, but the league keeps it out of the standings and
+# the season stats, so the pipeline does too.
+CUP_FINAL_TYPE = "CC"
+# Postseason round codes the app reads from ``games.game_type``.
+PLAYOFF_ROUND_BY_ESPN_TYPE = {"RD16": "R1", "QTR": "R2", "SEMI": "CF", "FINAL": "FIN"}
+SKIPPED_STATUSES = frozenset({"STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_SUSPENDED"})
+
+
+def game_type_code(phase: str, type_abbreviation: Any, status_name: Any) -> str:
+    """``games.game_type`` for a schedule row.
+
+    ``REG`` or a playoff round (``R1``, ``R2``, ``CF``, ``FIN``, else ``POST``),
+    ``CUP`` for the NBA Cup final, and ``PPD`` for a postponed or cancelled game,
+    whose makeup is a separate row.
+    """
+    if str(status_name or "").upper() in SKIPPED_STATUSES:
+        return "PPD"
+    kind = str(type_abbreviation or "").strip().upper()
+    if phase == "POST":
+        return PLAYOFF_ROUND_BY_ESPN_TYPE.get(kind, "POST")
+    return "CUP" if kind == CUP_FINAL_TYPE else phase
+
 
 
 def season_for_date(day: date | datetime) -> int:

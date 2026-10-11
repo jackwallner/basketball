@@ -97,6 +97,20 @@ def test_a_failing_optional_feed_degrades_the_build_instead_of_failing_it():
         playergames.build_player_games(2027, loader=loader, strict=True)
 
 
+def test_the_cup_final_counts_toward_no_season_stats():
+    cup = PLAYER_BOX.with_columns(pl.lit(2, dtype=pl.Int64).alias("game_id"))
+    cup_team = TEAM_BOX.with_columns(pl.lit(2, dtype=pl.Int64).alias("game_id"))
+    schedule = pl.DataFrame({"game_id": [1, 2], "type_abbreviation": ["STD", "CC"]})
+    sources = {"player_box": pl.concat([PLAYER_BOX, cup]), "team_box": pl.concat([TEAM_BOX, cup_team]),
+               "schedule": schedule}
+    loader = lambda kind, season: sources[kind]  # noqa: E731
+
+    built = playergames.build_player_games(2026, zones=False, on_off=False, loader=loader)
+    assert set(built.frame["game_id"]) == {1}
+    pages = playergames.build_player_games(2026, zones=False, on_off=False, loader=loader, include_cup_final=True)
+    assert set(pages.frame["game_id"]) == {1, 2}
+
+
 PLAYER_BOX = pl.DataFrame([
     {"game_id": 1, "season_type": 2, "game_date": pd.Timestamp("2026-11-02").date(), "athlete_id": a,
      "athlete_display_name": f"P{a}", "team_id": t, "team_abbreviation": code, "opponent_team_id": 3 - t,
