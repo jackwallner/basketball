@@ -52,6 +52,10 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
 WINDOW_WEEKS = (1, 2, 4)
+# The app's small-sample floor (`RecentForm.isSmallSample`), applied to the
+# window a change is measured from.
+PRIOR_MIN_GAMES = 2
+PRIOR_MIN_MINUTES = 60
 
 # Game-log metric keys the formulas read; missing ones (zones before the shots
 # feed, On-Off where the replay failed) become NaN, never 0.
@@ -160,11 +164,19 @@ def build_rows(logs: list[dict], now: Optional[datetime] = None) -> list[dict]:
             as_of=("game_date", "last"), team=("team", "last"), games=("game_date", "size"),
             plays=("plays", "sum"), touches=("touches", "sum"),
         )
+        prior_volume = frame[in_prior].groupby(keys).agg(games=("game_date", "size"), touches=("touches", "sum"))
+        # A prior window under the app's volume floor (two games, an hour on the
+        # floor) is no baseline: a four-minute cameo's 0-for-3 made a normal
+        # week read as the league's biggest riser.
+        thin_prior = {
+            key for key, line in zip(prior_volume.index, prior_volume.to_dict("records"))
+            if line["games"] < PRIOR_MIN_GAMES or line["touches"] < PRIOR_MIN_MINUTES
+        }
         for key, line in zip(summary.index, summary.to_dict("records")):
             player_id, season, season_type, player_type = key
             anchor = int(anchors[(season, season_type)])
             metrics = now_metrics.get(key, {})
-            prior = then_metrics.get(key, {})
+            prior = {} if key in thin_prior else then_metrics.get(key, {})
             rows.append({
                 "player_id": int(player_id),
                 "season": int(season),

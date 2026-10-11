@@ -40,7 +40,7 @@ def test_windows_are_anchored_on_the_leagues_latest_week_not_the_players():
 
 
 def test_current_and_prior_windows_do_not_overlap():
-    rows = logs_for(1, [("2026-01-13", {}), ("2026-01-06", {}), ("2025-12-30", {})])
+    rows = logs_for(1, [("2026-01-13", {}), ("2026-01-06", {}), ("2025-12-30", {}), ("2025-12-23", {})])
     two_week = by_window(rf.build_rows(rows, NOW), 1)[2]
     assert two_week["games"] == 2                      # weeks 15-16
     assert two_week["start_week"] == 15 and two_week["end_week"] == 16
@@ -103,10 +103,23 @@ def test_a_player_in_two_cohorts_gets_a_row_per_cohort():
 
 
 def test_delta_is_now_minus_then():
-    rows = logs_for(1, [("2026-01-13", dict(pts=30, fgm=11)), ("2026-01-06", dict(pts=20, fgm=8))])
+    rows = logs_for(1, [
+        ("2026-01-13", dict(pts=30, fgm=11)),
+        ("2026-01-06", dict(pts=20, fgm=8)), ("2026-01-08", dict(pts=20, fgm=8)),
+    ])
     one_week = by_window(rf.build_rows(rows, NOW), 1)[1]
     assert one_week["metrics"]["ppg"] == 30 and one_week["prior_metrics"]["ppg"] == 20
     assert one_week["delta"]["ppg"] == 10
+
+
+def test_a_thin_prior_window_is_no_baseline():
+    # One four-minute cameo before: a normal week now is not a rise from it.
+    rows = logs_for(1, [
+        ("2026-01-13", dict(min=34.0)), ("2026-01-15", dict(min=34.0)),
+        ("2026-01-06", dict(min=4.0, pts=0, fgm=0, fga=3)),
+    ])
+    one_week = by_window(rf.build_rows(rows, NOW), 1)[1]
+    assert one_week["metrics"] and one_week["prior_metrics"] == {} and one_week["delta"] == {}
 
 
 def test_routable_logs_drop_players_without_a_profile():
