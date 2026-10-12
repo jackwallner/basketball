@@ -63,6 +63,15 @@ class CandidateNotReady(RuntimeError):
     """Raised when a source read cannot produce a safe serving revision."""
 
 
+class SourceMoved(CandidateNotReady):
+    """The source published a newer generation mid-run.
+
+    Not a failure: the live revision is untouched and the next planned check
+    builds the new generation. Treating it as one opened an issue for every
+    upload that landed during a refresh (five on 2026-10-11 in hockey alone).
+    """
+
+
 @dataclass(frozen=True)
 class Coverage:
     max_week: int | None
@@ -353,11 +362,11 @@ def publish(refresh_id: str, *, season: int | None = None, now: datetime | None 
     try:
         source_before = probe_sources(target_season)
         if not source_before.ready or source_before.fingerprint != metadata["source_fingerprint"]:
-            raise CandidateNotReady("Source generation changed after the probe; retry the new generation")
+            raise SourceMoved("Source generation changed after the probe; retry the new generation")
         candidate = build_candidate(target_season, now=now)
         source_after = probe_sources(target_season)
         if not source_after.ready or source_after.fingerprint != source_before.fingerprint:
-            raise CandidateNotReady("Source changed during the build; keeping the live revision")
+            raise SourceMoved("Source changed during the build; keeping the live revision")
         output_hash = content_hash(candidate)
         if output_hash == _live_content_hash(client):
             result = _rpc(
@@ -466,7 +475,10 @@ def main() -> int:
         if args.out:
             write_candidate(candidate, args.out)
         return 0
-    publish(args.refresh_id, season=args.season)
+    try:
+        publish(args.refresh_id, season=args.season)
+    except SourceMoved as error:
+        logger.warning("Source moved mid-run; the next planned check builds it: %s", error)
     return 0
 
 

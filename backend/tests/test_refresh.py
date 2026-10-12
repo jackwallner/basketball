@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from conftest import player_game
+import refresh
 from refresh import _coverage, _validate_unique
 
 NOW = datetime(2026, 1, 12, 18, 0, tzinfo=timezone.utc)
@@ -156,3 +157,22 @@ def test_publisher_refuses_the_football_project(monkeypatch):
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "x")
     with pytest.raises(RuntimeError, match="Basketball Supabase"):
         refresh._client()
+
+
+def test_a_source_that_moves_mid_run_is_not_a_failure(monkeypatch):
+    def moved(*args, **kwargs):
+        raise refresh.SourceMoved("Source changed during the build; keeping the live revision")
+
+    monkeypatch.setattr(refresh, "publish", moved)
+    monkeypatch.setattr("sys.argv", ["refresh.py", "--refresh-id", "r1"])
+    assert refresh.main() == 0
+
+
+def test_a_bad_candidate_still_fails_the_run(monkeypatch):
+    def bad(*args, **kwargs):
+        raise refresh.CandidateNotReady("no snapshot rows built")
+
+    monkeypatch.setattr(refresh, "publish", bad)
+    monkeypatch.setattr("sys.argv", ["refresh.py", "--refresh-id", "r1"])
+    with pytest.raises(refresh.CandidateNotReady):
+        refresh.main()
