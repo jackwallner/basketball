@@ -10,22 +10,25 @@ paths:
 
 # App Store release workflow
 
-## Current state, 2026-10-09
+## Current state, 2026-10-14
 
 - App Store Connect app `6820647074` ("Basketball: Hardwood StatScout", SKU
-  `basketball-statscout`, bundle id `com.jackwallner.basketball`, portal id
-  `69QDVP4NJT`), created 2026-10-08.
-- Version 1.0 is `PREPARE_FOR_SUBMISSION` with build 2 attached and release
-  type MANUAL. Metadata, 6 iPhone 6.9" and 3 iPad 13" screenshots, age rating,
-  content rights, privacy (Data Not Collected), free price and all-territory
-  availability are set.
-- Subscriptions `.pro.monthly` ($1.99) and `.pro.yearly` ($9.99), both with a
-  1-week trial, and lifetime `.pro` ($19.99) are `READY_TO_SUBMIT` with paywall
-  review screenshots. The first group must ride with the version: in the ASC
-  web UI press Add for Review on 1.0, add the three products to the draft
-  submission, then Submit.
-- Only `en-US` metadata exists. 1.0 carries no What's New (Apple rejects it on
-  a first version); the drafted note is in the session scratchpad only.
+  `basketball-statscout`, bundle id `com.jackwallner.basketball`).
+- Version 1.0, build 5, submitted for review 2026-10-14 (review submission
+  `ce070079-e7c4-4456-a168-7a7246118225`, five items: the version, the
+  subscription group, monthly, yearly and the lifetime IAP). Release type
+  MANUAL: release it by hand once approved.
+- 39 locales of metadata (see Localized listing below), 6 iPhone 6.9" and
+  3 iPad 13" screenshots (en-US only), age rating, privacy (Data Not
+  Collected), free price, all territories.
+- Products: `.pro.monthly` ($1.99) and `.pro.yearly` ($9.99), both with a
+  1-week trial in 175 territories, lifetime `.pro` ($19.99). Subscription
+  review notes set 2026-10-14.
+- A version in a draft review submission is frozen ("could not find an
+  editable version"). To edit it, delete its reviewSubmissionItem (the
+  products stay queued), edit, then `scripts/asc-submit-for-review.py`
+  re-adds it and submits.
+- 1.0 carries no What's New (Apple rejects it on a first version).
 
 ## Submission scripts
 
