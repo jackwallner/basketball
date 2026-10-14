@@ -87,7 +87,7 @@ enum PaywallTrigger: Identifiable, Hashable {
         case .pastSeasonsLoad:
             return "Load historical data to explore past seasons, year-over-year trends, and more."
         case .teamView:
-            return "Advanced and standard stats for all 30 teams, a roster you can rank by any metric over any window, and side-by-side comparisons for every team."
+            return "Last week, 2 week and 4 week form for every team and roster, and side-by-side comparisons for any two teams in any season."
         case .winback:
             return "Your StatScout+ access has lapsed. Pick it back up to get the Trends board, recent form, head-to-head matchups, and every past season."
         case .playerScouting:
@@ -127,9 +127,9 @@ enum PaywallTrigger: Identifiable, Hashable {
     /// than the product does.
     private static let proFeatures: [(icon: String, title: String)] = [
         ("flame.fill", "The Trends board: who's heating up and cooling off, league-wide"),
-        ("chart.bar.fill", "Recent form (1 / 2 / 4 weeks) on any player, team or leaderboard"),
+        ("chart.bar.fill", "Recent form (last week, 2 or 4 weeks) on any player, team or roster"),
         ("person.2.fill", "Head-to-head: any two players, every metric"),
-        ("shield.lefthalf.filled", "Team scouting for all 30 teams: advanced and standard, season or recent"),
+        ("shield.lefthalf.filled", "Team scouting: recent form for every team, team-vs-team comparisons"),
         ("sportscourt.fill", "Player ratings in every box score: each night ranked against the season"),
         ("calendar.badge.clock", "Every season back to 2002-03 + year-over-year trends")
     ]
@@ -332,7 +332,8 @@ struct PaywallView: View {
             HStack(spacing: 5) {
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 11, weight: .semibold))
-                Text("Cancel anytime")
+                // Lifetime has nothing to cancel.
+                Text(selectedPackage?.productKind == .lifetime ? "One-time purchase" : "Cancel anytime")
                     .font(HardwoodType.smallBold)
             }
         }

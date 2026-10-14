@@ -107,9 +107,10 @@ struct DataFreshnessView: View {
             if viewModel.isSeasonPending {
                 // Nothing is updating until opening night, so how old the last
                 // revision is would only read as staleness.
+                // No "Through Jun 13 · 1,316 games": that counts the playoffs
+                // too, and sat on the regular-season boards as their total.
                 return [
                     "\(SeasonLabel.text(viewModel.freeSeason)) final",
-                    coverageText,
                     viewModel.upcomingSeasonStartsText,
                 ].compactMap { $0 }.joined(separator: " · ")
             }

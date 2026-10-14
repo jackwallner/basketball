@@ -206,6 +206,16 @@ struct HardwoodTabs: View {
         .overlay(Rectangle().fill(HardwoodPalette.hairline).frame(height: HardwoodGeo.hairline), alignment: .bottom)
     }
 
+    /// VoiceOver reads "G" as a letter; the position tabs say what they are.
+    private static func spoken(_ tab: String) -> String {
+        switch tab {
+        case "G": return "Guards"
+        case "F": return "Forwards"
+        case "C": return "Centers"
+        default: return tab
+        }
+    }
+
     private var tabRow: some View {
         HStack(spacing: 0) {
             ForEach(tabs, id: \.self) { tab in
@@ -231,6 +241,8 @@ struct HardwoodTabs: View {
                 }
                 .buttonStyle(.plain)
                 .frame(maxWidth: scrolls ? nil : .infinity)
+                .accessibilityLabel(Self.spoken(tab))
+                .accessibilityAddTraits(selected == tab ? .isSelected : [])
                 .id(tab)
             }
         }

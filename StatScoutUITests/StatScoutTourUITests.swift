@@ -69,7 +69,7 @@ final class StatScoutTourUITests: XCTestCase {
         waitForText("RANK", in: app)
         scrollThrough(app, "all_advanced", maxPages: 4)
         scrollToTop(app)
-        for title in ["G", "F", "C"] {
+        for title in ["Guards", "Forwards", "Centers"] {
             tapButton(title, in: app)
             Thread.sleep(forTimeInterval: 1)
             scrollThrough(app, "\(title.lowercased())_advanced", maxPages: 2)
@@ -83,7 +83,7 @@ final class StatScoutTourUITests: XCTestCase {
         waitForText("RANK", in: app)
         scrollThrough(app, "all_standard", maxPages: 4)
         scrollToTop(app)
-        for title in ["G", "F", "C"] {
+        for title in ["Guards", "Forwards", "Centers"] {
             tapButton(title, in: app)
             Thread.sleep(forTimeInterval: 1)
             scrollThrough(app, "\(title.lowercased())_standard", maxPages: 2)
@@ -95,19 +95,6 @@ final class StatScoutTourUITests: XCTestCase {
         let app = launch(board: "advanced")
         begin("05")
         waitForText("RANK", in: app)
-        tapButton("Stat", in: app)
-        shot(app, "stat_menu_open")
-        tapMenuItem("TS%", in: app)
-        Thread.sleep(forTimeInterval: 1)
-        shot(app, "sorted_by_ts")
-        tapButton("Sort direction", in: app)
-        shot(app, "sort_direction_flipped")
-        tapButton("Stat", in: app)
-        scrollMenu(app)
-        shot(app, "stat_menu_scrolled_standard_section")
-        dismissMenu(app)
-        Thread.sleep(forTimeInterval: 1.5)
-
         tapButton("View options", in: app)
         shot(app, "view_menu_open")
         tapMenuItem("Best & Worst", in: app)
@@ -116,6 +103,18 @@ final class StatScoutTourUITests: XCTestCase {
         scrollToTop(app)
         tapButton("View options", in: app)
         tapMenuItem("Leaderboard", in: app)
+        Thread.sleep(forTimeInterval: 1.5)
+
+        tapButton("Stat", in: app)
+        shot(app, "stat_menu_open")
+        tapMenuItem("TS%", in: app)
+        Thread.sleep(forTimeInterval: 1)
+        shot(app, "sorted_by_ts")
+        tapButton("Sort direction", in: app)
+        shot(app, "sort_direction_flipped")
+        tapButton("Guards", in: app)
+        Thread.sleep(forTimeInterval: 1)
+        shot(app, "ts_kept_on_guards")
 
         tapButton("Search players or teams", in: app)
         app.textFields.firstMatch.typeText("Knicks")
@@ -213,7 +212,7 @@ final class StatScoutTourUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 6)
         scrollThrough(app, "trends_default", maxPages: 4)
         scrollToTop(app)
-        for side in ["G", "F", "C"] {
+        for side in ["Guards", "Forwards", "Centers"] {
             tapButton(side, in: app, required: false)
             Thread.sleep(forTimeInterval: 1.5)
             shot(app, "trends_\(side)")

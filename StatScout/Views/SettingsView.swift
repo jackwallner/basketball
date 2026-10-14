@@ -6,6 +6,8 @@ struct AboutView: View {
     var dataCoverage: DataCoverage?
     var freshness: DataFreshness?
     @State private var paywallTrigger: PaywallTrigger?
+    @State private var isRestoring = false
+    @State private var restoreConfirmed = false
 
     private var version: String {
         let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -122,12 +124,24 @@ struct AboutView: View {
 
                 Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
                 Button {
-                    Task { await store.restorePurchases() }
+                    isRestoring = true
+                    restoreConfirmed = false
+                    Task { @MainActor in
+                        await store.restorePurchases()
+                        isRestoring = false
+                        restoreConfirmed = store.isPro
+                    }
                 } label: {
                     HStack {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.caption)
-                        Text("Restore Purchases")
+                        if isRestoring {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Image(systemName: restoreConfirmed ? "checkmark.circle.fill" : "arrow.clockwise")
+                                .font(.caption)
+                        }
+                        // The paywall's feedback, here too: a tap that showed
+                        // nothing read as a dead button.
+                        Text(isRestoring ? "Restoring…" : (restoreConfirmed ? "StatScout+ restored" : "Restore Purchases"))
                             .font(HardwoodType.smallBold)
                     }
                     .foregroundStyle(HardwoodPalette.linkBlue)
@@ -135,6 +149,7 @@ struct AboutView: View {
                     .padding(HardwoodGeo.padCard)
                 }
                 .buttonStyle(.plain)
+                .disabled(isRestoring)
 
                 if let error = store.lastError {
                     Rectangle().fill(HardwoodPalette.divider).frame(height: HardwoodGeo.hairline)
@@ -392,7 +407,7 @@ struct StatGlossaryView: View {
             VStack(spacing: 12) {
                 SearchField(text: $searchText, prompt: "Search stats")
 
-                Text("Values come from ESPN box scores, play-by-play and shot charts via hoopR. Percentiles are calculated within each position group, separately for each season and season type. The current season ranks everyone who has played; past seasons rank qualifying players.")
+                Text("Values come from ESPN box scores, play-by-play and shot charts via hoopR. Percentiles are calculated within each position group, separately for each season and season type. Each player is ranked against the qualified players at his position; in the current season, players under the playing-time minimum are placed against that pool without joining it.")
                     .font(HardwoodType.small)
                     .foregroundStyle(HardwoodPalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)

@@ -86,8 +86,8 @@ struct TrialPitchSheet: View {
                         title: "Head-to-head matchups",
                         detail: "Stack any two players across every percentile."),
                 Benefit(icon: "shield.lefthalf.filled",
-                        title: "Full team scouting",
-                        detail: "All 30 teams, every roster ranked by any metric."),
+                        title: "Team scouting",
+                        detail: "Recent form for every team and roster, and any two teams side by side."),
                 Benefit(icon: "flame.fill",
                         title: "The Trends board",
                         detail: "The whole league ranked by who's moving, right now.")

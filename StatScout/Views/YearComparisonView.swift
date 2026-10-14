@@ -221,7 +221,7 @@ struct YearComparisonView: View {
             yearValueColumn(
                 percentile: item.percentileB,
                 value: item.valueB,
-                isWinner: item.percentileB > item.percentileA && !item.isShownTie
+                isWinner: item.percentileB > item.percentileA && !item.isShownTie && !item.isShotProfile
             )
             .frame(width: 72)
 
@@ -229,7 +229,7 @@ struct YearComparisonView: View {
             yearValueColumn(
                 percentile: item.percentileA,
                 value: item.valueA,
-                isWinner: item.percentileA > item.percentileB && !item.isShownTie
+                isWinner: item.percentileA > item.percentileB && !item.isShownTie && !item.isShotProfile
             )
             .frame(width: 72)
         }
@@ -358,6 +358,9 @@ struct YearComparisonView: View {
                         : (isWinner ? HardwoodPalette.court : HardwoodPalette.inkSecondary)
                 )
                 .monospacedDigit()
+                // "731/1,321" must stay on one line in a 72pt column.
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
         }
     }
 
@@ -421,6 +424,10 @@ private struct MetricComparison {
 
     /// Both seasons show the same number, so neither gets the trophy.
     var isShownTie: Bool { !valueA.isEmpty && valueA == valueB }
+
+    /// Shot diet (where shots come from) is a style, not a grade: no trophy,
+    /// the player comparison's rule.
+    var isShotProfile: Bool { Metric.shotProfileLabels.contains(metricLabel) }
 }
 
 private extension Sequence where Element: Hashable {

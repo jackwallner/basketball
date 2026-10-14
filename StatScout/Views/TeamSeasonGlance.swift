@@ -22,8 +22,11 @@ struct TeamSeasonGlance: View {
 
     private var tiles: [Tile] {
         let abbr = normalizedTeamAbbreviation(team)
-        let rows = viewModel.standings.values.filter { $0.games > 0 }
-        guard let row = viewModel.standings[abbr], row.games > 0 else { return [] }
+        let rows = Array(viewModel.standings.values)
+        // A rank means little until every team has a few games: on opening
+        // night "1st" would be first of two.
+        guard rows.count >= 30, rows.allSatisfy({ $0.games >= 3 }),
+              let row = viewModel.standings[abbr] else { return [] }
         func perGame(_ total: Int, _ games: Int) -> Double { Double(total) / Double(games) }
         let tenths: (Double) -> String = { String(format: "%.1f", $0) }
 
@@ -38,7 +41,9 @@ struct TeamSeasonGlance: View {
             Tile(label: "Allowed / game", value: tenths(myAllowed), rank: Self.rank(myAllowed, among: allowed, higherIsBetter: false)),
             Tile(label: "Margin", value: TeamRating.signed(myMargin), rank: Self.rank(myMargin, among: margins)),
         ]
-        if let rating = viewModel.teamRating(abbr) {
+        // Only the season this card is titled with; a rating a season behind
+        // (the days after the rollover) waits for its own.
+        if let rating = viewModel.teamRating(abbr), rating.season == viewModel.freeSeason {
             let all = Array(viewModel.teamRatings.values)
             out.append(Tile(label: "Offense", value: TeamRating.signed(rating.offense),
                             rank: Self.rank(rating.offense, among: all.map(\.offense))))

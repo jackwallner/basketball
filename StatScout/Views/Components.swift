@@ -555,46 +555,22 @@ struct LeaderboardTableHeader: View {
             Text("TEAM")
                 .font(HardwoodType.micro)
                 .foregroundStyle(HardwoodPalette.inkTertiary)
-                .frame(width: 44, alignment: .leading)
+                .frame(width: 50, alignment: .leading)
 
-            HStack(spacing: 2) {
-                Menu {
-                    ForEach(metrics, id: \.self) { metric in
-                        Button {
-                            onSelectMetric(metric)
-                        } label: {
-                            if metric == sortLabel {
-                                Label(metric, systemImage: "checkmark")
-                            } else {
-                                Text(metric)
-                            }
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 3) {
-                        Text(sortLabel.uppercased())
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 7, weight: .bold))
-                    }
-                    .font(HardwoodType.micro)
-                    .foregroundStyle(HardwoodPalette.court)
-                }
-                .menuOrder(.fixed)
-                .accessibilityLabel("Metric")
-                .accessibilityValue(sortLabel)
-
-                Button(action: onToggleDirection) {
-                    Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(HardwoodPalette.court)
-                        .frame(width: 18, height: 26)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(sortDescending ? "Highest first" : "Lowest first")
-                .accessibilityHint("Double tap to reverse ranking order")
+            // A label, not controls: the whole header is the caller's sort
+            // button, the same as the Standard board's.
+            HStack(spacing: 4) {
+                Text(sortLabel.uppercased())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
+                    .font(.system(size: 8, weight: .bold))
             }
+            .font(HardwoodType.micro)
+            .foregroundStyle(HardwoodPalette.court)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(sortLabel), \(sortDescending ? "highest first" : "lowest first")")
+            .accessibilityHint("Double tap to reverse ranking order")
             .frame(width: 104, alignment: .trailing)
         }
         .frame(height: HardwoodGeo.rowHeightHeader)
@@ -644,6 +620,9 @@ struct LeaderboardTableRow: View {
     var volume: String? = nil
     /// Under the playing-time bar for the ranked metric: value and bar dimmed.
     var isSmallSample: Bool = false
+    /// The row's place in the list as drawn, for the banding, when it differs
+    /// from the rank (a search keeps league ranks: 3, 7, 12).
+    var stripe: Int? = nil
 
     private var displayMetric: Metric? {
         guard let label = metricLabel else { return nil }
@@ -684,7 +663,7 @@ struct LeaderboardTableRow: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            Text("\(rank)")
+            Text(rank > 0 ? "\(rank)" : "-")
                 .font(HardwoodType.statSmall)
                 .foregroundStyle(HardwoodPalette.inkSecondary)
                 .frame(width: 42, alignment: .leading)
@@ -707,6 +686,7 @@ struct LeaderboardTableRow: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.trailing, 6)
 
             HStack(spacing: 4) {
                 TeamColorDot(abbr: player.team, size: 6)
@@ -714,7 +694,7 @@ struct LeaderboardTableRow: View {
                     .font(HardwoodType.small)
                     .foregroundStyle(HardwoodPalette.inkSecondary)
             }
-            .frame(width: 44, alignment: .leading)
+            .frame(width: 50, alignment: .leading)
 
             HStack(spacing: 8) {
                 // A player without the sorted metric gets no bar - drawing one
@@ -769,7 +749,7 @@ struct LeaderboardTableRow: View {
         // surface is where the eye loses its place tracking a name across to a
         // number; the band is what carries it. Keyed on `rank` (1-based) so the
         // first row is the plain surface and the card's top edge stays clean.
-        .background(rank % 2 == 1 ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
+        .background((stripe ?? rank) % 2 == 1 ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
         .contentShape(Rectangle())
     }
 }

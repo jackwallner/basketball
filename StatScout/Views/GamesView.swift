@@ -64,6 +64,9 @@ struct GamesView: View {
         .scrollBounceBehavior(.basedOnSize)
         .background(HardwoodPalette.canvas.ignoresSafeArea())
         .refreshable { await viewModel.loadGames(force: true) }
+        // A day picked yesterday is not today's slate: when the current game
+        // day moves on, so does the tab.
+        .onChange(of: viewModel.currentGameDay?.id) { _, _ in selectedDayID = nil }
         .task(id: isActive) {
             guard isActive else { return }
             await pollWhileActive()
@@ -92,7 +95,9 @@ struct GamesView: View {
                 case .upcoming: return false
                 }
             }
-            try? await Task.sleep(for: .seconds(busy ? 120 : 600))
+            // Wake for the next tip-off rather than sleeping through it.
+            let untilTip = viewModel.nextTipoff(after: now).map { $0.timeIntervalSince(now) + 5 } ?? .infinity
+            try? await Task.sleep(for: .seconds(min(busy ? 120 : 600, max(30, untilTip))))
         }
     }
 
@@ -148,8 +153,9 @@ struct GamesView: View {
         // A game the scoreboard calls final sits with the finals before the
         // schedule catches up.
         let started = remaining.filter { [.inProgress, .awaitingScore].contains($0.status(now: now)) }
-        let live = started.filter { viewModel.liveScore(for: $0)?.isFinal != true }
-        let finals = started.filter { viewModel.liveScore(for: $0)?.isFinal == true }
+        let isDone: (Game) -> Bool = { viewModel.liveScore(for: $0)?.isFinal == true || $0.isScorePending(now: now) }
+        let live = started.filter { !isDone($0) }
+        let finals = started.filter(isDone)
             + remaining.filter { $0.status(now: now) == .final }
         let upcoming = remaining.filter { $0.status(now: now) == .upcoming }
         if !live.isEmpty { section(title: "In progress", games: live) }
@@ -166,7 +172,13 @@ struct GamesView: View {
                 .padding(.top, 12)
         }
 
-        if viewModel.isSeasonPending, selectedDay?.id == viewModel.currentGameDay?.id, !viewModel.lastPlayedGames.isEmpty {
+        // How last season ended, under the first night of the new one, until
+        // that night tips off. Never when the slate is last season itself
+        // (the upcoming schedule failed to load), which listed the Finals twice.
+        if viewModel.isSeasonPending, !viewModel.upcomingGames.isEmpty,
+           selectedDay?.id == viewModel.currentGameDay?.id,
+           !slate.contains(where: { $0.status() != .upcoming }),
+           !viewModel.lastPlayedGames.isEmpty {
             section(title: "Last played · \(SeasonLabel.text(viewModel.freeSeason))", games: viewModel.lastPlayedGames)
         }
 
@@ -216,7 +228,7 @@ struct GamesView: View {
     @ViewBuilder
     private var emptyState: some View {
         if viewModel.isGamesLoading {
-            ProgressView("Loading games")
+            ProgressView("Loading games…")
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 64)
         } else {
@@ -356,11 +368,9 @@ struct GameRow: View {
     }
 
     private func statusTitle(_ status: GameStatus) -> String {
-        if let live { return live.clockLabel }
         switch status {
         case .final: return game.overtime ? "Final/OT" : "Final"
-        case .inProgress: return "In progress"
-        case .awaitingScore: return "Final soon"
+        case .inProgress, .awaitingScore: return game.startedLabel(live: live)
         case .upcoming: return game.tipoffLabel
         }
     }
@@ -369,7 +379,7 @@ struct GameRow: View {
         if let live { return live.isFinal ? "Stats arriving" : "Live" }
         switch status {
         case .final: return hasStats ? game.dayLabel : "Stats arriving"
-        case .inProgress, .awaitingScore: return "Score at final"
+        case .inProgress, .awaitingScore: return game.isScorePending() ? "No score posted yet" : "Score updates live"
         case .upcoming:
             if let projection {
                 return projection.label(home: game.homeTeam, away: game.awayTeam)
@@ -389,7 +399,7 @@ struct GameRow: View {
             if let live {
                 return "\(away) \(live.awayScore), \(home) \(live.homeScore), \(live.isFinal ? live.clockLabel : "live, \(live.clockLabel)")"
             }
-            return "\(away) at \(home), in progress"
+            return "\(away) at \(home), \(game.isScorePending() ? "score pending" : "in progress")"
         case .upcoming:
             let projected = projection.map { ", projected \($0.label(home: game.homeTeam, away: game.awayTeam))" } ?? ""
             return "\(away) at \(home), \(game.dayLabel) at \(game.tipoff?.formatted(date: .omitted, time: .shortened) ?? "time TBD")\(projected)"

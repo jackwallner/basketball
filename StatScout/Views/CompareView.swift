@@ -57,6 +57,8 @@ struct CompareView: View {
     @State private var comparisonRoute: ComparisonRoute?
     @State private var yearRoute: YearCompareRoute?
     @State private var showingTrial = false
+    /// A tap on a crowned season pitches that season, as Stats and Trends do.
+    @State private var lockedSeasonTrigger: PaywallTrigger?
     @State private var showingFollowSheet = false
     @State private var favorites = FavoritesStore.shared
     @State private var seasonA: Int?
@@ -75,21 +77,20 @@ struct CompareView: View {
     init(viewModel: DashboardViewModel, isActive: Bool = true) {
         self.viewModel = viewModel
         self.isActive = isActive
-        _seasonA = State(initialValue: viewModel.selectedSeason)
-        _seasonB = State(initialValue: viewModel.selectedSeason)
+        // Seasons start unset and follow the live season, so a session that
+        // spans the October rollover compares the new season, not the one the
+        // app launched on.
         _phaseA = State(initialValue: viewModel.selectedPhase)
         _phaseB = State(initialValue: viewModel.selectedPhase)
         _yearPhase = State(initialValue: viewModel.selectedPhase)
-        _teamSeasonA = State(initialValue: viewModel.selectedSeason)
-        _teamSeasonB = State(initialValue: viewModel.selectedSeason)
         _teamPhaseA = State(initialValue: viewModel.selectedPhase)
         _teamPhaseB = State(initialValue: viewModel.selectedPhase)
     }
 
-    private var activeSeasonA: Int { seasonA ?? viewModel.selectedSeason }
-    private var activeSeasonB: Int { seasonB ?? viewModel.selectedSeason }
-    private var activeTeamSeasonA: Int { teamSeasonA ?? viewModel.selectedSeason }
-    private var activeTeamSeasonB: Int { teamSeasonB ?? viewModel.selectedSeason }
+    private var activeSeasonA: Int { seasonA ?? viewModel.freeSeason }
+    private var activeSeasonB: Int { seasonB ?? viewModel.freeSeason }
+    private var activeTeamSeasonA: Int { teamSeasonA ?? viewModel.freeSeason }
+    private var activeTeamSeasonB: Int { teamSeasonB ?? viewModel.freeSeason }
 
     /// The same team twice is a legitimate comparison - a franchise against its
     /// own past is the whole point of holding a season picker under each slot.
@@ -158,15 +159,16 @@ struct CompareView: View {
         return nil
     }
 
-    /// The followed players that exist in the selected season, in the order
-    /// they were followed.
+    /// Every followed player, in the order they were followed: the live
+    /// regular-season row, else his latest season. The list used to follow
+    /// slot A's season, so picking 2010 there emptied it.
     private var followedPlayers: [Player] {
-        let roster = viewModel.players(
-            forSeason: activeSeasonA,
-            phase: phaseA
-        )
+        let roster = viewModel.players(forSeason: viewModel.freeSeason, phase: .regular)
         return favorites.playerIds.compactMap { id in
             roster.first { $0.playerId == id }
+                ?? viewModel.playerHistories[id]?
+                    .filter { $0.seasonPhase == .regular && !StatScoutSeason.isAllTime($0.season ?? 0) }
+                    .max { ($0.season ?? 0) < ($1.season ?? 0) }
         }
     }
 
@@ -316,6 +318,9 @@ struct CompareView: View {
                     }
                 }
             }
+        }
+        .sheet(item: $lockedSeasonTrigger) { trigger in
+            TrialPitchSheet(trigger: trigger)
         }
         .sheet(isPresented: $showingTrial) {
             TrialPitchSheet(trigger: .playerComparison)
@@ -769,7 +774,7 @@ struct CompareView: View {
                 isSeasonLocked: viewModel.isSeasonLocked,
                 onSelectSeason: { picked in
                     if viewModel.isSeasonLocked(picked) {
-                        showingTrial = true
+                        lockedSeasonTrigger = .lockedSeason(picked)
                     } else {
                         onPickSeason(picked)
                     }
@@ -803,9 +808,16 @@ struct CompareView: View {
                     Circle()
                         .fill(team.map(NBATeamColor.color) ?? HardwoodPalette.surfaceAlt)
                         .frame(width: 48, height: 48)
-                    Text(team.map(displayTeamAbbr) ?? "+")
-                        .font(HardwoodType.smallBold)
-                        .foregroundStyle(team == nil ? HardwoodPalette.inkTertiary : .white)
+                    if let team {
+                        Text(displayTeamAbbr(team))
+                            .font(HardwoodType.smallBold)
+                            .foregroundStyle(.white)
+                    } else {
+                        // The player slot's empty mark, so the two read as one control.
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(HardwoodPalette.inkTertiary)
+                    }
                 }
                 Text(team.map(teamFullName) ?? placeholder)
                     .font(HardwoodType.smallBold)
@@ -840,7 +852,7 @@ struct CompareView: View {
                 isSeasonLocked: { viewModel.isSeasonLocked($0) },
                 onSelectSeason: { picked in
                     if viewModel.isSeasonLocked(picked) {
-                        showingTrial = true
+                        lockedSeasonTrigger = .lockedSeason(picked)
                     } else {
                         onPickSeason(picked)
                     }
@@ -1103,7 +1115,7 @@ struct ComparePlayerPicker: View {
                         )
                     } description: {
                         if isLoading {
-                            Text("Pulling the \(season.map(String.init) ?? "") roster.")
+                            Text("Pulling the " + (season.map { SeasonLabel.text($0) } ?? "") + " roster.")
                         } else if !searchText.isEmpty {
                             Text("Nobody matches “\(searchText)”.")
                         } else if let season {
@@ -1188,7 +1200,8 @@ extension CompareView {
     func clubSeason(_ team: String, season: Int, phase: SeasonPhase) -> ClubSeason? {
         guard season == viewModel.freeSeason, phase == .regular else { return nil }
         let abbr = normalizedTeamAbbreviation(team)
-        return ClubSeason(standing: viewModel.standings[abbr], rating: viewModel.teamRating(abbr))
+        let rating = viewModel.teamRating(abbr)
+        return ClubSeason(standing: viewModel.standings[abbr], rating: rating?.season == season ? rating : nil)
     }
 }
 
@@ -1254,8 +1267,8 @@ struct TeamComparisonView: View {
                 higherIsBetter: false, format: tenths),
             row("Margin", perGame(sa.differential, sa.games), perGame(sb.differential, sb.games)) { TeamRating.signed($0) },
             row("Power", a.rating?.rating, b.rating?.rating) { TeamRating.signed($0) },
-            row("Power OFF", a.rating?.offense, b.rating?.offense) { TeamRating.signed($0) },
-            row("Power DEF", a.rating?.defense, b.rating?.defense) { TeamRating.signed($0) },
+            row("Offense", a.rating?.offense, b.rating?.offense) { TeamRating.signed($0) },
+            row("Defense", a.rating?.defense, b.rating?.defense) { TeamRating.signed($0) },
         ]
     }
 
@@ -1266,7 +1279,9 @@ struct TeamComparisonView: View {
     /// unable to reference a single advanced number - the exact thing the rest
     /// of the app is built on.
     private var statGroups: [(title: String, rows: [StatRow])] {
-        [("TEAM · THIS SEASON", clubRows)] + MetricCategory.allCases.flatMap { category -> [(title: String, rows: [StatRow])] in
+        [("TEAM · " + (route.seasonA == route.seasonB
+            ? SeasonLabel.text(route.seasonA)
+            : "\(SeasonLabel.text(route.seasonA)) vs \(SeasonLabel.text(route.seasonB))"), clubRows)] + MetricCategory.allCases.flatMap { category -> [(title: String, rows: [StatRow])] in
             [
                 (category.rawValue.uppercased() + " · ADVANCED", advancedRows(for: category)),
                 (category.rawValue.uppercased() + " · STANDARD", standardRows(for: category)),
@@ -1306,8 +1321,9 @@ struct TeamComparisonView: View {
                 label: label,
                 aText: a.map(format.string) ?? "-",
                 bText: b.map(format.string) ?? "-",
-                aValue: a.map { $0 * sign },
-                bValue: b.map { $0 * sign }
+                // Shot diet is a style, not a grade: shown, never awarded.
+                aValue: Metric.shotProfileLabels.contains(label) ? nil : a.map { $0 * sign },
+                bValue: Metric.shotProfileLabels.contains(label) ? nil : b.map { $0 * sign }
             )
         }
     }
@@ -1414,7 +1430,7 @@ struct TeamComparisonView: View {
                     }
                 }
 
-                Text((clubRows.isEmpty ? "" : "Team · This season is each team's own record, scoring and StatScout Power Rating. ")
+                Text((clubRows.isEmpty ? "" : "The team section is each team's own record, scoring and StatScout Power Rating. ")
                      + "The other sections sum the selected roster's player season lines, with rates weighted by minutes. Traded players bring their full-season line, so those are roster aggregates rather than official team totals.")
                     .font(HardwoodType.micro)
                     .foregroundStyle(HardwoodPalette.inkTertiary)

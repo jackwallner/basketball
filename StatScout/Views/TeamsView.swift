@@ -23,7 +23,7 @@ struct TeamsView: View {
     private let teamsViewModel = TeamsViewModel()
     @State private var favorites = FavoritesStore.shared
     @State private var searchText = ""
-    @State private var showingTrial = false
+    @State private var lockedSeasonTrigger: PaywallTrigger?
     // Auto-enter the favorite team once per launch; popping back must not
     // re-push it, or the user can never reach the list.
     @State private var didAutoEnterFavorite = false
@@ -92,7 +92,7 @@ struct TeamsView: View {
     }
 
     private var isInitiallyLoading: Bool {
-        (viewModel.isLoading || viewModel.isHistoricalLoading) && viewModel.teamsWithData.isEmpty
+        (viewModel.isLoading || viewModel.isHistoricalLoading || viewModel.isRefreshing) && viewModel.teamsWithData.isEmpty
     }
 
     var body: some View {
@@ -137,6 +137,7 @@ struct TeamsView: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .background(HardwoodPalette.canvas.ignoresSafeArea())
+        .modifier(LiveScorePolling(viewModel: viewModel))
         // Same header as Stats and Trends, from the one shared modifier, so the
         // season you are reading never moves when you change tabs.
         .modifier(
@@ -151,7 +152,7 @@ struct TeamsView: View {
                 isSeasonLocked: { viewModel.isSeasonLocked($0) },
                 onSelectSeason: { season in
                     if viewModel.isSeasonLocked(season) {
-                        showingTrial = true
+                        lockedSeasonTrigger = .lockedSeason(season)
                     } else {
                         viewModel.selectSeason(season)
                     }
@@ -163,8 +164,8 @@ struct TeamsView: View {
             await viewModel.load()
         }
         .onAppear(perform: autoEnterFavoriteIfNeeded)
-        .sheet(isPresented: $showingTrial) {
-            TrialPitchSheet(trigger: .teamView)
+        .sheet(item: $lockedSeasonTrigger) { trigger in
+            TrialPitchSheet(trigger: trigger)
         }
     }
 
@@ -270,20 +271,11 @@ struct TeamsView: View {
     /// favorites, and a long-press toggle so the row stays one-tap-to-navigate.
     private var allTeamsSection: some View {
         VStack(spacing: 0) {
-            SearchField(text: $searchText)
+            SearchField(text: $searchText, prompt: "Search teams")
                 .padding(.horizontal, 12)
                 .padding(.bottom, 12)
 
             if let fav = pinnedFavorite {
-                HStack {
-                    Text("FAVORITE TEAM")
-                        .font(HardwoodType.micro)
-                        .foregroundStyle(HardwoodPalette.inkSecondary)
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-
                 FavoriteTeamCard(
                     abbr: fav,
                     destination: TeamDestination(abbr: fav),
@@ -324,7 +316,7 @@ struct TeamsView: View {
                          // tab (it is "Stats"), and the fix has not lived on
                          // another screen since the season moved into the nav
                          // bar - it is the pill at the top of this one.
-                         ? "No teams have player data for the \(SeasonLabel.text(viewModel.selectedSeason)) season. Pick another season from the pill at the top of the screen."
+                         ? "No team data yet for \(viewModel.selectedSeasonPhrase). Pick another season from the pill at the top of the screen."
                          : "Try a different search term.")
                 }
                 .padding(.vertical, 48)
@@ -422,7 +414,7 @@ struct TeamsView: View {
                 }
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
-                Label(teamsViewModel.isFavorite(abbr) ? "Remove Favorite" : "Set as Favorite",
+                Label(teamsViewModel.isFavorite(abbr) ? "Unfollow Team" : "Follow Team",
                       systemImage: teamsViewModel.isFavorite(abbr) ? "star.slash" : "star.fill")
             }
         }
@@ -437,7 +429,20 @@ struct TeamsView: View {
               viewModel.selectedPhase == .regular else { return nil }
         if let game = viewModel.currentGame(forTeam: abbr),
            [.inProgress, .awaitingScore].contains(game.status()) {
-            return ("Live", "playing \(game.matchupLabel(for: abbr))", HardwoodPalette.performanceLow)
+            if let live = viewModel.liveScore(for: game) {
+                let mine = live.score(isHome: game.isHome(abbr))
+                let theirs = live.score(isHome: !game.isHome(abbr))
+                if live.isFinal {
+                    let result = mine > theirs ? "W" : "L"
+                    return ("\(result) \(mine)-\(theirs)", "\(result == "W" ? "won" : "lost") \(mine) to \(theirs)", HardwoodPalette.inkSecondary)
+                }
+                return ("\(mine)-\(theirs)", "playing \(game.matchupLabel(for: abbr)), \(mine) to \(theirs)", HardwoodPalette.performanceLow)
+            }
+            if game.status() == .inProgress && !game.isScorePending() {
+                return ("Live", "playing \(game.matchupLabel(for: abbr))", HardwoodPalette.performanceLow)
+            }
+            let label = game.startedLabel(live: nil)
+            return (label, "\(game.matchupLabel(for: abbr)), \(label.lowercased())", HardwoodPalette.inkSecondary)
         }
         if let record = viewModel.record(forTeam: abbr) {
             return (record, "record \(record)", HardwoodPalette.inkSecondary)
@@ -531,7 +536,7 @@ struct FavoriteTeamCard: View {
                     .overlay(Circle().stroke(HardwoodPalette.hairline, lineWidth: 0.5))
             }
             .buttonStyle(.borderless)
-            .accessibilityLabel("Remove favorite")
+            .accessibilityLabel("Unfollow team")
             .padding(10)
         }
     }

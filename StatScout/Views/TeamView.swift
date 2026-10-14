@@ -22,7 +22,8 @@ struct TeamView: View {
     @State private var lastDefaultedSortKey: String? = nil
     @State private var showingTrial = false
     @State private var trialTrigger: PaywallTrigger?
-    @State private var qualifierLevel: DashboardViewModel.QualifierLevel = .all
+    /// Without a view model (previews, tests) the roster keeps its own.
+    @State private var localQualifierLevel: DashboardViewModel.QualifierLevel = .all
     @State private var rosterMode: RosterMode = .season
     @State private var rosterWindow: RecentWindow = .twoWeeks
 
@@ -161,7 +162,17 @@ struct TeamView: View {
             ?? (displaySeason == StatScoutSeason.bundledNewest)
     }
 
-    private var filteredPlayers: [Player] {
+    private var filteredPlayers: [Player] { rosterBoard(search: searchText) }
+
+    /// Each player's place on the unsearched roster while a search narrows
+    /// it, the Stats board's rule. Nil when nothing is being searched.
+    private var rosterRanks: [Player.ID: Int]? {
+        guard !searchText.isEmpty else { return nil }
+        return Dictionary(rosterBoard(search: "").enumerated().map { ($1.id, $0 + 1) },
+                          uniquingKeysWith: { first, _ in first })
+    }
+
+    private func rosterBoard(search searchText: String) -> [Player] {
         let bySearch = searchText.isEmpty ? players : players.filter {
             $0.matchesSearch(searchText, includingTeam: false)
                 || $0.displayPosition.localizedCaseInsensitiveContains(searchText)
@@ -181,13 +192,31 @@ struct TeamView: View {
             }
         }
         // A roster mixes guards, forwards and centers, whose percentiles come
-        // from different pools: order by the value itself.
-        return byQualifier.sorted(by: DashboardViewModel.metricComparator(
+        // from different pools: order by the value itself. Small samples sit
+        // below the rest, the Stats board's rule, so a cameo never leads.
+        let sorted = byQualifier.sorted(by: DashboardViewModel.metricComparator(
             label: sortMetric.label,
             category: sortMetric.category,
             descending: sortDescending,
             acrossCohorts: true
         ))
+        return sorted.filter { !isSmallSample($0) } + sorted.filter(isSmallSample)
+    }
+
+    /// The Stats board's qualifier, shared so the two never disagree.
+    private var qualifierLevel: DashboardViewModel.QualifierLevel {
+        get { viewModel?.qualifierLevel ?? localQualifierLevel }
+        nonmutating set {
+            if let viewModel { viewModel.qualifierLevel = newValue } else { localQualifierLevel = newValue }
+        }
+    }
+
+    /// Under the playing-time bar for the ranked metric.
+    private func isSmallSample(_ player: Player) -> Bool {
+        guard let sortMetric,
+              let metric = player.metrics.first(where: { $0.label == sortMetric.label && $0.category == sortMetric.category })
+        else { return false }
+        return viewModel.map { !$0.isQualified(player, metric: metric) } ?? metric.isSmallSample
     }
 
     private func isQualified(_ player: Player) -> Bool {
@@ -456,6 +485,7 @@ struct TeamView: View {
     /// arrow on the left, search and View on the right.
     private var sortControlsRow: some View {
         HStack(spacing: 8) {
+            BoardPickerStrip {
             StatPickerMenu(
                 advanced: StatPickerMenu.Option.categorized(rosterLabels(.advanced), selected: sortMetric?.label),
                 standard: rosterLabels(.traditional).map {
@@ -468,8 +498,7 @@ struct TeamView: View {
             SortDirectionButton(descending: sortDescending, statLabel: sortLabel) {
                 sortDescending.toggle()
             }
-
-            Spacer(minLength: 0)
+            }
 
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) { isSearching.toggle() }
@@ -482,8 +511,9 @@ struct TeamView: View {
             .accessibilityLabel("Search players")
 
             rosterViewMenu
+                .fixedSize()
         }
-        .padding(.horizontal, 12)
+        .padding(.trailing, 12)
         .frame(height: HardwoodControl.height + 2)
         .padding(.top, HardwoodGeo.controlRowGap)
     }
@@ -534,7 +564,7 @@ struct TeamView: View {
 
     private var searchRow: some View {
         HStack(spacing: 8) {
-            SearchField(text: $searchText, focusOnAppear: true)
+            SearchField(text: $searchText, focusOnAppear: true, prompt: "Search roster")
             Button("Cancel") {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isSearching = false
@@ -557,6 +587,47 @@ struct TeamView: View {
                     title: "No players tracked",
                     description: "No players are tracked for \(teamFullName(team)) in the \(SeasonLabel.text(displaySeason)) season."
                 )
+            } else if isRosterRecent && !hasRecentData {
+                if let error = viewModel?.recentFormError {
+                    VStack(spacing: 10) {
+                        Text(error)
+                            .font(HardwoodType.small)
+                            .foregroundStyle(HardwoodPalette.inkSecondary)
+                        Button("Try Again") {
+                            Task { await viewModel?.loadRecentFormIfNeeded(window: rosterWindow) }
+                        }
+                        .font(HardwoodType.smallBold)
+                        .foregroundStyle(HardwoodPalette.court)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 32)
+                } else {
+                    HStack(spacing: 10) {
+                        ProgressView().scaleEffect(0.75)
+                        Text("Loading the \(rosterWindow.prose)…")
+                            .font(HardwoodType.small)
+                            .foregroundStyle(HardwoodPalette.inkSecondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 32)
+                }
+            } else if filteredPlayers.isEmpty && isRosterRecent && searchText.isEmpty {
+                emptyStateView(
+                    icon: "calendar.badge.clock",
+                    title: "No recent games",
+                    description: "No \(teamFullName(team)) player has \(sortLabel) over the \(rosterWindow.prose). Try Season or a longer window."
+                )
+            } else if filteredPlayers.isEmpty && searchText.isEmpty && qualifierLevel != .all {
+                ContentUnavailableView {
+                    Label("No players match these filters", systemImage: "line.3.horizontal.decrease.circle")
+                } description: {
+                    Text("Qualified hides players under the playing-time minimum.")
+                } actions: {
+                    Button("Clear Filters") { qualifierLevel = .all }
+                        .buttonStyle(.borderedProminent)
+                        .tint(HardwoodPalette.court)
+                }
+                .padding(.vertical, 48)
             } else if filteredPlayers.isEmpty {
                 emptyStateView(
                     icon: "magnifyingglass",
@@ -565,15 +636,6 @@ struct TeamView: View {
                         ? "No \(rosterPosition == .all ? "" : rosterPosition.noun + " ")players match this view. Try All or another position."
                         : "Try a different search term."
                 )
-            } else if isRosterRecent && !hasRecentData {
-                HStack(spacing: 10) {
-                    ProgressView().scaleEffect(0.75)
-                    Text("Loading the \(rosterWindow.prose)…")
-                        .font(HardwoodType.small)
-                        .foregroundStyle(HardwoodPalette.inkSecondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 32)
             } else {
                 Button {
                     sortDescending.toggle()
@@ -588,10 +650,11 @@ struct TeamView: View {
                 }
                 .buttonStyle(.plain)
 
+                let ranks = rosterRanks
                 ForEach(Array(filteredPlayers.enumerated()), id: \.element.id) { index, player in
                     NavigationLink(value: player) {
                         LeaderboardTableRow(
-                            rank: index + 1,
+                            rank: ranks.map { $0[player.id] ?? 0 } ?? index + 1,
                             player: player,
                             metricLabel: rowDisplayMetric.label,
                             metricCategory: rowDisplayMetric.category,
@@ -599,7 +662,11 @@ struct TeamView: View {
                             trendDecimals: rowDisplayMetric.label.map {
                                 RecentMetricKey.decimals(for: $0)
                             } ?? 3,
-                            valueOverride: isRosterRecent ? recentValueText(player) : nil
+                            valueOverride: isRosterRecent ? recentValueText(player) : nil,
+                            // Minutes beside the position, the Stats board's row.
+                            volume: isRosterRecent ? nil : viewModel?.volumeCaption(for: player, category: rowDisplayMetric.category),
+                            isSmallSample: !isRosterRecent && isSmallSample(player),
+                            stripe: index + 1
                         )
                     }
                     .buttonStyle(.plain)

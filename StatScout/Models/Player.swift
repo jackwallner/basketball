@@ -513,6 +513,25 @@ extension Player {
     }
 }
 
+extension Player {
+    /// "Jackson" for "Jaren Jackson Jr.": the surname, skipping a suffix.
+    var lastName: String {
+        let parts = name.split(separator: " ")
+        guard parts.count > 1, let last = parts.last else { return name }
+        let suffix = last.trimmingCharacters(in: .punctuationCharacters).uppercased()
+        if ["JR", "SR", "II", "III", "IV", "V"].contains(suffix), parts.count > 2 {
+            return String(parts[parts.count - 2])
+        }
+        return String(last)
+    }
+
+    /// Column headings for two players side by side: surnames, or full names
+    /// when the surnames match (Jalen Williams and Jaylin Williams).
+    static func columnNames(_ a: Player, _ b: Player) -> (String, String) {
+        a.lastName == b.lastName && a.name != b.name ? (a.name, b.name) : (a.lastName, b.lastName)
+    }
+}
+
 struct GameTrend: Identifiable, Codable, Hashable, Sendable {
     let id: String
     let date: Date
@@ -607,7 +626,7 @@ enum PlayerPositionGroup: String, CaseIterable, Identifiable, Hashable, Sendable
 
 enum MetricKind: String, CaseIterable, Identifiable, Hashable, Sendable {
     case advanced = "Advanced"
-    case traditional = "Traditional"
+    case traditional = "Standard"
 
     var id: String { rawValue }
 }

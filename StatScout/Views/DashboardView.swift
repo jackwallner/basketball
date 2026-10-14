@@ -8,6 +8,12 @@ struct DashboardView: View {
     @State private var paywallTrigger: PaywallTrigger?
     @State private var isSearching = false
 
+    private static let topID = "board-top"
+
+    private var boardKey: String {
+        "\(viewModel.selectedPosition.rawValue)-\(viewModel.currentSortMetric ?? "")-\(viewModel.sortDescending)-\(viewModel.selectedSeason)-\(viewModel.selectedPhase.rawValue)"
+    }
+
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
@@ -19,8 +25,10 @@ struct DashboardView: View {
                     }
                 }
 
+                ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 0) {
+                        Color.clear.frame(height: 0).id(Self.topID)
                         if !viewModel.players.isEmpty,
                            isSearching || !viewModel.searchText.isEmpty {
                             teamResults
@@ -39,6 +47,11 @@ struct DashboardView: View {
                 .scrollDismissesKeyboard(.interactively)
                 .refreshable {
                     await viewModel.load()
+                }
+                // A new ranking starts at its top, not at the old one's row 40.
+                .onChange(of: boardKey) { _, _ in
+                    proxy.scrollTo(Self.topID, anchor: .top)
+                }
                 }
             }
 
@@ -81,7 +94,9 @@ struct DashboardView: View {
             playByPlayStatus: viewModel.dataFreshness?.playByPlayStatus
         ) : nil
         let noun = viewModel.selectedPosition.noun
-        let cohort = isLive ? "every \(noun) with a line this season" : "every qualified \(noun)"
+        let cohort = isLive
+            ? "qualified \(noun)s; players under the minimum are placed against that pool"
+            : "qualified \(noun)s"
         let minimum = viewModel.qualifierLevel == .all
             ? "Dimmed rows are under the playing-time minimum."
             : "Players under the playing-time minimum are hidden; View shows them."
@@ -181,37 +196,20 @@ struct DashboardView: View {
 
     private var activeSortChip: some View {
         HStack(spacing: 8) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    if let boardBindings {
-                        StatsBoardStatPicker(
-                            viewModel: viewModel,
-                            bindings: boardBindings
-                        )
-                    }
-                    SortDirectionButton(
-                        descending: viewModel.sortDescending,
-                        statLabel: viewModel.currentSortMetric ?? viewModel.sortLabel
-                    ) {
-                        viewModel.toggleSortDirection()
-                    }
+            BoardPickerStrip {
+                if let boardBindings {
+                    StatsBoardStatPicker(
+                        viewModel: viewModel,
+                        bindings: boardBindings
+                    )
                 }
-                .padding(.leading, 12)
-                .padding(.trailing, 2)
-                .padding(.vertical, 1)
+                SortDirectionButton(
+                    descending: viewModel.sortDescending,
+                    statLabel: viewModel.currentSortMetric ?? viewModel.sortLabel
+                ) {
+                    viewModel.toggleSortDirection()
+                }
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .mask(
-                LinearGradient(
-                    stops: [
-                        .init(color: .black, location: 0),
-                        .init(color: .black, location: 0.88),
-                        .init(color: .clear, location: 1),
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
             searchToggle
             if let boardBindings {
                 StatsViewMenu(
@@ -365,7 +363,11 @@ struct DashboardView: View {
                 }
                 .padding(.vertical, 24)
                 .frame(minHeight: 200)
-            } else if viewModel.leaderboard.isEmpty && viewModel.isHistoricalLoading {
+            } else if viewModel.leaderboard.isEmpty
+                        && (viewModel.isHistoricalLoading
+                            // The moment a new season goes live its rows are
+                            // still on the way; that is loading, not "no data".
+                            || (viewModel.seasonPlayers.isEmpty && viewModel.isRefreshing)) {
                 // Season history is fetched on demand, so the first tap on a past
                 // season (or on All Time) arrives before its rows do. This
                 // used to fall through to "No player data is available", which
@@ -393,6 +395,19 @@ struct DashboardView: View {
                 let needsFirstConnection = !hasSeasonData
                     && viewModel.selectedSeason == viewModel.freeSeason
                     && viewModel.lastFetchFailed
+                if hasSeasonData && viewModel.hasActiveBoardFilters {
+                    ContentUnavailableView {
+                        Label("No players match these filters", systemImage: "line.3.horizontal.decrease.circle")
+                    } description: {
+                        Text("The View menu's filters leave nobody on this board.")
+                    } actions: {
+                        Button("Clear Filters") { viewModel.clearBoardFilters() }
+                            .buttonStyle(.borderedProminent)
+                            .tint(HardwoodPalette.court)
+                    }
+                    .padding(.vertical, 24)
+                    .frame(minHeight: 200)
+                } else {
                 ContentUnavailableView {
                     Label(
                         needsFirstConnection
@@ -405,8 +420,8 @@ struct DashboardView: View {
                         Text("The current season needs a connection for its first update. Once it has loaded, your saved stats are here offline.")
                     } else {
                         Text(hasSeasonData
-                             ? "No metrics are available for \(viewModel.selectedPosition.rawValue) in \(SeasonLabel.text(viewModel.selectedSeason))."
-                             : "No player data is available for the \(SeasonLabel.text(viewModel.selectedSeason)) season.")
+                             ? "No \(viewModel.selectedPosition == .all ? "player" : viewModel.selectedPosition.noun) has \(viewModel.currentSortMetric ?? "this stat") in \(SeasonLabel.text(viewModel.selectedSeason))."
+                             : "No player data yet for \(viewModel.selectedSeasonPhrase).")
                     }
                 } actions: {
                     if needsFirstConnection {
@@ -419,19 +434,24 @@ struct DashboardView: View {
                 }
                 .padding(.vertical, 24)
                 .frame(minHeight: 200)
+                }
             } else {
                 sortHeader
                 let sortMetric = viewModel.currentSortMetricForDisplay
+                let ranks = viewModel.leaderboardRanks
                 LazyVStack(spacing: 0) {
                     ForEach(Array(viewModel.leaderboard.enumerated()), id: \.element.id) { index, player in
                         NavigationLink(value: player) {
                             LeaderboardTableRow(
-                                rank: index + 1,
+                                // League rank while searching; 0 (a dash) for
+                                // a match the board can't rank.
+                                rank: ranks.map { $0[player.id] ?? 0 } ?? index + 1,
                                 player: player,
                                 metricLabel: sortMetric.label,
                                 metricCategory: sortMetric.category,
                                 volume: viewModel.volumeCaption(for: player, category: sortMetric.category),
-                                isSmallSample: isSmallSample(player, label: sortMetric.label, category: sortMetric.category)
+                                isSmallSample: isSmallSample(player, label: sortMetric.label, category: sortMetric.category),
+                                stripe: index + 1
                             )
                         }
                         .buttonStyle(.plain)

@@ -661,7 +661,7 @@ struct PlayerProfileView: View {
                             if isLocked {
                                 // Explicit tap on a locked season - always answer it.
                                 // PaywallGate only caps automatic pop-ups.
-                                trialPitchTrigger = .pastSeason
+                                trialPitchTrigger = .lockedSeason(season)
                             } else {
                                 selectedPercentileSeason = season
                             }
@@ -1153,7 +1153,7 @@ struct PlayerProfileView: View {
                 emptyStateCard(
                     icon: "chart.bar",
                     title: "Standard stats unavailable",
-                    description: "Traditional stats are not available for this player."
+                    description: "Standard stats are not available for this player."
                 )
                 .padding(.vertical, 24)
             } else {
@@ -1225,7 +1225,8 @@ struct PlayerProfileView: View {
             NavigationLink(value: StandardStatRoute(
                 stat: standardStatKey(for: metric.label),
                 season: activeSeason,
-                phase: activePhase
+                phase: activePhase,
+                position: player.positionGroup
             )) {
                 Group {
                     switch effectiveStandardMode {

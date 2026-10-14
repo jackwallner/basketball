@@ -51,7 +51,7 @@ struct StandardStatsLeadersView: View {
             controlRow
             if isSearching {
                 HStack(spacing: 8) {
-                    SearchField(text: $searchText, focusOnAppear: true)
+                    SearchField(text: $searchText, focusOnAppear: true, prompt: "Search players")
                     Button("Cancel") {
                         isSearching = false
                         searchText = ""
@@ -121,40 +121,23 @@ struct StandardStatsLeadersView: View {
 
     private var controlRow: some View {
         HStack(spacing: 8) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    if let boardBindings, let viewModel {
-                        StatsBoardStatPicker(
-                            viewModel: viewModel,
-                            bindings: boardBindings
-                        )
-                    } else {
-                        statMenu
-                    }
-
-                    SortDirectionButton(
-                        descending: sortDescending,
-                        statLabel: selectedStat
-                    ) {
-                        sortDescending.toggle()
-                    }
+            BoardPickerStrip {
+                if let boardBindings, let viewModel {
+                    StatsBoardStatPicker(
+                        viewModel: viewModel,
+                        bindings: boardBindings
+                    )
+                } else {
+                    statMenu
                 }
-                .padding(.leading, 12)
-                .padding(.trailing, 2)
-                .padding(.vertical, 1)
+
+                SortDirectionButton(
+                    descending: sortDescending,
+                    statLabel: selectedStat
+                ) {
+                    sortDescending.toggle()
+                }
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .mask(
-                LinearGradient(
-                    stops: [
-                        .init(color: .black, location: 0),
-                        .init(color: .black, location: 0.88),
-                        .init(color: .clear, location: 1),
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
 
             Button {
                 isSearching.toggle()
@@ -163,7 +146,7 @@ struct StandardStatsLeadersView: View {
                 HardwoodChip(systemImage: "magnifyingglass", isActive: isSearching)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Search players or teams")
+            .accessibilityLabel("Search players")
 
             if let boardBindings, let viewModel {
                 StatsViewMenu(
@@ -217,7 +200,7 @@ struct StandardStatsLeadersView: View {
                     Text("TEAM")
                         .font(HardwoodType.micro)
                         .foregroundStyle(HardwoodPalette.inkTertiary)
-                        .frame(width: 44, alignment: .leading)
+                        .frame(width: 50, alignment: .leading)
                     HStack(spacing: 4) {
                         Text(selectedStat.uppercased())
                             .font(HardwoodType.micro)
@@ -243,8 +226,20 @@ struct StandardStatsLeadersView: View {
             .buttonStyle(.plain)
 
             if viewModel?.isLoading == true && players.isEmpty {
-                ProgressView("Loading player stats")
+                ProgressView("Loading player stats…")
                     .padding(.vertical, 48)
+            } else if filteredPlayers.isEmpty, let viewModel, viewModel.hasActiveBoardFilters {
+                ContentUnavailableView {
+                    Label("No players match these filters", systemImage: "line.3.horizontal.decrease.circle")
+                } description: {
+                    Text("The View menu's filters leave nobody on this board.")
+                } actions: {
+                    Button("Clear Filters") { viewModel.clearBoardFilters() }
+                        .buttonStyle(.borderedProminent)
+                        .tint(HardwoodPalette.court)
+                }
+                .padding(.vertical, 48)
+                .background(HardwoodPalette.surface)
             } else if filteredPlayers.isEmpty {
                 ContentUnavailableView {
                     Label("No data available", systemImage: "chart.bar")
@@ -307,6 +302,7 @@ struct StandardStatsLeadersView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.trailing, 6)
 
                 HStack(spacing: 4) {
                     TeamColorDot(abbr: player.team, size: 6)
@@ -314,7 +310,7 @@ struct StandardStatsLeadersView: View {
                         .font(HardwoodType.small)
                         .foregroundStyle(HardwoodPalette.inkSecondary)
                 }
-                .frame(width: 44, alignment: .leading)
+                .frame(width: 50, alignment: .leading)
 
                 let pct = percentile(for: player, peerValues: peerValues)
                 // A zero count has no honest rank; see `Metric.isUnranked`.

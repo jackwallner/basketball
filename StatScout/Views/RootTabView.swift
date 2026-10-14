@@ -29,6 +29,8 @@ struct StandardStatRoute: Hashable {
     var season: Int? = nil
     /// See `MetricRoute.phase`.
     var phase: SeasonPhase? = nil
+    /// See `MetricRoute.position`.
+    var position: PlayerPositionGroup = .all
 }
 
 struct RootTabView: View {
@@ -208,7 +210,7 @@ struct RootTabView: View {
                 viewModel: viewModel,
                 isActive: selection == Tab.games.rawValue
             )
-                .navigationTitle("Games · \(SeasonLabel.text(viewModel.upcomingSeason ?? viewModel.freeSeason))")
+                .navigationTitle("Games · \(SeasonLabel.text(viewModel.slateGames.first?.season ?? viewModel.upcomingSeason ?? viewModel.freeSeason))")
                 .navigationBarTitleDisplayMode(.inline)
                 .modifier(HardwoodNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage, freshness: viewModel.dataFreshness))
@@ -552,6 +554,7 @@ private struct StandardDestinations: ViewModifier {
                     metricCategory: route.category,
                     players: viewModel.players(forSeason: season, phase: phase),
                     season: season,
+                    phase: phase,
                     position: route.position,
                     viewModel: viewModel
                 )
@@ -563,6 +566,7 @@ private struct StandardDestinations: ViewModifier {
                 StandardStatsLeaderboardScreen(
                     players: viewModel.players(forSeason: season, phase: phase),
                     initialStat: route.stat,
+                    initialPosition: route.position,
                     season: season
                 )
                     // The phase only earns title space when it isn't the

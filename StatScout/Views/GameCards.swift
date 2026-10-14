@@ -33,7 +33,8 @@ struct TeamGameCard: View {
         let games = viewModel.schedule(forTeam: team)
         let now = Date()
         if let live = games.first(where: { [.inProgress, .awaitingScore].contains($0.status(now: now)) }) {
-            return (viewModel.liveScore(for: live)?.isFinal == true ? .last : .live, live)
+            let over = viewModel.liveScore(for: live)?.isFinal == true || live.isScorePending(now: now)
+            return (over ? .last : .live, live)
         }
         let finals = games.filter { $0.status(now: now) == .final }
         if let last = finals.last, let tip = last.tipoff, now.timeIntervalSince(tip) < 24 * 3_600 {
@@ -67,7 +68,7 @@ struct TeamGameCard: View {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
                 HardwoodChip(
-                    title: following ? "Your team" : "Follow team",
+                    title: following ? "Following" : "Follow Team",
                     systemImage: following ? "star.fill" : "star",
                     isActive: following
                 )
@@ -123,7 +124,7 @@ struct TeamGameCard: View {
         case .final:
             return "\(game.dayLabel) · " + (viewModel.hasStats(game) ? "box score" : "stats arriving")
         case .inProgress, .awaitingScore:
-            return "In progress"
+            return game.startedLabel(live: nil)
         case .upcoming:
             return "\(game.dayLabel), \(game.tipoff?.formatted(date: .omitted, time: .shortened) ?? "time TBD")"
         }
@@ -159,6 +160,15 @@ struct TeamGameCard: View {
 struct TeamScheduleView: View {
     @Bindable var viewModel: DashboardViewModel
     let team: String
+    @State private var didScrollToNext = false
+
+    /// The next game not yet final, where the page opens: in the pending month
+    /// it sits below a whole finished season.
+    private var nextGameID: String? {
+        let games = sections.flatMap(\.games)
+        // The latest result when nothing is left to play.
+        return (games.first { !$0.isFinal } ?? games.last)?.id
+    }
 
     /// One season's games for the team, in tip-off order.
     private struct SeasonBlock: Identifiable {
@@ -177,13 +187,14 @@ struct TeamScheduleView: View {
     }
 
     var body: some View {
+        ScrollViewReader { proxy in
         ScrollView {
-            LazyVStack(spacing: 12) {
+            VStack(spacing: 12) {
                 ForEach(sections) { section in
                     card(section)
                 }
                 if sections.isEmpty {
-                    Text(viewModel.isGamesLoading ? "Loading schedule" : "Schedule not published yet")
+                    Text(viewModel.isGamesLoading ? "Loading schedule…" : "Schedule not published yet")
                         .font(HardwoodType.small)
                         .foregroundStyle(HardwoodPalette.inkTertiary)
                         .padding(.vertical, 32)
@@ -193,7 +204,14 @@ struct TeamScheduleView: View {
             .padding(.horizontal, 12)
             .padding(.top, 12)
         }
+        .onChange(of: nextGameID, initial: true) { _, id in
+            guard !didScrollToNext, let id else { return }
+            didScrollToNext = true
+            proxy.scrollTo(id, anchor: .center)
+        }
+        }
         .background(HardwoodPalette.canvas.ignoresSafeArea())
+        .modifier(LiveScorePolling(viewModel: viewModel))
         .navigationTitle(teamFullName(team))
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.loadGames() }
@@ -213,6 +231,7 @@ struct TeamScheduleView: View {
                     row(entry.game, number: entry.number)
                         .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                 }
+                .id(entry.game.id)
                 .buttonStyle(.plain)
             }
         }
@@ -262,7 +281,9 @@ struct TeamScheduleView: View {
                     .font(HardwoodType.statMed)
                     .foregroundStyle(game.result(for: team) == "L" ? HardwoodPalette.performanceLow : HardwoodPalette.performanceHigh)
             } else {
-                Text(game.status() == .upcoming ? (game.tipoff?.formatted(date: .omitted, time: .shortened) ?? "TBD") : "In progress")
+                Text(game.status() == .upcoming
+                     ? (game.tipoff?.formatted(date: .omitted, time: .shortened) ?? "TBD")
+                     : game.startedLabel(live: viewModel.liveScore(for: game)))
                     .font(HardwoodType.small)
                     .foregroundStyle(HardwoodPalette.inkSecondary)
             }
@@ -542,10 +563,21 @@ struct LiveScorePolling: ViewModifier {
 
     func body(content: Content) -> some View {
         content.task {
+            // Keeps running while the screen is up, so a page opened before
+            // tip-off starts scoring when the game does. Nothing is fetched
+            // until a game is on.
             while !Task.isCancelled {
-                guard viewModel.hasGamesUnderway() else { return }
-                await viewModel.refreshLiveScores()
-                try? await Task.sleep(for: .seconds(30))
+                if viewModel.hasGamesUnderway() {
+                    await viewModel.refreshLiveScores()
+                    try? await Task.sleep(for: .seconds(30))
+                } else if viewModel.hasFinalsAwaitingSchedule() {
+                    // Over on the scoreboard: pick up the posted final, record
+                    // and box score as soon as the schedule has them.
+                    await viewModel.loadGames(force: true)
+                    try? await Task.sleep(for: .seconds(120))
+                } else {
+                    try? await Task.sleep(for: .seconds(60))
+                }
             }
         }
     }

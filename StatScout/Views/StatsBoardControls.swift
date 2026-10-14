@@ -228,6 +228,9 @@ struct StatsViewMenu: View {
     @EnvironmentObject private var store: StoreService
     @Bindable var viewModel: DashboardViewModel
     @Binding var board: StatsBoard
+    /// The leaderboard Best & Worst was opened from, so Leaderboard goes back
+    /// to Standard when that is where the user was.
+    @AppStorage("stats.board.beforeBestWorst") private var boardBeforeBestWorst: StatsBoard = .advanced
 
     private var isActive: Bool {
         viewModel.qualifierLevel != .all
@@ -238,10 +241,12 @@ struct StatsViewMenu: View {
 
     var body: some View {
         Menu {
+            // What the board is first, then how it is filtered: Best & Worst
+            // sat below the fold once the Players section arrived.
+            boardSection
             conferenceSection
             if viewModel.canFilterRookies { playersSection }
             qualifierSection
-            boardSection
         } label: {
             HardwoodChip(
                 title: "View",
@@ -310,7 +315,7 @@ struct StatsViewMenu: View {
     private var boardSection: some View {
         Section("Show") {
             Button {
-                if board == .bestWorst { board = .advanced }
+                if board == .bestWorst { board = boardBeforeBestWorst }
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
                 if board != .bestWorst {
@@ -321,6 +326,7 @@ struct StatsViewMenu: View {
             }
 
             Button {
+                if board != .bestWorst { boardBeforeBestWorst = board }
                 board = .bestWorst
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
@@ -333,5 +339,35 @@ struct StatsViewMenu: View {
                 }
             }
         }
+    }
+}
+
+/// The left half of every board's control row: the stat picker and sort
+/// arrow, scrolling sideways with a fade when a long stat name would push the
+/// search and View chips off a narrow phone.
+struct BoardPickerStrip<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                content()
+            }
+            .padding(.leading, 12)
+            .padding(.trailing, 2)
+            .padding(.vertical, 1)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .mask(
+            LinearGradient(
+                stops: [
+                    .init(color: .black, location: 0),
+                    .init(color: .black, location: 0.88),
+                    .init(color: .clear, location: 1),
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        )
     }
 }

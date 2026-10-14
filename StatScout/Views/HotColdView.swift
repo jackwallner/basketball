@@ -53,6 +53,12 @@ struct HotColdView: View {
         )
     }
 
+    private static let topID = "trends-top"
+
+    private var boardKey: String {
+        "\(side.rawValue)-\(metric.key)-\(showingCold)-\(viewModel.recentWindow.rawValue)-\(selectedSeason)-\(selectedPhase.rawValue)"
+    }
+
     private static let zeroIsReal: Set<String> = [
         "fg_pct", "ft_pct", "ts_pct", "efg_pct", "rim_fg", "three_pct", "three_pm",
     ]
@@ -127,8 +133,12 @@ struct HotColdView: View {
     var body: some View {
         Group {
             if store.isPro {
+                ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 0) {
+                        // A real view to scroll to: the freshness line is empty
+                        // outside the live regular season.
+                        Color.clear.frame(height: 0).id(Self.topID)
                         DataFreshnessView(
                             viewModel: viewModel,
                             season: selectedSeason,
@@ -141,6 +151,12 @@ struct HotColdView: View {
                     }
                 }
                 .scrollBounceBehavior(.basedOnSize)
+                // A new board starts at its top: switching to Cooling off from
+                // row 40 of Heating up landed on row 40 of a different list.
+                .onChange(of: boardKey) { _, _ in
+                    proxy.scrollTo(Self.topID, anchor: .top)
+                }
+                }
                 .refreshable {
                     await viewModel.load()
                 }
@@ -199,7 +215,8 @@ struct HotColdView: View {
             )
         }
         .onChange(of: side) { _, _ in
-            metric = metricOptions[0]
+            // Keep the stat when the new position offers it.
+            metric = metricOptions.first { $0.key == metric.key } ?? metricOptions[0]
         }
         // The live season resolves from the data, so it can move under the view
         // once the first fetch lands (and again on the September rollover).
@@ -355,6 +372,15 @@ struct HotColdView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(HardwoodPalette.court)
+            }
+            .padding(.vertical, 32)
+        } else if forms.isEmpty {
+            // A season (or a playoffs) with no games yet ranks nobody, and no
+            // stat or window can change that.
+            ContentUnavailableView {
+                Label("No games yet", systemImage: "calendar.badge.clock")
+            } description: {
+                Text("No \(SeasonLabel.text(selectedSeason, phase: selectedPhase)) games yet. Form appears once the first games are played.")
             }
             .padding(.vertical, 32)
         } else if isEarlySeason, !earlyRanked.isEmpty {

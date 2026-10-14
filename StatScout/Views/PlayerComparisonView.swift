@@ -301,9 +301,9 @@ struct PlayerComparisonView: View {
             HStack(spacing: 8) {
                 Text("STAT")
                     .frame(width: 82, alignment: .leading)
-                Text(a.name.split(separator: " ").last.map(String.init) ?? "A")
+                Text(Player.columnNames(a, b).0)
                     .frame(maxWidth: .infinity)
-                Text(b.name.split(separator: " ").last.map(String.init) ?? "B")
+                Text(Player.columnNames(a, b).1)
                     .frame(maxWidth: .infinity)
             }
             .font(HardwoodType.micro)
@@ -392,6 +392,8 @@ struct PlayerComparisonView: View {
                         : (isWinner ? HardwoodPalette.court : HardwoodPalette.inkSecondary)
                 )
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity)
     }
@@ -540,11 +542,11 @@ struct PlayerComparisonView: View {
                     .font(HardwoodType.micro)
                     .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(width: 72, alignment: .leading)
-                Text(a.name.split(separator: " ").last.map(String.init) ?? "A")
+                Text(Player.columnNames(a, b).0)
                     .font(HardwoodType.micro)
                     .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                Text(b.name.split(separator: " ").last.map(String.init) ?? "B")
+                Text(Player.columnNames(a, b).1)
                     .font(HardwoodType.micro)
                     .foregroundStyle(HardwoodPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)

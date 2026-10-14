@@ -23,14 +23,21 @@ struct FollowPlayersSheet: View {
         self.viewModel = viewModel
     }
 
+    /// The live regular season, whatever season or phase the tab behind is
+    /// on: following is about current players, and a playoff or 2010 roster
+    /// hid everyone else.
     private var allPlayers: [Player] {
-        viewModel.players(forSeason: viewModel.selectedSeason)
+        viewModel.players(forSeason: viewModel.freeSeason, phase: .regular)
     }
 
     private var followed: [Player] {
-        // Ordered by when they were followed, matching the Trends board.
+        // Ordered by when they were followed. A player missing from the live
+        // season still shows (his latest season) so he can be unfollowed.
         favorites.playerIds.compactMap { id in
             allPlayers.first { $0.playerId == id }
+                ?? viewModel.playerHistories[id]?
+                    .filter { $0.seasonPhase == .regular && ($0.season ?? 0) > 0 }
+                    .max { ($0.season ?? 0) < ($1.season ?? 0) }
         }
     }
 
@@ -158,7 +165,7 @@ struct FollowPlayersSheet: View {
                         .font(HardwoodType.bodyBold)
                         .foregroundStyle(HardwoodPalette.ink)
                         .lineLimit(1)
-                    Text("\(player.team) · \(player.position)")
+                    Text("\(displayTeamAbbr(player.team)) · \(player.displayPosition)")
                         .font(HardwoodType.micro)
                         .tracking(0.3)
                         .foregroundStyle(HardwoodPalette.inkTertiary)
@@ -178,7 +185,7 @@ struct FollowPlayersSheet: View {
     }
 
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        VStack(spacing: 0) { content() }
+        LazyVStack(spacing: 0) { content() }
             .background(HardwoodPalette.surface)
             .clipShape(RoundedRectangle(cornerRadius: HardwoodGeo.radiusCard))
             .overlay(

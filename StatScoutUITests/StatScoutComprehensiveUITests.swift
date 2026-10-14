@@ -385,7 +385,7 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         // The position selector labels itself for VoiceOver.
         XCTAssertTrue(
             app.otherElements["Position"].firstMatch.exists
-                || app.buttons["G"].firstMatch.exists,
+                || app.buttons["Guards"].firstMatch.exists,
             "Position selector should be exposed to VoiceOver"
         )
 

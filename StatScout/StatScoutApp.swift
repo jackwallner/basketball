@@ -493,13 +493,12 @@ struct OnboardingCards: View {
         OnboardingPage(
             icon: "chart.bar.fill",
             title: "Find Insights\nFast",
-            description: "Scores, leaders and movement across the league in seconds, with the numbers behind every game.",
+            description: "Free, for everyone: the scores, the leaders and every team, with the numbers behind every game.",
             bullets: [
-                BulletItem(text: "Games: scores and box scores", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
-                BulletItem(text: "Stats: leaders, best and worst", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
-                BulletItem(text: "Trends: heating up, cooling off", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
-                BulletItem(text: "Teams: all 30, any roster, any season", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
-                BulletItem(text: "Compare: two players side by side", icon: "checkmark.circle.fill", color: HardwoodPalette.court)
+                BulletItem(text: "Games: live scores and box scores", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Stats: league leaders by position", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Teams: standings, power and rosters", icon: "checkmark.circle.fill", color: HardwoodPalette.court),
+                BulletItem(text: "Following: your team and players", icon: "checkmark.circle.fill", color: HardwoodPalette.court)
             ]
         ),
         OnboardingPage(

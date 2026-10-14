@@ -28,6 +28,9 @@ final class DashboardViewModel {
     var selectedPosition: PlayerPositionGroup = .all {
         didSet {
             guard oldValue != selectedPosition else { return }
+            // A stat the user picked follows them to any position that has
+            // it, the Standard board's rule; otherwise back to the default.
+            if let picked = userSortMetric, availableSortMetrics.contains(picked) { return }
             userSortMetric = nil
             applyDefaultSortDirection()
         }
@@ -160,6 +163,11 @@ final class DashboardViewModel {
     /// "2026-27 starts Oct 20", the line that sits beside a final season.
     var upcomingSeasonStartsText: String? {
         guard let upcomingSeason, let start = upcomingSeasonStart else { return nil }
+        // Once the first game has tipped off, the line says so until the new
+        // season's stats publish and the app moves to it.
+        if let firstTip = upcomingGames.compactMap(\.tipoff).min(), firstTip <= Date() {
+            return "\(SeasonLabel.text(upcomingSeason)) under way · stats arriving"
+        }
         return "\(SeasonLabel.text(upcomingSeason)) starts \(start)"
     }
 
@@ -511,6 +519,11 @@ final class DashboardViewModel {
         didSet { scheduleCache = ScheduleCache() }
     }
 
+    /// Last season's schedule once a new one is live, fetched once, so last
+    /// season's profiles (Recent Form keeps two seasons) still resolve their
+    /// game log rows to results, links and home or away.
+    private(set) var priorGames: [Game] = []
+
     /// Answers derived from the schedule, kept until the next load replaces
     /// it. The Games strip and every team disk on the Teams grid ask for these
     /// on each render, and each answer otherwise walks the whole season.
@@ -561,22 +574,48 @@ final class DashboardViewModel {
     /// Running scores for games that have tipped off without a posted final,
     /// keyed by game id, from the league scoreboard.
     private(set) var liveScores: [String: LiveScore] = [:]
+    @ObservationIgnored private var liveScoresFetchedAt: Date?
 
     func liveScore(for game: Game) -> LiveScore? {
         game.isFinal ? nil : liveScores[game.id]
     }
 
-    /// True while a game has tipped off and the schedule has no final for it.
+    /// Games that tipped off in the last twelve hours with no posted final:
+    /// the ones the scoreboard can still say something about. Older unscored
+    /// games (a postponement, a slow source) never keep the poll alive.
+    private func startedWithoutFinal(now: Date) -> [Game] {
+        (games + upcomingGames).filter { game in
+            guard [.inProgress, .awaitingScore].contains(game.status(now: now)),
+                  let tipoff = game.tipoff else { return false }
+            return now.timeIntervalSince(tipoff) < 12 * 3_600
+        }
+    }
+
+    /// True while a game is on: tipped off, no final from the schedule, and
+    /// not already final on the scoreboard.
     func hasGamesUnderway(now: Date = .now) -> Bool {
-        (games + upcomingGames).contains { [.inProgress, .awaitingScore].contains($0.status(now: now)) }
+        startedWithoutFinal(now: now).contains { liveScores[$0.id]?.isFinal != true }
+    }
+
+    /// A game the scoreboard calls final that the schedule has not posted yet:
+    /// worth re-reading the schedule for the score, record and box score.
+    func hasFinalsAwaitingSchedule(now: Date = .now) -> Bool {
+        startedWithoutFinal(now: now).contains { liveScores[$0.id]?.isFinal == true }
+    }
+
+    /// When the next game tips off, for pacing the polls before it.
+    func nextTipoff(after now: Date = .now) -> Date? {
+        (games + upcomingGames).compactMap(\.tipoff).filter { $0 > now }.min()
     }
 
     /// Re-reads the scoreboard for every game that has tipped off without a
     /// posted final. Clears it when nothing is under way.
     func refreshLiveScores(now: Date = .now) async {
-        let started = (games + upcomingGames).filter {
-            [.inProgress, .awaitingScore].contains($0.status(now: now))
-        }
+        // Several screens poll at once (Games, Teams, a team card, a game
+        // page); one read every 20 seconds serves them all.
+        if let liveScoresFetchedAt, now.timeIntervalSince(liveScoresFetchedAt) < 20 { return }
+        liveScoresFetchedAt = now
+        let started = startedWithoutFinal(now: now)
         guard !started.isEmpty else {
             if !liveScores.isEmpty { liveScores = [:] }
             return
@@ -690,6 +729,10 @@ final class DashboardViewModel {
                     uniquingKeysWith: { first, _ in first }
                 )
             }
+            if !isSeasonPending, priorGames.first?.season != season - 1,
+               let prior = try? await provider.fetchGames(season: season - 1) {
+                priorGames = prior.filter { !$0.isPostponed }
+            }
             if let loadedProjections = await projected {
                 projections = Dictionary(
                     loadedProjections.map { ($0.gameId, $0) },
@@ -712,11 +755,14 @@ final class DashboardViewModel {
     /// Round, game number and series score for a playoff game.
     func seriesStatus(for game: Game) -> SeriesStatus? {
         guard game.playoffRoundName != nil else { return nil }
-        return SeriesStatus.of(game, in: game.season == freeSeason ? games : upcomingGames)
+        let schedule = game.season == freeSeason ? games : (game.season < freeSeason ? priorGames : upcomingGames)
+        return SeriesStatus.of(game, in: schedule)
     }
 
     func game(id: String) -> Game? {
-        games.first { $0.id == id } ?? upcomingGames.first { $0.id == id }
+        games.first { $0.id == id }
+            ?? upcomingGames.first { $0.id == id }
+            ?? priorGames.first { $0.id == id }
     }
 
     /// A team's game on the day the Games tab calls current, or nil on an off
@@ -1005,11 +1051,13 @@ final class DashboardViewModel {
 
     private var eligibleMetrics: [Metric] { sortMetricLists.eligible }
 
-    var filteredPlayers: [Player] {
+    var filteredPlayers: [Player] { boardPlayers(search: searchText) }
+
+    private func boardPlayers(search: String) -> [Player] {
         // Resolved once: it walks every metric in the season.
         let gateLabel = qualifierLevel == .qualified ? currentSortMetricLabelForGate : nil
         return seasonPlayers.filter { player in
-            let matchesSearch = player.matchesSearch(searchText)
+            let matchesSearch = player.matchesSearch(search)
             let matchesPosition = selectedPosition.includes(player)
             let matchesConference = matchesBoardFilters(player)
             let matchingMetrics = player.metrics.filter {
@@ -1032,10 +1080,33 @@ final class DashboardViewModel {
 
     /// Rookies are known for the live season only.
     var canFilterRookies: Bool {
-        selectedSeason == freeSeason && profiles.values.contains(where: \.isRookie)
+        // Profiles can be a season behind for a moment after the rollover;
+        // only the live season's own rookies count.
+        selectedSeason == freeSeason && profiles.values.contains { $0.season == freeSeason && $0.isRookie }
     }
 
     var isRookieFilterActive: Bool { rookiesOnly && canFilterRookies }
+
+    /// "the 2026-27 season", or "the 2026-27 playoffs, which start in April"
+    /// when the playoffs of a season still under way are picked.
+    var selectedSeasonPhrase: String {
+        if selectedPhase == .playoffs, selectedSeason == freeSeason,
+           !players(forSeason: selectedSeason, phase: .regular).isEmpty {
+            return "the \(SeasonLabel.text(selectedSeason)) playoffs, which start in April"
+        }
+        return "the \(SeasonLabel.text(selectedSeason, phase: selectedPhase))"
+    }
+
+    /// A View-menu filter is narrowing the board.
+    var hasActiveBoardFilters: Bool {
+        isRookieFilterActive || selectedConference != .all || qualifierLevel == .qualified
+    }
+
+    func clearBoardFilters() {
+        rookiesOnly = false
+        selectedConference = .all
+        qualifierLevel = .all
+    }
 
     func isRookie(_ player: Player) -> Bool {
         profile(for: player)?.isRookie == true
@@ -1114,16 +1185,28 @@ final class DashboardViewModel {
         }
     }
 
-    var leaderboard: [Player] {
+    var leaderboard: [Player] { rankedBoard(search: searchText) }
+
+    /// Each player's place on the unsearched board, while a search is
+    /// narrowing it: a search shows where a player ranks in the league, not
+    /// his place among the matches. Nil when nothing is being searched.
+    var leaderboardRanks: [Player.ID: Int]? {
+        guard !searchText.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+        let board = rankedBoard(search: "")
+        return Dictionary(board.enumerated().map { ($1.id, $0 + 1) }, uniquingKeysWith: { first, _ in first })
+    }
+
+    private func rankedBoard(search: String) -> [Player] {
+        let players = boardPlayers(search: search)
         guard let label = currentSortMetric,
               let referenceMetric = eligibleMetrics.first(where: { $0.label == label }) else {
-            return filteredPlayers.sorted { $0.name < $1.name }
+            return players.sorted { $0.name < $1.name }
         }
         // A board ranked by one metric lists the players who have it. Someone
         // searched for by name still shows, with a dash, so search never
         // answers "nobody" for a player the board simply can't rank.
-        let searching = !searchText.trimmingCharacters(in: .whitespaces).isEmpty
-        let ranked = searching ? filteredPlayers : filteredPlayers.filter { player in
+        let searching = !search.trimmingCharacters(in: .whitespaces).isEmpty
+        let ranked = searching ? players : players.filter { player in
             player.metrics.contains { $0.label == label && $0.category == referenceMetric.category }
         }
         let sorted = ranked.sorted(
@@ -1456,10 +1539,19 @@ final class DashboardViewModel {
         StatScoutSeason.remember(resolved, defaults: defaults)
         if selectedSeason == old.season {
             selectedSeason = resolved.season
+            // A new season opens on its regular season: its playoffs are
+            // months away, and staying on them showed an empty board.
+            selectedPhase = .regular
         }
         clampSelectedSeason()
         // The recent-form windows and team caches describe the old season.
         invalidateRecentFormCache()
+        // So do the power ratings: shown beside the new season's records they
+        // would pass for its own. The next schedule load fetches the new ones.
+        if resolved.season != old.season {
+            teamRatings = [:]
+            gamesLoadedAt = nil
+        }
     }
 
     private func performLoad() async {

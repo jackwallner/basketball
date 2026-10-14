@@ -6,6 +6,7 @@ import SwiftUI
 struct MetricRankingView: View {
     let players: [Player]
     let season: Int?
+    var phase: SeasonPhase = .regular
     /// Supplies qualification and volume; nil in previews.
     var viewModel: DashboardViewModel? = nil
     @State private var metricLabel: String
@@ -20,11 +21,13 @@ struct MetricRankingView: View {
         metricCategory: MetricCategory,
         players: [Player],
         season: Int?,
+        phase: SeasonPhase = .regular,
         position: PlayerPositionGroup = .all,
         viewModel: DashboardViewModel? = nil
     ) {
         self.players = players
         self.season = season
+        self.phase = phase
         self.viewModel = viewModel
         _metricLabel = State(initialValue: metricLabel)
         _metricCategory = State(initialValue: metricCategory)
@@ -104,7 +107,7 @@ struct MetricRankingView: View {
             controlRow
             if isSearching {
                 HStack(spacing: 8) {
-                    SearchField(text: $searchText, focusOnAppear: true)
+                    SearchField(text: $searchText, focusOnAppear: true, prompt: "Search players")
                     Button("Cancel") {
                         isSearching = false
                         searchText = ""
@@ -126,23 +129,29 @@ struct MetricRankingView: View {
             .scrollDismissesKeyboard(.interactively)
         }
         .background(HardwoodPalette.canvas.ignoresSafeArea())
-        .navigationTitle([metricLabel, season.map { SeasonLabel.text($0) }].compactMap { $0 }.joined(separator: " · "))
+        // The phase only earns title space when it isn't the default, the
+        // Standard drill-down's rule.
+        .navigationTitle([
+            metricLabel,
+            season.map { phase == .regular ? SeasonLabel.text($0) : SeasonLabel.text($0, phase: phase) },
+        ].compactMap { $0 }.joined(separator: " · "))
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private var controlRow: some View {
         HStack(spacing: 8) {
-            StatPickerMenu(
-                advanced: pickerOptions(.advanced),
-                standard: pickerOptions(.traditional),
-                activeLabel: metricLabel,
-                onSelectAdvanced: select,
-                onSelectStandard: select
-            )
-            SortDirectionButton(descending: sortDescending, statLabel: metricLabel) {
-                sortDescending.toggle()
+            BoardPickerStrip {
+                StatPickerMenu(
+                    advanced: pickerOptions(.advanced),
+                    standard: pickerOptions(.traditional),
+                    activeLabel: metricLabel,
+                    onSelectAdvanced: select,
+                    onSelectStandard: select
+                )
+                SortDirectionButton(descending: sortDescending, statLabel: metricLabel) {
+                    sortDescending.toggle()
+                }
             }
-            Spacer(minLength: 0)
             Button {
                 isSearching.toggle()
                 if !isSearching { searchText = "" }
@@ -151,9 +160,9 @@ struct MetricRankingView: View {
                 HardwoodChip(systemImage: "magnifyingglass", isActive: isSearching)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Search players or teams")
+            .accessibilityLabel("Search players")
         }
-        .padding(.horizontal, 12)
+        .padding(.trailing, 12)
         .frame(height: HardwoodControl.height + 2)
         .padding(.top, HardwoodGeo.controlRowGap)
     }
@@ -181,7 +190,8 @@ struct MetricRankingView: View {
                     ContentUnavailableView.search(text: searchText)
                         .padding(.vertical, 24)
                 }
-                ForEach(ranked, id: \.element.id) { index, player in
+                ForEach(Array(ranked.enumerated()), id: \.element.element.id) { position, entry in
+                    let (index, player) = entry
                     NavigationLink(value: player) {
                         LeaderboardTableRow(
                             rank: index + 1,
@@ -190,7 +200,8 @@ struct MetricRankingView: View {
                             metricCategory: metricCategory,
                             volume: viewModel?.volumeCaption(for: player, category: metricCategory)
                                 ?? player.volumeCaption(for: metricCategory),
-                            isSmallSample: isSmallSample(player)
+                            isSmallSample: isSmallSample(player),
+                            stripe: position + 1
                         )
                     }
                     .buttonStyle(.plain)

@@ -117,7 +117,7 @@ struct GameDetailView: View {
                             scoreText(live.homeScore, winner: !live.isFinal || live.homeScore > live.awayScore)
                         }
                     } else {
-                        Text(status == .upcoming ? game.tipoffLabel : "In progress")
+                        Text(status == .upcoming ? game.tipoffLabel : game.startedLabel(live: nil))
                             .font(HardwoodType.cardTitle)
                             .foregroundStyle(status == .upcoming ? HardwoodPalette.ink : HardwoodPalette.performanceLow)
                     }
@@ -199,8 +199,9 @@ struct GameDetailView: View {
         }
         switch status {
         case .final: return game.overtime ? "Final/OT" : "Final"
-        case .inProgress, .awaitingScore: return "Score posts at the final"
-        case .upcoming: return game.tipoff.map { $0.formatted(.dateTime.month(.abbreviated).day()) } ?? ""
+        case .inProgress, .awaitingScore: return game.isScorePending() ? "No score posted yet" : "Score updates live"
+        // The date is on the line below; the projection is the news here.
+        case .upcoming: return viewModel.projection(for: game).map { $0.label(home: game.homeTeam, away: game.awayTeam) } ?? ""
         }
     }
 
@@ -222,7 +223,7 @@ struct GameDetailView: View {
                 }
                 playerLinesCards(detail, game: game)
             } else if isDetailLoading {
-                ProgressView("Loading advanced breakdown")
+                ProgressView("Loading advanced breakdown…")
                     .font(HardwoodType.small)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 40)
@@ -231,7 +232,7 @@ struct GameDetailView: View {
                     icon: "wifi.exclamationmark",
                     title: "Couldn't load the advanced breakdown",
                     text: "The score margin and four factors didn't load. Check your connection and try again.",
-                    action: ("Try again", { Task { await loadDetail() } })
+                    action: ("Try Again", { Task { await loadDetail() } })
                 )
             } else {
                 notice(
@@ -253,7 +254,7 @@ struct GameDetailView: View {
                 .padding(.horizontal, 12)
                 .padding(.top, 12)
         } else if isLoading {
-            ProgressView("Loading box score")
+            ProgressView("Loading box score…")
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
         } else if let loadError {
@@ -272,6 +273,12 @@ struct GameDetailView: View {
                         icon: "clock",
                         title: "Stats arriving",
                         text: "The game is final. Player stats usually post within a few hours of the final buzzer."
+                    )
+                } else if game.isScorePending() {
+                    notice(
+                        icon: "clock",
+                        title: "Score pending",
+                        text: "No score has posted for this game yet. It shows here once the final is in."
                     )
                 } else {
                     notice(
@@ -992,7 +999,11 @@ struct GameDetailView: View {
                 HStack(spacing: 2) {
                     NBATeamColor.color(game.awayTeam)
                         .frame(width: max(0, (proxy.size.width - 2) * (1 - home)))
-                    NBATeamColor.color(game.homeTeam)
+                    // Two blues (PHI at NYK) read as one bar; the home side
+                    // goes neutral when the colours are too close to tell apart.
+                    Self.isClose(NBATeamColor.color(game.awayTeam), NBATeamColor.color(game.homeTeam))
+                        ? HardwoodPalette.inkTertiary
+                        : NBATeamColor.color(game.homeTeam)
                 }
                 .clipShape(Capsule())
             }
@@ -1000,10 +1011,19 @@ struct GameDetailView: View {
             Text("Projected: " + projection.label(home: game.homeTeam, away: game.awayTeam))
                 .font(HardwoodType.micro)
                 .foregroundStyle(HardwoodPalette.inkSecondary)
+                .frame(maxWidth: .infinity)
         }
         .padding(HardwoodGeo.padCard)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Win chance: \(teamFullName(game.awayTeam)) \(Int(((1 - home) * 100).rounded())) percent, \(teamFullName(game.homeTeam)) \(Int((home * 100).rounded())) percent. Projected \(projection.label(home: game.homeTeam, away: game.awayTeam))")
+    }
+
+    private static func isClose(_ a: Color, _ b: Color) -> Bool {
+        var (r1, g1, b1, r2, g2, b2): (CGFloat, CGFloat, CGFloat, CGFloat, CGFloat, CGFloat) = (0, 0, 0, 0, 0, 0)
+        UIColor(a).getRed(&r1, green: &g1, blue: &b1, alpha: nil)
+        UIColor(b).getRed(&r2, green: &g2, blue: &b2, alpha: nil)
+        let distance = sqrt(pow(r1 - r2, 2) + pow(g1 - g2, 2) + pow(b1 - b2, 2))
+        return distance < 0.3
     }
 
     /// "Season series: NYK leads 2-1", from this season's finals between them.
@@ -1021,7 +1041,11 @@ struct GameDetailView: View {
     }
 
     private func matchupFootnote(_ game: Game) -> String {
-        let ratingSeason = game.season == viewModel.freeSeason ? "" : " Ratings are from \(SeasonLabel.text(viewModel.freeSeason)) until this season has games."
+        // Ratings can trail the schedule (the pending month, the first days
+        // after the rollover); say which season they describe when it isn't
+        // this game's.
+        let rated = viewModel.teamRating(game.homeTeam)?.season ?? game.season
+        let ratingSeason = rated == game.season ? "" : " Ratings are from \(SeasonLabel.text(rated)) until this season has games."
         return "Win chance and margin come from StatScout Power Ratings: points per 100 possessions against an average team, adjusted for schedule, plus home court. Ranks are among all 30 teams." + ratingSeason
             + " The score updates live from tip-off."
     }
