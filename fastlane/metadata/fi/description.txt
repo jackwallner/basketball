@@ -1,0 +1,25 @@
+Näe, kuka johtaa boxscoren takana.
+
+StatScout vertaa jokaista NBA-pelaajaa hänen omaan pelipaikkaryhmäänsä analyytikoiden luvuilla: true shooting, usage, heittoalueet, pelinrakennus, levypallot, puolustus ja vaikutus kentällä. Jokainen mittari on persentiilipalkki, joten huiput ja vaikeuksissa olevat erottuvat heti.
+
+ILMAISEKSI
+- Livetulokset, boxscoret ja sarjataulukot
+- Persentiilirankingit takamiehille, laitureille ja senttereille
+- Täydet pelaajaprofiilit edistyneillä ja perinteisillä tilastoilla
+- Seuraa joukkuettasi ja suosikkipelaajiasi
+
+STATSCOUT+
+- Trendit: koko liiga järjestettynä sen mukaan, kuka on kuumana tai kylmänä
+- Tuore vire viimeiseltä viikolta, 2 tai 4 viikolta
+- Pelaajavertailut ja kehitys vuodesta toiseen
+- Pelaajien arvosanat jokaisessa boxscoressa
+- Jokainen kausi vuoteen 2002-03 asti
+
+Ei tiliä, ei mainoksia, ei seurantaa.
+
+StatScout+ on saatavilla kuukausittain tai vuosittain (molemmissa 7 päivän ilmainen kokeilu) tai kertaostona elinajaksi. Maksu veloitetaan Apple ID:ltäsi. Tilaukset uusiutuvat automaattisesti, ellei niitä peruta vähintään 24 tuntia ennen jakson loppua; hallitse niitä Apple ID:n asetuksissa.
+
+Tietosuoja: https://jackwallner.github.io/basketball/privacy-policy.html
+Käyttöehdot (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Ei NBA:n tai sen joukkueiden kanssa yhteydessä eikä niiden hyväksymä.

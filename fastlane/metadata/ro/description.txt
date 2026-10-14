@@ -1,0 +1,25 @@
+Vezi cine conduce dincolo de box score.
+
+StatScout compară fiecare jucător NBA cu propriul grup de posturi folosind cifrele analiștilor: true shooting, usage, zone de aruncare, construcție, recuperări, apărare și impact pe teren. Fiecare indicator este o bară de percentilă, așa că elita și cei în dificultate se văd imediat.
+
+GRATUIT
+- Scoruri live, box score și clasamente
+- Clasamente pe percentile pentru fundași, extreme și pivoți
+- Profiluri complete cu statistici avansate și clasice
+- Urmărește-ți echipa și jucătorii preferați
+
+STATSCOUT+
+- Tendințe: toată liga ordonată după cine e în formă și cine scade
+- Forma recentă din ultima săptămână, 2 sau 4 săptămâni
+- Comparații între jucători și evoluția an de an
+- Note pentru jucători în fiecare box score
+- Fiecare sezon până în 2002-03
+
+Fără cont, fără reclame, fără urmărire.
+
+StatScout+ este disponibil lunar sau anual (ambele cu 7 zile de probă gratuită) sau ca achiziție unică pe viață. Plata se face prin ID-ul tău Apple. Abonamentele se reînnoiesc automat dacă nu sunt anulate cu cel puțin 24 de ore înainte de sfârșitul perioadei; gestionează-le în setările ID-ului Apple.
+
+Confidențialitate: https://jackwallner.github.io/basketball/privacy-policy.html
+Termeni de utilizare (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Nu este afiliat sau aprobat de NBA sau de echipele sale.

@@ -1,0 +1,25 @@
+Zjistěte, kdo vede i mimo box score.
+
+StatScout porovnává každého hráče NBA s jeho vlastní skupinou postů pomocí čísel, která používají analytici: true shooting, usage, střelecké zóny, rozehrávka, doskoky, obrana a vliv na hřišti. Každá metrika je percentilový pruh, takže elita i ti, kdo se trápí, jsou vidět hned.
+
+ZDARMA
+- Živé výsledky, box score a tabulky
+- Percentilové žebříčky pro rozehrávače, křídla a pivoty
+- Úplné profily hráčů s pokročilými i klasickými statistikami
+- Sledujte svůj tým a oblíbené hráče
+
+STATSCOUT+
+- Trendy: celá liga seřazená podle toho, kdo je ve formě a kdo ne
+- Aktuální forma za poslední týden, 2 nebo 4 týdny
+- Srovnání hráčů a vývoj rok po roce
+- Hodnocení hráčů v každém box score
+- Každá sezóna zpět do 2002-03
+
+Bez účtu, bez reklam, bez sledování.
+
+StatScout+ je k dispozici měsíčně nebo ročně (obojí se 7denní zkušební dobou zdarma) nebo jako jednorázový doživotní nákup. Platba se strhne z vašeho Apple ID. Předplatné se automaticky obnovuje, pokud ho nezrušíte alespoň 24 hodin před koncem období; spravujte ho v nastavení Apple ID.
+
+Soukromí: https://jackwallner.github.io/basketball/privacy-policy.html
+Podmínky použití (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Bez vazby na NBA nebo její týmy a bez jejich schválení.

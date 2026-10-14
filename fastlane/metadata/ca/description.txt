@@ -1,0 +1,25 @@
+Descobreix qui mana més enllà del box score.
+
+StatScout compara cada jugador de l'NBA amb el seu propi grup de posició amb els números dels analistes: true shooting, ús, zones de tir, creació, rebot, defensa i impacte a la pista. Cada mètrica és una barra de percentil, així l'elit i els que pateixen es veuen de seguida.
+
+GRATIS
+- Resultats en directe, box scores i classificacions
+- Rànquings per percentil per a bases, alers i pivots
+- Perfils complets amb estadístiques avançades i clàssiques
+- Segueix el teu equip i els teus jugadors preferits
+
+STATSCOUT+
+- Tendències: tota la lliga ordenada per qui està en ratxa o a la baixa
+- Forma recent de l'última setmana, 2 o 4 setmanes
+- Duels entre jugadors i evolució any rere any
+- Valoració de cada jugador a cada box score
+- Totes les temporades des del 2002-03
+
+Sense compte, sense anuncis, sense seguiment.
+
+StatScout+ s'ofereix mensual o anual (tots dos amb 7 dies de prova gratuïta) o com a compra única per sempre. El pagament es carrega al teu ID d'Apple. La subscripció es renova automàticament si no es cancel·la com a mínim 24 hores abans del final del període; gestiona-la a la configuració del teu ID d'Apple.
+
+Privadesa: https://jackwallner.github.io/basketball/privacy-policy.html
+Condicions d'ús (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Sense afiliació ni aval de l'NBA ni dels seus equips.

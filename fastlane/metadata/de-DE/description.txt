@@ -1,0 +1,25 @@
+Erkenne, wer jenseits des Boxscores wirklich führt.
+
+StatScout misst jeden NBA-Spieler an seiner eigenen Positionsgruppe, mit den Zahlen, die Analysten nutzen: True Shooting, Usage, Wurfzonen, Spielaufbau, Rebounds, Defense und Einfluss auf dem Feld. Jede Metrik ist ein Perzentil-Balken, so fallen Elite und Schwächen sofort auf.
+
+GRATIS
+- Live-Ergebnisse, Boxscores und Tabellen
+- Perzentil-Ranglisten für Guards, Forwards und Center
+- Vollständige Spielerprofile mit erweiterten und klassischen Werten
+- Folge deinem Team und deinen Lieblingsspielern
+
+STATSCOUT+
+- Trends: die ganze Liga sortiert danach, wer heiß läuft oder abkühlt
+- Aktuelle Form über die letzte Woche, 2 oder 4 Wochen
+- Direkte Spielervergleiche und Entwicklung von Jahr zu Jahr
+- Spielerbewertungen in jedem Boxscore
+- Jede Saison zurück bis 2002-03
+
+Kein Konto, keine Werbung, kein Tracking.
+
+StatScout+ gibt es monatlich oder jährlich (beide mit 7 Tagen gratis) oder als einmaligen Lifetime-Kauf. Die Zahlung erfolgt über deine Apple-ID. Abos verlängern sich automatisch, wenn sie nicht mindestens 24 Stunden vor Ende des Zeitraums gekündigt werden; verwalte sie in den Einstellungen deiner Apple-ID.
+
+Datenschutz: https://jackwallner.github.io/basketball/privacy-policy.html
+Nutzungsbedingungen (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Nicht mit der NBA oder ihren Teams verbunden oder von ihnen unterstützt.

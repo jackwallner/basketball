@@ -1,0 +1,25 @@
+Se vem som leder bortom boxscoren.
+
+StatScout jämför varje NBA-spelare med hans egen positionsgrupp med siffrorna analytiker använder: true shooting, usage, skottzoner, speluppbyggnad, returer, försvar och påverkan på planen. Varje mått är en percentilstapel, så eliten och de som kämpar syns direkt.
+
+GRATIS
+- Liveresultat, boxscores och tabeller
+- Percentilrankning för guards, forwards och centrar
+- Fullständiga spelarprofiler med avancerad och vanlig statistik
+- Följ ditt lag och dina favoritspelare
+
+STATSCOUT+
+- Trender: hela ligan rankad efter vem som är het eller kall
+- Aktuell form senaste veckan, 2 eller 4 veckorna
+- Spelarjämförelser och utveckling år för år
+- Spelarbetyg i varje boxscore
+- Varje säsong tillbaka till 2002-03
+
+Inget konto, ingen reklam, ingen spårning.
+
+StatScout+ finns per månad eller år (båda med 7 dagars gratis provperiod) eller som ett engångsköp för livstid. Betalningen dras från ditt Apple-ID. Prenumerationer förnyas automatiskt om de inte sägs upp minst 24 timmar före periodens slut; hantera dem i inställningarna för ditt Apple-ID.
+
+Integritet: https://jackwallner.github.io/basketball/privacy-policy.html
+Användarvillkor (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Inte ansluten till eller godkänd av NBA eller dess lag.

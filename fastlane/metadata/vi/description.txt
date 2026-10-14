@@ -1,0 +1,25 @@
+Xem ai thực sự dẫn đầu ngoài box score.
+
+StatScout so sánh mỗi cầu thủ NBA với chính nhóm vị trí của anh ấy bằng những con số giới phân tích dùng: true shooting, tỉ lệ sử dụng, vùng ném, kiến thiết, bắt bóng bật bảng, phòng ngự và ảnh hưởng trên sân. Mỗi chỉ số là một thanh phân vị, nên cầu thủ hàng đầu và người đang chật vật hiện ra ngay.
+
+MIỄN PHÍ
+- Tỉ số trực tiếp, box score và bảng xếp hạng
+- Xếp hạng phân vị cho hậu vệ, tiền phong và trung phong
+- Hồ sơ cầu thủ đầy đủ với thống kê nâng cao và cơ bản
+- Theo dõi đội bóng và cầu thủ yêu thích
+
+STATSCOUT+
+- Xu hướng: cả giải xếp theo ai đang lên và ai đang xuống
+- Phong độ 1, 2 hoặc 4 tuần gần nhất
+- So sánh cầu thủ và tiến triển qua từng mùa
+- Điểm đánh giá cầu thủ trong mọi box score
+- Mọi mùa giải từ 2002-03
+
+Không tài khoản, không quảng cáo, không theo dõi.
+
+StatScout+ có gói tháng hoặc năm (đều được dùng thử miễn phí 7 ngày) hoặc mua một lần dùng trọn đời. Thanh toán qua Apple ID của bạn. Gói đăng ký tự động gia hạn trừ khi hủy ít nhất 24 giờ trước khi kết thúc kỳ; quản lý trong cài đặt Apple ID.
+
+Quyền riêng tư: https://jackwallner.github.io/basketball/privacy-policy.html
+Điều khoản sử dụng (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Không liên kết với hay được NBA hoặc các đội bóng chứng thực.

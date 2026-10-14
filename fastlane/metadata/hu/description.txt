@@ -1,0 +1,25 @@
+Nézd meg, ki vezet a box score-on túl.
+
+A StatScout minden NBA-játékost a saját posztcsoportjához méri az elemzők számaival: true shooting, usage, dobózónák, irányítás, lepattanók, védekezés és pályára gyakorolt hatás. Minden mutató egy percentilis sáv, így az elit és a küszködők azonnal látszanak.
+
+INGYENES
+- Élő eredmények, box score-ok és tabellák
+- Percentilis rangsorok hátvédeknek, bedobóknak és centereknek
+- Teljes játékosprofilok haladó és hagyományos statisztikákkal
+- Kövesd a csapatodat és a kedvenc játékosaidat
+
+STATSCOUT+
+- Trendek: az egész liga aszerint, ki van formában és ki hanyatlik
+- Friss forma az elmúlt héten, 2 vagy 4 héten
+- Játékos-összevetések és fejlődés évről évre
+- Játékosértékelések minden box score-ban
+- Minden szezon 2002-03-ig visszamenőleg
+
+Nincs fiók, nincs reklám, nincs követés.
+
+A StatScout+ havi vagy éves előfizetéssel (mindkettő 7 napos ingyenes próbával) vagy egyszeri, örökös vásárlással érhető el. A fizetés az Apple ID-dat terheli. Az előfizetés automatikusan megújul, hacsak nem mondod le legalább 24 órával az időszak vége előtt; kezeld az Apple ID beállításaiban.
+
+Adatvédelem: https://jackwallner.github.io/basketball/privacy-policy.html
+Felhasználási feltételek (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Nem kapcsolódik az NBA-hez vagy csapataihoz, és nem ők támogatják.

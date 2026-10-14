@@ -1,0 +1,1 @@
+basketball,yüzdelik,oyuncu,karşılaştır,sıralama,skor,canlı,box score,fantasy,takım,puan durumu

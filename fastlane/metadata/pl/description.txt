@@ -1,0 +1,25 @@
+Zobacz, kto naprawdę prowadzi poza box score.
+
+StatScout porównuje każdego zawodnika NBA z jego własną grupą pozycji, używając liczb analityków: true shooting, usage, strefy rzutowe, rozegranie, zbiórki, obrona i wpływ na boisko. Każda statystyka to pasek percentyla, więc elita i słabsi są widoczni od razu.
+
+ZA DARMO
+- Wyniki na żywo, box score i tabele
+- Rankingi percentylowe dla obrońców, skrzydłowych i środkowych
+- Pełne profile zawodników ze statystykami zaawansowanymi i klasycznymi
+- Obserwuj swoją drużynę i ulubionych zawodników
+
+STATSCOUT+
+- Trendy: cała liga według tego, kto jest w formie, a kto obniża loty
+- Aktualna forma z ostatniego tygodnia, 2 lub 4 tygodni
+- Porównania zawodników i postępy rok do roku
+- Oceny zawodników w każdym box score
+- Każdy sezon od 2002-03
+
+Bez konta, bez reklam, bez śledzenia.
+
+StatScout+ jest dostępny miesięcznie lub rocznie (oba z 7-dniowym darmowym okresem próbnym) albo jako jednorazowy zakup dożywotni. Płatność pobierana jest z konta Apple ID. Subskrypcja odnawia się automatycznie, jeśli nie zostanie anulowana co najmniej 24 godziny przed końcem okresu; zarządzaj nią w ustawieniach Apple ID.
+
+Prywatność: https://jackwallner.github.io/basketball/privacy-policy.html
+Warunki korzystania (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Brak powiązań z NBA ani jej drużynami i brak ich poparcia.

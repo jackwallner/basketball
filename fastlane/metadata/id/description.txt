@@ -1,0 +1,25 @@
+Lihat siapa yang unggul di luar box score.
+
+StatScout membandingkan setiap pemain NBA dengan kelompok posisinya sendiri memakai angka yang dipakai para analis: true shooting, usage, zona tembakan, playmaking, rebound, bertahan, dan dampak di lapangan. Setiap metrik berupa batang persentil, jadi pemain elite dan yang sedang kesulitan langsung terlihat.
+
+GRATIS
+- Skor langsung, box score, dan klasemen
+- Peringkat persentil untuk guard, forward, dan center
+- Profil pemain lengkap dengan statistik lanjutan dan standar
+- Ikuti tim dan pemain favoritmu
+
+STATSCOUT+
+- Tren: seluruh liga diurutkan menurut siapa yang sedang naik atau turun
+- Performa terkini 1, 2, atau 4 minggu terakhir
+- Perbandingan pemain dan perkembangan dari tahun ke tahun
+- Rating pemain di setiap box score
+- Setiap musim hingga 2002-03
+
+Tanpa akun, tanpa iklan, tanpa pelacakan.
+
+StatScout+ tersedia bulanan atau tahunan (keduanya dengan uji coba gratis 7 hari) atau pembelian seumur hidup sekali bayar. Pembayaran ditagihkan ke Apple ID Anda. Langganan diperpanjang otomatis kecuali dibatalkan paling lambat 24 jam sebelum periode berakhir; kelola di pengaturan Apple ID.
+
+Privasi: https://jackwallner.github.io/basketball/privacy-policy.html
+Ketentuan Penggunaan (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Tidak berafiliasi dengan atau didukung oleh NBA maupun timnya.

@@ -1,0 +1,25 @@
+Scopri chi comanda oltre il tabellino.
+
+StatScout confronta ogni giocatore NBA con il proprio gruppo di ruolo usando i numeri degli analisti: true shooting, usage, zone di tiro, regia, rimbalzi, difesa e impatto in campo. Ogni metrica è una barra di percentile, così l'élite e chi fatica saltano all'occhio.
+
+GRATIS
+- Risultati live, tabellini e classifiche
+- Classifiche per percentile per guardie, ali e centri
+- Profili completi con statistiche avanzate e classiche
+- Segui la tua squadra e i tuoi giocatori preferiti
+
+STATSCOUT+
+- Tendenze: tutta la lega ordinata per chi è in crescita o in calo
+- Forma recente nell'ultima settimana, 2 o 4 settimane
+- Confronti tra giocatori e andamento anno per anno
+- Valutazioni dei giocatori in ogni tabellino
+- Ogni stagione dal 2002-03
+
+Nessun account, nessuna pubblicità, nessun tracciamento.
+
+StatScout+ è disponibile mensile o annuale (entrambi con 7 giorni di prova gratuita) o come acquisto unico a vita. Il pagamento è addebitato sul tuo ID Apple. L'abbonamento si rinnova automaticamente se non viene disdetto almeno 24 ore prima della fine del periodo; gestiscilo nelle impostazioni del tuo ID Apple.
+
+Privacy: https://jackwallner.github.io/basketball/privacy-policy.html
+Termini d'uso (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Non affiliato né approvato dalla NBA o dalle sue squadre.

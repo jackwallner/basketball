@@ -1,0 +1,25 @@
+Box score'un ötesinde kimin öne çıktığını gör.
+
+StatScout her NBA oyuncusunu kendi pozisyon grubuyla, analistlerin kullandığı sayılarla karşılaştırır: true shooting, kullanım oranı, şut bölgeleri, oyun kurma, ribaund, savunma ve sahadaki etki. Her metrik bir yüzdelik çubuğudur; elit oyuncular ve zorlananlar bir bakışta görünür.
+
+ÜCRETSİZ
+- Canlı skorlar, box score'lar ve puan durumu
+- Gard, forvet ve pivotlar için yüzdelik sıralamalar
+- Gelişmiş ve klasik istatistiklerle tam oyuncu profilleri
+- Takımını ve favori oyuncularını takip et
+
+STATSCOUT+
+- Trendler: tüm lig kimin yükselişte, kimin düşüşte olduğuna göre
+- Son 1, 2 veya 4 haftalık güncel form
+- Oyuncu karşılaştırmaları ve yıldan yıla gelişim
+- Her box score'da oyuncu notları
+- 2002-03'e kadar her sezon
+
+Hesap yok, reklam yok, takip yok.
+
+StatScout+ aylık veya yıllık (ikisi de 7 gün ücretsiz deneme ile) ya da tek seferlik ömür boyu satın alma olarak sunulur. Ödeme Apple Kimliğinizden alınır. Abonelikler, dönem bitmeden en az 24 saat önce iptal edilmezse otomatik yenilenir; Apple Kimliği ayarlarından yönetebilirsiniz.
+
+Gizlilik: https://jackwallner.github.io/basketball/privacy-policy.html
+Kullanım Koşulları (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+NBA veya takımlarıyla bağlantılı değildir ve onlar tarafından onaylanmamıştır.
