@@ -102,7 +102,12 @@ struct HotColdView: View {
     /// would crowd out every real riser.
     private var ranked: [RecentForm] {
         forms
-            .filter { !$0.isSmallSample && improvement($0) != nil }
+            .filter { form in
+                // Only movement in the board's direction, so Heating up never
+                // ends in a run of fallers.
+                guard !form.isSmallSample, let change = improvement(form) else { return false }
+                return showingCold ? change < 0 : change > 0
+            }
             .sorted {
                 let a = improvement($0) ?? 0
                 let b = improvement($1) ?? 0
@@ -304,10 +309,17 @@ struct HotColdView: View {
 
     private var metricPicker: some View {
         StatPickerMenu(
-            advanced: pickerOptions(TrendMetric.advanced(for: side)),
+            advanced: StatPickerMenu.Option.categorized(
+                TrendMetric.advanced(for: side).map(\.label),
+                selected: metric.label
+            ),
             standard: pickerOptions(TrendMetric.standard(for: side)),
             activeLabel: metric.label,
-            onSelectAdvanced: { select($0, from: TrendMetric.advanced(for: side)) },
+            onSelectAdvanced: { option in
+                if let picked = TrendMetric.advanced(for: side).first(where: { $0.label == option.id }) {
+                    metric = picked
+                }
+            },
             onSelectStandard: { select($0, from: TrendMetric.standard(for: side)) }
         )
     }
@@ -355,7 +367,9 @@ struct HotColdView: View {
             ContentUnavailableView {
                 Label("No movement to rank yet", systemImage: "chart.line.flattrend.xyaxis")
             } description: {
-                Text("\(metric.label) doesn't have a prior window to compare against yet. Try another stat or a shorter window.")
+                Text(forms.contains { $0.priorMetrics[metric.key] != nil }
+                    ? "Nobody's \(metric.label) is \(showingCold ? "falling" : "rising") over this window. Try another stat or window."
+                    : "\(metric.label) doesn't have a prior window to compare against yet. Try another stat or a shorter window.")
             }
             .padding(.vertical, 32)
         } else {

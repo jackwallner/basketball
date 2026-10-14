@@ -13,19 +13,14 @@ import SwiftUI
 /// list on a tab that's otherwise entirely league-wide.
 struct FollowPlayersSheet: View {
     @Bindable var viewModel: DashboardViewModel
-    /// Which position group the Trends board is showing, so the sheet opens
-    /// on the list the user was already looking at.
-    var side: TrendSide = .guard
 
     @Environment(\.dismiss) private var dismiss
     @State private var favorites = FavoritesStore.shared
     @State private var searchText = ""
-    @State private var listSide: TrendSide
+    @State private var position: PlayerPositionGroup = .all
 
-    init(viewModel: DashboardViewModel, side: TrendSide = .guard) {
+    init(viewModel: DashboardViewModel) {
         self.viewModel = viewModel
-        self.side = side
-        _listSide = State(initialValue: side)
     }
 
     private var allPlayers: [Player] {
@@ -40,14 +35,12 @@ struct FollowPlayersSheet: View {
     }
 
     private var candidates: [Player] {
-        let query = searchText.trimmingCharacters(in: .whitespaces).lowercased()
-        let wanted: String = listSide.playerType
-        let sameSide: [Player] = allPlayers.filter { player in
-            (player.playerType ?? "") == wanted
-        }
-        let matching: [Player] = query.isEmpty ? sameSide : sameSide.filter { player in
-            player.name.lowercased().contains(query) || player.team.lowercased().contains(query)
-        }
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        // A search looks across every position: typing a center's name while
+        // the Guards tab is up answered "No players match".
+        let matching: [Player] = query.isEmpty
+            ? allPlayers.filter { position.includes($0) }
+            : allPlayers.filter { $0.matchesSearch(query) }
         return matching.sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
     }
 
@@ -77,32 +70,23 @@ struct FollowPlayersSheet: View {
                     }
 
                     card {
-                        // Same position-group menu the Trends board uses: the
-                        // two screens ask the identical question, so they use
-                        // the identical control.
-                        HStack {
-                            Menu {
-                                ForEach(TrendSide.allCases) { option in
-                                    Button {
-                                        listSide = option
-                                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                    } label: {
-                                        if option == listSide {
-                                            Label(option.label, systemImage: "checkmark")
-                                        } else {
-                                            Text(option.label)
+                        // The same position tabs as the Stats board.
+                        if searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+                            HardwoodTabs(
+                                tabs: PlayerPositionGroup.allCases.map(\.rawValue),
+                                selected: Binding(
+                                    get: { position.rawValue },
+                                    set: { raw in
+                                        if let next = PlayerPositionGroup.allCases.first(where: { $0.rawValue == raw }) {
+                                            position = next
                                         }
                                     }
-                                }
-                            } label: {
-                                HardwoodInlinePill(systemImage: "person.fill", title: listSide.label)
-                            }
-                            .menuOrder(.fixed)
-                            .accessibilityLabel("Position group")
-                            .accessibilityValue(listSide.label)
-                            Spacer(minLength: 0)
+                                )
+                            )
+                            .accessibilityElement(children: .contain)
+                            .accessibilityLabel("Position")
+                            .padding(.top, 4)
                         }
-                        .padding(12)
 
                         if candidates.isEmpty {
                             Text("No players match “\(searchText)”.")

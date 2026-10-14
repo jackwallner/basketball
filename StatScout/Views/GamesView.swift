@@ -71,13 +71,18 @@ struct GamesView: View {
     }
 
     /// Re-reads the schedule while this tab is on screen: every two minutes
-    /// while a game is under way or a final is still waiting on its stats, every
-    /// ten otherwise. The backend itself only updates every fifteen minutes on a
-    /// game day, so anything faster would be noise.
+    /// while a final is still waiting on its stats, every ten otherwise. Live
+    /// scores come from the league scoreboard every thirty seconds while a game
+    /// is under way; the backend itself only posts a score at the final.
     private func pollWhileActive() async {
         while !Task.isCancelled {
             await viewModel.loadGames()
+            await viewModel.refreshLiveScores()
             let now = Date()
+            if viewModel.hasGamesUnderway(now: now) {
+                try? await Task.sleep(for: .seconds(30))
+                continue
+            }
             let busy = viewModel.games.contains { game in
                 switch game.status(now: now) {
                 case .inProgress, .awaitingScore: return true
@@ -140,8 +145,12 @@ struct GamesView: View {
         }
         let now = Date()
         let remaining = slate.filter { $0.id != favoriteGame?.id }
-        let live = remaining.filter { [.inProgress, .awaitingScore].contains($0.status(now: now)) }
-        let finals = remaining.filter { $0.status(now: now) == .final }
+        // A game the scoreboard calls final sits with the finals before the
+        // schedule catches up.
+        let started = remaining.filter { [.inProgress, .awaitingScore].contains($0.status(now: now)) }
+        let live = started.filter { viewModel.liveScore(for: $0)?.isFinal != true }
+        let finals = started.filter { viewModel.liveScore(for: $0)?.isFinal == true }
+            + remaining.filter { $0.status(now: now) == .final }
         let upcoming = remaining.filter { $0.status(now: now) == .upcoming }
         if !live.isEmpty { section(title: "In progress", games: live) }
         if !finals.isEmpty { section(title: "Final", games: finals) }
@@ -162,8 +171,8 @@ struct GamesView: View {
         }
 
         Text(favorites.team == nil
-             ? "Scores post when each game goes final, stats usually within a few hours. Follow a team from its page to pin its game here."
-             : "Scores post when each game goes final. Player stats usually follow within a few hours.")
+             ? "Scores update live while a game is on. Player stats usually follow within a few hours of the final. Follow a team from its page to pin its game here."
+             : "Scores update live while a game is on. Player stats usually follow within a few hours of the final.")
             .font(HardwoodType.micro)
             .foregroundStyle(HardwoodPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -186,7 +195,8 @@ struct GamesView: View {
                         awayRecord: series == nil ? viewModel.record(forTeam: game.awayTeam, through: game) : nil,
                         homeRecord: series == nil ? viewModel.record(forTeam: game.homeTeam, through: game) : nil,
                         projection: viewModel.projection(for: game),
-                        context: game.contextLine(series: series)
+                        context: game.contextLine(series: series),
+                        live: viewModel.liveScore(for: game)
                     )
                         .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
                 }
@@ -245,6 +255,8 @@ struct GameRow: View {
     /// "NBA Finals · Game 5 · NYK wins 4-1" above the teams, for a game that
     /// is more than a date on the calendar.
     var context: String? = nil
+    /// The scoreboard's running score for a game the schedule has no final for.
+    var live: LiveScore? = nil
 
     var body: some View {
         let status = game.status()
@@ -273,15 +285,15 @@ struct GameRow: View {
     private func rowBody(_ status: GameStatus) -> some View {
         HStack(spacing: 12) {
             VStack(spacing: 6) {
-                teamLine(game.awayTeam, score: game.awayScore, status: status, record: awayRecord)
-                teamLine(game.homeTeam, score: game.homeScore, status: status, record: homeRecord)
+                teamLine(game.awayTeam, score: game.awayScore ?? live?.awayScore, status: status, record: awayRecord)
+                teamLine(game.homeTeam, score: game.homeScore ?? live?.homeScore, status: status, record: homeRecord)
             }
             .frame(maxWidth: .infinity)
 
             VStack(alignment: .trailing, spacing: 3) {
                 Text(statusTitle(status))
                     .font(HardwoodType.smallBold)
-                    .foregroundStyle(status == .inProgress ? HardwoodPalette.performanceLow : HardwoodPalette.ink)
+                    .foregroundStyle(isUnderway(status) ? HardwoodPalette.performanceLow : HardwoodPalette.ink)
                 if let detail = statusDetail(status) {
                     Text(detail)
                         .font(HardwoodType.micro)
@@ -296,9 +308,18 @@ struct GameRow: View {
         }
     }
 
+    private func isUnderway(_ status: GameStatus) -> Bool {
+        if let live { return live.isUnderway }
+        return status == .inProgress
+    }
+
     private func teamLine(_ team: String, score: Int?, status: GameStatus, record: String?) -> some View {
         let isWinner = game.result(for: team) == "W"
-        let dim = status == .final && !isWinner && game.result(for: team) != "T"
+        var dim = status == .final && !isWinner && game.result(for: team) != "T"
+        if let live, live.isFinal {
+            let isHome = normalizedTeamAbbreviation(team) == normalizedTeamAbbreviation(game.homeTeam)
+            dim = live.score(isHome: isHome) < live.score(isHome: !isHome)
+        }
         return HStack(spacing: 8) {
             TeamColorDot(abbr: team, size: 10)
             Text(displayTeamAbbr(team))
@@ -335,6 +356,7 @@ struct GameRow: View {
     }
 
     private func statusTitle(_ status: GameStatus) -> String {
+        if let live { return live.clockLabel }
         switch status {
         case .final: return game.overtime ? "Final/OT" : "Final"
         case .inProgress: return "In progress"
@@ -344,6 +366,7 @@ struct GameRow: View {
     }
 
     private func statusDetail(_ status: GameStatus) -> String? {
+        if let live { return live.isFinal ? "Stats arriving" : "Live" }
         switch status {
         case .final: return hasStats ? game.dayLabel : "Stats arriving"
         case .inProgress, .awaitingScore: return "Score at final"
@@ -363,6 +386,9 @@ struct GameRow: View {
             let score = "\(away) \(game.awayScore ?? 0), \(home) \(game.homeScore ?? 0)"
             return "\(score), \(statusTitle(status))" + (hasStats ? "" : ", stats arriving")
         case .inProgress, .awaitingScore:
+            if let live {
+                return "\(away) \(live.awayScore), \(home) \(live.homeScore), \(live.isFinal ? live.clockLabel : "live, \(live.clockLabel)")"
+            }
             return "\(away) at \(home), in progress"
         case .upcoming:
             let projected = projection.map { ", projected \($0.label(home: game.homeTeam, away: game.awayTeam))" } ?? ""

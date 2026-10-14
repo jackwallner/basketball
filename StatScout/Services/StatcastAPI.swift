@@ -40,9 +40,13 @@ protocol StatcastProviding: Sendable {
     func fetchPlayerProfiles(season: Int) async throws -> [PlayerProfile]
     func fetchTeamRatings(season: Int) async throws -> [TeamRating]
     func fetchGameProjections(season: Int) async throws -> [GameProjection]
+    /// Running scores from the league scoreboard, keyed by game id.
+    func fetchLiveScores(dates: Set<String>) async -> [String: LiveScore]
 }
 
 extension StatcastProviding {
+    /// Fixture and test providers have no live games.
+    func fetchLiveScores(dates: Set<String>) async -> [String: LiveScore] { [:] }
     /// Older test and preview providers do not need to know about the optional
     /// status endpoint. A missing implementation is treated as unavailable.
     func fetchDataFreshness() async throws -> DataFreshness? { nil }
@@ -63,6 +67,10 @@ extension StatcastProviding {
 struct StatcastAPI: StatcastProviding {
     private let baseURL: URL
     private let apiKey: String
+
+    func fetchLiveScores(dates: Set<String>) async -> [String: LiveScore] {
+        await LiveScoreClient().fetch(dates: dates)
+    }
 
     init(baseURL: URL, apiKey: String) {
         self.baseURL = baseURL

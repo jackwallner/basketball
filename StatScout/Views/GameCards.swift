@@ -33,7 +33,7 @@ struct TeamGameCard: View {
         let games = viewModel.schedule(forTeam: team)
         let now = Date()
         if let live = games.first(where: { [.inProgress, .awaitingScore].contains($0.status(now: now)) }) {
-            return (.live, live)
+            return (viewModel.liveScore(for: live)?.isFinal == true ? .last : .live, live)
         }
         let finals = games.filter { $0.status(now: now) == .final }
         if let last = finals.last, let tip = last.tipoff, now.timeIntervalSince(tip) < 24 * 3_600 {
@@ -56,6 +56,7 @@ struct TeamGameCard: View {
             }
             actions
         }
+        .modifier(LiveScorePolling(viewModel: viewModel))
     }
 
     private var actions: some View {
@@ -100,6 +101,13 @@ struct TeamGameCard: View {
                 Text(line)
                     .font(HardwoodType.statMed)
                     .foregroundStyle(game.result(for: team) == "L" ? HardwoodPalette.performanceLow : HardwoodPalette.performanceHigh)
+            } else if let live = viewModel.liveScore(for: game) {
+                let mine = live.score(isHome: game.isHome(team))
+                let theirs = live.score(isHome: !game.isHome(team))
+                Text("\(mine)-\(theirs)")
+                    .font(HardwoodType.statMed)
+                    .foregroundStyle(HardwoodPalette.ink)
+                    .monospacedDigit()
             }
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
@@ -108,6 +116,9 @@ struct TeamGameCard: View {
     }
 
     private func detail(_ game: Game) -> String {
+        if let live = viewModel.liveScore(for: game) {
+            return live.isFinal ? "\(live.clockLabel) · stats arriving" : "Live · \(live.clockLabel)"
+        }
         switch game.status() {
         case .final:
             return "\(game.dayLabel) · " + (viewModel.hasStats(game) ? "box score" : "stats arriving")
@@ -519,6 +530,23 @@ struct PlayerGameLogCard: View {
                 .accessibilityHint("Opens the game")
         } else {
             content
+        }
+    }
+}
+
+/// Keeps `DashboardViewModel.liveScores` current while the screen it is on is
+/// visible and a game is under way. The Games tab runs its own loop; this is
+/// for the team card and the game page, which a fan watches during a game.
+struct LiveScorePolling: ViewModifier {
+    let viewModel: DashboardViewModel
+
+    func body(content: Content) -> some View {
+        content.task {
+            while !Task.isCancelled {
+                guard viewModel.hasGamesUnderway() else { return }
+                await viewModel.refreshLiveScores()
+                try? await Task.sleep(for: .seconds(30))
+            }
         }
     }
 }

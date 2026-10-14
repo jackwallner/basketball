@@ -16,6 +16,8 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
     var heightInches: Int?
     var weightPounds: Int?
     var yearsExperience: Int?
+    /// The season (end year) of his first NBA season.
+    var rookieSeason: Int?
     var draftYear: Int?
     var draftRound: Int?
     var draftPick: Int?
@@ -28,6 +30,7 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         case heightInches = "height_in"
         case weightPounds = "weight_lb"
         case yearsExperience = "years_exp"
+        case rookieSeason = "rookie_season"
         case draftYear = "draft_year"
         case draftRound = "draft_round"
         case draftPick = "draft_pick"
@@ -47,6 +50,7 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         heightInches = try c.decodeIfPresent(Int.self, forKey: .heightInches)
         weightPounds = try c.decodeIfPresent(Int.self, forKey: .weightPounds)
         yearsExperience = try c.decodeIfPresent(Int.self, forKey: .yearsExperience)
+        rookieSeason = try c.decodeIfPresent(Int.self, forKey: .rookieSeason)
         draftYear = try c.decodeIfPresent(Int.self, forKey: .draftYear)
         draftRound = try c.decodeIfPresent(Int.self, forKey: .draftRound)
         draftPick = try c.decodeIfPresent(Int.self, forKey: .draftPick)
@@ -59,6 +63,9 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         calendar.timeZone = TimeZone(identifier: "UTC") ?? .current
         return calendar.date(from: DateComponents(year: bits[0], month: bits[1], day: bits[2]))
     }
+
+    /// In his first NBA season.
+    var isRookie: Bool { rookieSeason == season }
 
     func age(on date: Date = .now) -> Int? {
         guard let birthDate else { return nil }

@@ -485,7 +485,7 @@ struct PlayerProfileView: View {
                 proPerk("chart.line.uptrend.xyaxis", "Year-over-year trends across every metric")
                 proPerk("person.2.fill", "Head-to-head comparisons vs any player")
                 proPerk("calendar.badge.clock", "Every past season, not just this one")
-                proPerk("arrow.down.circle.fill", "Saved offline - works on the road")
+                proPerk("chart.bar.fill", "Last week, 2 week and 4 week form on every player")
             }
 
             Button {
@@ -872,7 +872,7 @@ struct PlayerProfileView: View {
 
         switch effectiveFormDisplayMode {
         case .season:
-            NavigationLink(value: MetricRoute(label: metric.label, category: metric.category, season: activeSeason, phase: activePhase)) {
+            NavigationLink(value: MetricRoute(label: metric.label, category: metric.category, season: activeSeason, phase: activePhase, position: player.positionGroup)) {
                 MetricBar(metric: metric)
                     .padding(.horizontal, HardwoodGeo.padCard)
                     .padding(.vertical, 12)
@@ -897,7 +897,7 @@ struct PlayerProfileView: View {
                 // No window figure for this metric (a season total has no
                 // per-week form) - fall back to the season bar so the recent
                 // view still shows every percentile bar.
-                NavigationLink(value: MetricRoute(label: metric.label, category: metric.category, season: activeSeason, phase: activePhase)) {
+                NavigationLink(value: MetricRoute(label: metric.label, category: metric.category, season: activeSeason, phase: activePhase, position: player.positionGroup)) {
                     MetricBar(metric: metric)
                         .padding(.horizontal, HardwoodGeo.padCard)
                         .padding(.vertical, 12)
@@ -910,7 +910,7 @@ struct PlayerProfileView: View {
                 .buttonStyle(.plain)
             }
         case .both:
-            NavigationLink(value: MetricRoute(label: metric.label, category: metric.category, season: activeSeason, phase: activePhase)) {
+            NavigationLink(value: MetricRoute(label: metric.label, category: metric.category, season: activeSeason, phase: activePhase, position: player.positionGroup)) {
                 DualMetricBar(
                     season: metric,
                     recent: recentMetric,

@@ -58,6 +58,26 @@ struct StatPickerMenu: View {
         let id: String
         let label: String
         var isSelected = false
+        /// The metric category the option sits under in the menu.
+        var group: String? = nil
+
+        /// Advanced metric labels as options grouped by category, in the
+        /// order the player page reads (Scoring, Shooting, ... Impact), each
+        /// category in its own priority order.
+        static func categorized(_ labels: [String], selected: String?) -> [Option] {
+            let order = MetricCategory.allCases
+            return labels
+                .map { label -> (option: Option, rank: (Int, Int)) in
+                    let definition = BasketballMetricRegistry.definitions.first { $0.label == label }
+                    let category = definition?.category
+                    return (
+                        Option(id: label, label: label, isSelected: label == selected, group: category?.rawValue),
+                        (category.flatMap { order.firstIndex(of: $0) } ?? order.count, definition?.priority ?? Int.max)
+                    )
+                }
+                .sorted { $0.rank < $1.rank }
+                .map(\.option)
+        }
     }
 
     var advanced: [Option] = []
@@ -68,7 +88,13 @@ struct StatPickerMenu: View {
 
     var body: some View {
         Menu {
-            if !advanced.isEmpty {
+            if advanced.contains(where: { $0.group != nil }) {
+                ForEach(groups(advanced), id: \.title) { group in
+                    Section(group.title) {
+                        rows(group.options, select: onSelectAdvanced)
+                    }
+                }
+            } else if !advanced.isEmpty {
                 Section("Advanced") {
                     rows(advanced, select: onSelectAdvanced)
                 }
@@ -85,6 +111,20 @@ struct StatPickerMenu: View {
         .hardwoodMenuAppearance()
         .accessibilityLabel("Stat")
         .accessibilityValue(activeLabel)
+    }
+
+    /// Consecutive options sharing a group, in order.
+    private func groups(_ options: [Option]) -> [(title: String, options: [Option])] {
+        var result: [(title: String, options: [Option])] = []
+        for option in options {
+            let title = option.group ?? "Advanced"
+            if result.last?.title == title {
+                result[result.count - 1].options.append(option)
+            } else {
+                result.append((title, [option]))
+            }
+        }
+        return result
     }
 
     private func rows(
@@ -153,14 +193,10 @@ struct StatsBoardStatPicker: View {
 
     var body: some View {
         StatPickerMenu(
-            advanced: viewModel.availableAdvancedSortMetrics.map { metric in
-                .init(
-                    id: metric,
-                    label: metric,
-                    isSelected: bindings.board == .advanced
-                        && metric == viewModel.currentSortMetric
-                )
-            },
+            advanced: StatPickerMenu.Option.categorized(
+                viewModel.availableAdvancedSortMetrics,
+                selected: bindings.board == .advanced ? viewModel.currentSortMetric : nil
+            ),
             standard: StandardStatCatalog.stats(for: position).map { stat in
                 .init(
                     id: stat,
@@ -196,12 +232,14 @@ struct StatsViewMenu: View {
     private var isActive: Bool {
         viewModel.qualifierLevel != .all
             || viewModel.selectedConference != .all
+            || viewModel.isRookieFilterActive
             || board == .bestWorst
     }
 
     var body: some View {
         Menu {
             conferenceSection
+            if viewModel.canFilterRookies { playersSection }
             qualifierSection
             boardSection
         } label: {
@@ -227,6 +265,24 @@ struct StatsViewMenu: View {
                         Label(conference.rawValue, systemImage: "checkmark")
                     } else {
                         Text(conference.rawValue)
+                    }
+                }
+            }
+        }
+    }
+
+    private var playersSection: some View {
+        Section("Players") {
+            ForEach([false, true], id: \.self) { rookies in
+                Button {
+                    viewModel.rookiesOnly = rookies
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                } label: {
+                    let title = rookies ? "Rookies only" : "Everyone"
+                    if viewModel.rookiesOnly == rookies {
+                        Label(title, systemImage: "checkmark")
+                    } else {
+                        Text(title)
                     }
                 }
             }

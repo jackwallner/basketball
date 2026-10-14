@@ -48,6 +48,7 @@ struct GameDetailView: View {
         .sheet(item: $paywallTrigger) { trigger in
             TrialPitchSheet(trigger: trigger)
         }
+        .modifier(LiveScorePolling(viewModel: viewModel))
         .task(id: "\(gameId)-\(game.map(viewModel.hasStats) ?? false)-\(viewModel.freshnessRevision ?? "none")") {
             async let details: Void = loadDetail()
             async let lines: Void = loadLogs(force: false)
@@ -106,6 +107,14 @@ struct GameDetailView: View {
                                 .font(HardwoodType.statLarge)
                                 .foregroundStyle(HardwoodPalette.inkTertiary)
                             scoreText(game.homeScore, winner: game.result(for: game.homeTeam) != "L")
+                        }
+                    } else if let live = viewModel.liveScore(for: game) {
+                        HStack(spacing: 10) {
+                            scoreText(live.awayScore, winner: !live.isFinal || live.awayScore > live.homeScore)
+                            Text("-")
+                                .font(HardwoodType.statLarge)
+                                .foregroundStyle(HardwoodPalette.inkTertiary)
+                            scoreText(live.homeScore, winner: !live.isFinal || live.homeScore > live.awayScore)
                         }
                     } else {
                         Text(status == .upcoming ? game.tipoffLabel : "In progress")
@@ -185,6 +194,9 @@ struct GameDetailView: View {
     }
 
     private func statusLine(_ game: Game, status: GameStatus) -> String {
+        if let live = viewModel.liveScore(for: game) {
+            return live.isFinal ? live.clockLabel : "Live · \(live.clockLabel)"
+        }
         switch status {
         case .final: return game.overtime ? "Final/OT" : "Final"
         case .inProgress, .awaitingScore: return "Score posts at the final"
@@ -255,11 +267,19 @@ struct GameDetailView: View {
                     text: "The final score is in. Player stats usually post within a few hours of the final buzzer."
                 )
             case .inProgress, .awaitingScore:
-                notice(
-                    icon: "basketball",
-                    title: "Game in progress",
-                    text: "The score and box score post when the game goes final."
-                )
+                if viewModel.liveScore(for: game)?.isFinal == true {
+                    notice(
+                        icon: "clock",
+                        title: "Stats arriving",
+                        text: "The game is final. Player stats usually post within a few hours of the final buzzer."
+                    )
+                } else {
+                    notice(
+                        icon: "basketball",
+                        title: "Game in progress",
+                        text: "The score updates live. The box score posts after the final."
+                    )
+                }
             case .upcoming:
                 upcomingCard(game)
             }
@@ -832,12 +852,178 @@ struct GameDetailView: View {
         .monospacedDigit()
     }
 
+    /// The preview a fan opens before tip-off: who is favoured, how the two
+    /// teams compare, and the season series so far.
+    @ViewBuilder
     private func upcomingCard(_ game: Game) -> some View {
-        notice(
-            icon: "calendar",
-            title: "Not started yet",
-            text: "The score and box score post here when the game goes final. Scout both rosters from the team pages above."
-        )
+        let rows = matchupRows(game)
+        if viewModel.projection(for: game) == nil && rows.isEmpty {
+            notice(
+                icon: "calendar",
+                title: "Not started yet",
+                text: "The score updates live from tip-off, and the box score posts after the final. Scout both rosters from the team pages above."
+            )
+        } else {
+            card(title: "Matchup") {
+                if let projection = viewModel.projection(for: game) {
+                    winChance(projection, game: game)
+                }
+                if !rows.isEmpty {
+                    HStack(spacing: 0) {
+                        Text(displayTeamAbbr(game.awayTeam)).frame(width: 96, alignment: .leading)
+                        Spacer(minLength: 0)
+                        Text(displayTeamAbbr(game.homeTeam)).frame(width: 96, alignment: .trailing)
+                    }
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
+                    .padding(.horizontal, HardwoodGeo.padInline)
+                    .frame(height: 26)
+                    .background(HardwoodPalette.surfaceAlt)
+                    ForEach(Array(rows.enumerated()), id: \.element.label) { index, row in
+                        matchupRow(row)
+                            .background(index.isMultiple(of: 2) ? HardwoodPalette.surface : HardwoodPalette.surfaceAlt)
+                    }
+                }
+                if let series = seasonSeries(game) {
+                    Text(series)
+                        .font(HardwoodType.smallBold)
+                        .foregroundStyle(HardwoodPalette.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, HardwoodGeo.padCard)
+                        .padding(.top, 10)
+                }
+                footnoteRow(matchupFootnote(game))
+            }
+        }
+    }
+
+    private struct MatchupRow {
+        let label: String
+        let away: String
+        let home: String
+        /// Which side the row favours: -1 away, 1 home, 0 neither.
+        let edge: Int
+    }
+
+    private func matchupRows(_ game: Game) -> [MatchupRow] {
+        var rows: [MatchupRow] = []
+        func edge(_ away: Double, _ home: Double, higherIsBetter: Bool = true) -> Int {
+            guard away != home else { return 0 }
+            return (home > away) == higherIsBetter ? 1 : -1
+        }
+        // Records and scoring belong to the season being played; a game from a
+        // season that hasn't started has neither.
+        if game.season == viewModel.freeSeason,
+           let away = viewModel.standings[normalizedTeamAbbreviation(game.awayTeam)],
+           let home = viewModel.standings[normalizedTeamAbbreviation(game.homeTeam)],
+           away.games > 0, home.games > 0 {
+            rows.append(MatchupRow(label: "Record", away: away.record, home: home.record,
+                                   edge: edge(away.winPercentage, home.winPercentage)))
+            func perGame(_ total: Int, _ games: Int) -> Double { Double(total) / Double(games) }
+            let tenths: (Double) -> String = { String(format: "%.1f", $0) }
+            let ap = perGame(away.pointsFor, away.games), hp = perGame(home.pointsFor, home.games)
+            rows.append(MatchupRow(label: "PTS/G", away: tenths(ap), home: tenths(hp), edge: edge(ap, hp)))
+            let aa = perGame(away.pointsAgainst, away.games), ha = perGame(home.pointsAgainst, home.games)
+            rows.append(MatchupRow(label: "OPP PTS/G", away: tenths(aa), home: tenths(ha), edge: edge(aa, ha, higherIsBetter: false)))
+            if let a = away.streak, let h = home.streak {
+                rows.append(MatchupRow(label: "Streak", away: a, home: h, edge: 0))
+            }
+        }
+        let ratings = Array(viewModel.teamRatings.values)
+        if let away = viewModel.teamRating(game.awayTeam), let home = viewModel.teamRating(game.homeTeam) {
+            func rank(_ value: Double, _ key: (TeamRating) -> Double) -> String {
+                (ratings.filter { key($0) > value }.count + 1).ordinalString
+            }
+            func pair(_ label: String, _ key: @escaping (TeamRating) -> Double) {
+                rows.append(MatchupRow(
+                    label: label,
+                    away: "\(TeamRating.signed(key(away))) · \(rank(key(away), key))",
+                    home: "\(TeamRating.signed(key(home))) · \(rank(key(home), key))",
+                    edge: edge(key(away), key(home))
+                ))
+            }
+            pair("Power", \.rating)
+            pair("Offense", \.offense)
+            pair("Defense", \.defense)
+        }
+        return rows
+    }
+
+    private func matchupRow(_ row: MatchupRow) -> some View {
+        HStack(spacing: 0) {
+            Text(row.away)
+                .font(row.edge < 0 ? HardwoodType.smallBold : HardwoodType.small)
+                .foregroundStyle(row.edge < 0 ? HardwoodPalette.ink : HardwoodPalette.inkSecondary)
+                .frame(width: 96, alignment: .leading)
+            Text(row.label)
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkTertiary)
+                .frame(maxWidth: .infinity)
+            Text(row.home)
+                .font(row.edge > 0 ? HardwoodType.smallBold : HardwoodType.small)
+                .foregroundStyle(row.edge > 0 ? HardwoodPalette.ink : HardwoodPalette.inkSecondary)
+                .frame(width: 96, alignment: .trailing)
+        }
+        .monospacedDigit()
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .padding(.horizontal, HardwoodGeo.padInline)
+        .frame(height: 36)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(row.label): away \(row.away), home \(row.home)")
+    }
+
+    private func winChance(_ projection: GameProjection, game: Game) -> some View {
+        let home = projection.homeWinProbability
+        return VStack(spacing: 8) {
+            HStack {
+                Text("\(displayTeamAbbr(game.awayTeam)) \(Int(((1 - home) * 100).rounded()))%")
+                Spacer()
+                Text("WIN CHANCE")
+                    .font(HardwoodType.micro)
+                    .foregroundStyle(HardwoodPalette.inkTertiary)
+                Spacer()
+                Text("\(Int((home * 100).rounded()))% \(displayTeamAbbr(game.homeTeam))")
+            }
+            .font(HardwoodType.bodyBold)
+            .foregroundStyle(HardwoodPalette.ink)
+            .monospacedDigit()
+            GeometryReader { proxy in
+                HStack(spacing: 2) {
+                    NBATeamColor.color(game.awayTeam)
+                        .frame(width: max(0, (proxy.size.width - 2) * (1 - home)))
+                    NBATeamColor.color(game.homeTeam)
+                }
+                .clipShape(Capsule())
+            }
+            .frame(height: 8)
+            Text("Projected: " + projection.label(home: game.homeTeam, away: game.awayTeam))
+                .font(HardwoodType.micro)
+                .foregroundStyle(HardwoodPalette.inkSecondary)
+        }
+        .padding(HardwoodGeo.padCard)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Win chance: \(teamFullName(game.awayTeam)) \(Int(((1 - home) * 100).rounded())) percent, \(teamFullName(game.homeTeam)) \(Int((home * 100).rounded())) percent. Projected \(projection.label(home: game.homeTeam, away: game.awayTeam))")
+    }
+
+    /// "Season series: NYK leads 2-1", from this season's finals between them.
+    private func seasonSeries(_ game: Game) -> String? {
+        guard game.seasonPhase == .regular else { return nil }
+        let meetings = viewModel.schedule(forTeam: game.awayTeam).filter {
+            $0.isFinal && $0.season == game.season && $0.countsInStandings && $0.involves(game.homeTeam)
+        }
+        guard !meetings.isEmpty else { return nil }
+        let awayWins = meetings.filter { $0.result(for: game.awayTeam) == "W" }.count
+        let homeWins = meetings.count - awayWins
+        if awayWins == homeWins { return "Season series tied \(awayWins)-\(homeWins)" }
+        let leader = awayWins > homeWins ? game.awayTeam : game.homeTeam
+        return "Season series: \(displayTeamAbbr(leader)) leads \(max(awayWins, homeWins))-\(min(awayWins, homeWins))"
+    }
+
+    private func matchupFootnote(_ game: Game) -> String {
+        let ratingSeason = game.season == viewModel.freeSeason ? "" : " Ratings are from \(SeasonLabel.text(viewModel.freeSeason)) until this season has games."
+        return "Win chance and margin come from StatScout Power Ratings: points per 100 possessions against an average team, adjusted for schedule, plus home court. Ranks are among all 30 teams." + ratingSeason
+            + " The score updates live from tip-off."
     }
 
     // MARK: - Pieces

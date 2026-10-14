@@ -13,9 +13,11 @@ struct TeamView: View {
     @State private var selectedTab: TeamTab = .advanced
     @State private var searchText = ""
     @State private var isSearching = false
-    // Default to Impact so the roster opens on On-Off, the same all-in-one
-    // number the Stats board opens on.
-    @State private var selectedCategory: MetricCategory? = .impact
+    // The roster opens on On-Off, the same all-in-one number the Stats board
+    // opens on, and offers the same controls: position tabs, the stat picker,
+    // the sort arrow, search and the View menu.
+    @State private var rosterStat = "On-Off"
+    @State private var rosterPosition: PlayerPositionGroup = .all
     @State private var sortDescending = true
     @State private var lastDefaultedSortKey: String? = nil
     @State private var showingTrial = false
@@ -23,7 +25,6 @@ struct TeamView: View {
     @State private var qualifierLevel: DashboardViewModel.QualifierLevel = .all
     @State private var rosterMode: RosterMode = .season
     @State private var rosterWindow: RecentWindow = .twoWeeks
-    @State private var userSortLabel: String?
 
     enum TeamTab: String, CaseIterable {
         case advanced = "Advanced"
@@ -69,31 +70,33 @@ struct TeamView: View {
         viewModel?.selectedPhase ?? .regular
     }
 
-    private var sortMetric: (label: String, category: MetricCategory)? {
-        guard let category = selectedCategory else { return nil }
-        if let userSortLabel, availableSortLabels.contains(userSortLabel) {
-            return (userSortLabel, category)
-        }
-        for label in priorityMetrics(for: category) {
-            if players.contains(where: { p in p.metrics.contains { $0.label == label && $0.category == category } }) {
-                return (label, category)
-            }
-        }
-        return nil
+    /// Every metric the roster carries, one per label, in the registry's
+    /// order: the list the Stats board's picker draws from, for this team.
+    private var rosterMetrics: [Metric] {
+        var seen = Set<String>()
+        let present = players
+            .filter { rosterPosition.includes($0) }
+            .flatMap(\.metrics)
+            .filter { BasketballMetricRegistry.isSupported($0, by: rosterPosition) }
+        return BasketballMetricRegistry.sorted(present).filter { seen.insert($0.label).inserted }
     }
 
-    private var availableSortLabels: [String] {
-        guard let category = selectedCategory else { return [] }
-        let present = Set(players.flatMap { player in
-            player.metrics.filter { $0.category == category }.map(\.label)
-        })
-        let ordered = category.metricPriorityOrder.filter { present.contains($0) }
-        return ordered + present.subtracting(category.metricPriorityOrder).sorted()
+    private func rosterLabels(_ kind: MetricKind) -> [String] {
+        rosterMetrics
+            .filter { BasketballMetricRegistry.definition(for: $0.label, category: $0.category)?.kind == kind }
+            .map(\.label)
+    }
+
+    private var sortMetric: (label: String, category: MetricCategory)? {
+        let metrics = rosterMetrics
+        let pick = metrics.first { $0.label == rosterStat }
+            ?? metrics.first { $0.label == "On-Off" }
+            ?? metrics.first
+        return pick.map { ($0.label, $0.category) }
     }
 
     private var sortLabel: String {
-        if selectedCategory == nil { return "Overall" }
-        return sortMetric?.label ?? "Top Category"
+        sortMetric?.label ?? "Overall"
     }
 
     private var rowDisplayMetric: (label: String?, category: MetricCategory?) {
@@ -112,8 +115,7 @@ struct TeamView: View {
     }
 
     private func fallbackPercentile(_ player: Player) -> Int {
-        if let category = selectedCategory, let p = player.percentile(for: category) { return p }
-        return player.overallPercentile
+        player.overallPercentile
     }
 
     private func recentForm(_ player: Player) -> RecentForm? {
@@ -164,11 +166,8 @@ struct TeamView: View {
             $0.matchesSearch(searchText, includingTeam: false)
                 || $0.displayPosition.localizedCaseInsensitiveContains(searchText)
         }
-        let byCategory = bySearch.filter { player in
-            guard let selectedCategory else { return true }
-            return player.metrics.contains { $0.category == selectedCategory }
-        }
-        let byQualifier = byCategory.filter { isQualified($0) }
+        let byPosition = bySearch.filter { rosterPosition.includes($0) }
+        let byQualifier = byPosition.filter { isQualified($0) }
         if isRosterRecent, sortMetric != nil {
             return byQualifier.filter { recentValue($0) != nil }.sorted {
                 let first = recentValue($0) ?? 0
@@ -196,7 +195,7 @@ struct TeamView: View {
         case .all:
             return true
         case .qualified:
-            return DashboardViewModel.hasQualifyingMetric(player, in: selectedCategory)
+            return DashboardViewModel.hasQualifyingMetric(player, in: sortMetric?.category)
         }
     }
 
@@ -241,6 +240,11 @@ struct TeamView: View {
                         TeamGameCard(viewModel: viewModel, team: team)
                             .padding(.horizontal, 12)
                             .padding(.top, 10)
+                        if displayPhase == .regular {
+                            TeamSeasonGlance(viewModel: viewModel, team: team)
+                                .padding(.horizontal, 12)
+                                .padding(.top, 10)
+                        }
                     }
                 }
                 tabSelector
@@ -288,8 +292,10 @@ struct TeamView: View {
             }
         }
         .onAppear { applyDefaultDirectionIfMetricChanged() }
-        .onChange(of: selectedCategory) { _, _ in
-            userSortLabel = nil
+        .onChange(of: rosterStat) { _, _ in
+            applyDefaultDirectionIfMetricChanged()
+        }
+        .onChange(of: rosterPosition) { _, _ in
             applyDefaultDirectionIfMetricChanged()
         }
         // Season changes through the nav-bar menu rotate the roster data beneath
@@ -410,16 +416,18 @@ struct TeamView: View {
             }
 
             HardwoodTabs(
-                tabs: MetricCategory.allCases.map(\.rawValue),
+                tabs: PlayerPositionGroup.allCases.map(\.rawValue),
                 selected: Binding(
-                    get: { (selectedCategory ?? .scoring).rawValue },
-                    set: { rawValue in
-                        selectedCategory = MetricCategory.allCases.first {
-                            $0.rawValue == rawValue
+                    get: { rosterPosition.rawValue },
+                    set: { raw in
+                        if let next = PlayerPositionGroup.allCases.first(where: { $0.rawValue == raw }) {
+                            rosterPosition = next
                         }
                     }
                 )
             )
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Position")
             .padding(.horizontal, 12)
             .padding(.top, 8)
 
@@ -444,32 +452,22 @@ struct TeamView: View {
         )
     }
 
-    /// Mirrors the Stats tab's sort UI - left-side chip showing the active
-    /// metric (tap flips direction), and a magnifying-glass toggle on the right
-    /// that expands an inline search row.
+    /// The Stats board's control row, item for item: stat picker and sort
+    /// arrow on the left, search and View on the right.
     private var sortControlsRow: some View {
         HStack(spacing: 8) {
-            Button {
+            StatPickerMenu(
+                advanced: StatPickerMenu.Option.categorized(rosterLabels(.advanced), selected: sortMetric?.label),
+                standard: rosterLabels(.traditional).map {
+                    .init(id: $0, label: $0, isSelected: $0 == sortMetric?.label)
+                },
+                activeLabel: sortLabel,
+                onSelectAdvanced: { rosterStat = $0.id },
+                onSelectStandard: { rosterStat = $0.id }
+            )
+            SortDirectionButton(descending: sortDescending, statLabel: sortLabel) {
                 sortDescending.toggle()
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            } label: {
-                HStack(spacing: 6) {
-                    Text(sortLabel)
-                        .font(HardwoodType.smallBold)
-                        .foregroundStyle(HardwoodPalette.ink)
-                    Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(HardwoodPalette.court)
-                }
-                .padding(.horizontal, 12)
-                .frame(height: 30)
-                .background(HardwoodPalette.surface)
-                .clipShape(Capsule())
-                .overlay(Capsule().stroke(HardwoodPalette.hairline, lineWidth: 0.5))
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Sorted by \(sortLabel), \(sortDescending ? "highest first" : "lowest first")")
-            .accessibilityHint("Tap to flip sort direction")
 
             Spacer(minLength: 0)
 
@@ -478,22 +476,16 @@ struct TeamView: View {
                 if !isSearching { searchText = "" }
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
-                let active = isSearching || !searchText.isEmpty
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(active ? .white : HardwoodPalette.inkSecondary)
-                    .frame(width: 30, height: 30)
-                    .background(active ? HardwoodPalette.court : HardwoodPalette.surface)
-                    .clipShape(Capsule())
-                    .overlay(Capsule().stroke(active ? Color.clear : HardwoodPalette.hairline, lineWidth: 0.5))
+                HardwoodChip(systemImage: "magnifyingglass", isActive: isSearching || !searchText.isEmpty)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Search")
+            .accessibilityLabel("Search players")
 
-            rosterFiltersMenu
+            rosterViewMenu
         }
         .padding(.horizontal, 12)
-        .padding(.top, 12)
+        .frame(height: HardwoodControl.height + 2)
+        .padding(.top, HardwoodGeo.controlRowGap)
     }
 
     @ViewBuilder
@@ -509,27 +501,11 @@ struct TeamView: View {
         }
     }
 
-    private var rosterFiltersMenu: some View {
+    /// The Stats board's View menu, less what a single roster has no use for
+    /// (conference, Best & Worst).
+    private var rosterViewMenu: some View {
         Menu {
-            if !availableSortLabels.isEmpty {
-                Section("Sort by") {
-                    ForEach(availableSortLabels, id: \.self) { label in
-                        Button {
-                            userSortLabel = label
-                            applyDefaultDirectionIfMetricChanged()
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        } label: {
-                            if label == sortMetric?.label {
-                                Label(label, systemImage: "checkmark")
-                            } else {
-                                Text(label)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Section("Minimum playing time") {
+            Section("Qualifier") {
                 ForEach(DashboardViewModel.QualifierLevel.allCases) { level in
                     Button {
                         qualifierLevel = level
@@ -544,33 +520,16 @@ struct TeamView: View {
                     }
                 }
             }
-
-            Section("Direction") {
-                Button {
-                    sortDescending = true
-                } label: {
-                    sortDescending
-                        ? Label("Highest first", systemImage: "checkmark")
-                        : Label("Highest first", systemImage: "arrow.down")
-                }
-                Button {
-                    sortDescending = false
-                } label: {
-                    !sortDescending
-                        ? Label("Lowest first", systemImage: "checkmark")
-                        : Label("Lowest first", systemImage: "arrow.up")
-                }
-            }
         } label: {
             HardwoodChip(
-                title: "Filters",
-                systemImage: "line.3.horizontal.decrease.circle",
+                title: "View",
+                systemImage: "slider.horizontal.3",
                 trailing: .chevron,
                 isActive: qualifierLevel != .all
             )
         }
         .menuOrder(.fixed)
-        .accessibilityLabel("Filters")
+        .accessibilityLabel("View options")
     }
 
     private var searchRow: some View {
@@ -599,12 +558,11 @@ struct TeamView: View {
                     description: "No players are tracked for \(teamFullName(team)) in the \(SeasonLabel.text(displaySeason)) season."
                 )
             } else if filteredPlayers.isEmpty {
-                let noCategoryMatch = searchText.isEmpty && selectedCategory != nil
                 emptyStateView(
                     icon: "magnifyingglass",
                     title: "No players found",
-                    description: noCategoryMatch
-                        ? "No players match the selected category for this team."
+                    description: searchText.isEmpty
+                        ? "No \(rosterPosition == .all ? "" : rosterPosition.noun + " ")players match this view. Try All or another position."
                         : "Try a different search term."
                 )
             } else if isRosterRecent && !hasRecentData {
@@ -736,17 +694,6 @@ struct TeamView: View {
                 title: SeasonLabel.text(viewModel.selectedSeason)
                     + (viewModel.selectedPhase == .playoffs ? " · Playoffs" : "")
             )
-        }
-    }
-
-    private func priorityMetrics(for category: MetricCategory) -> [String] {
-        switch category {
-        case .scoring: return ["Pts/100", "TS%", "USG%", "PPG"]
-        case .shooting: return ["Rim FG%", "Rim Freq", "Non-Corner 3%", "Corner 3%"]
-        case .playmaking: return ["AST%", "AST/100", "APG", "AST:TO"]
-        case .rebounding: return ["REB%", "DREB%", "OREB%", "RPG"]
-        case .defense: return ["STL%", "BLK%", "Stocks/100", "SPG"]
-        case .impact: return ["On-Off", "On-Court +/-", "Min%", "MPG"]
         }
     }
 }

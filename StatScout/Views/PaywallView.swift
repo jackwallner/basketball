@@ -64,7 +64,7 @@ enum PaywallTrigger: Identifiable, Hashable {
         case .playerScouting:    return "Full Player Scouting"
         case .recentForm:        return "Recent Form"
         case .bestWorst:         return "Best & Worst"
-        case .advancedBoxScore:  return "Advanced Box Scores"
+        case .advancedBoxScore:  return "Player Ratings"
         }
     }
 
@@ -130,7 +130,7 @@ enum PaywallTrigger: Identifiable, Hashable {
         ("chart.bar.fill", "Recent form (1 / 2 / 4 weeks) on any player, team or leaderboard"),
         ("person.2.fill", "Head-to-head: any two players, every metric"),
         ("shield.lefthalf.filled", "Team scouting for all 30 teams: advanced and standard, season or recent"),
-        ("sportscourt.fill", "Advanced box scores: TS%, usage and plus/minus for every player, every game"),
+        ("sportscourt.fill", "Player ratings in every box score: each night ranked against the season"),
         ("calendar.badge.clock", "Every season back to 2002-03 + year-over-year trends")
     ]
 
@@ -429,7 +429,7 @@ struct PaywallView: View {
                 Button { dismissOnce() } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 28))
-                        .foregroundStyle(.white, .black.opacity(0.28))
+                        .foregroundStyle(.white, .black.opacity(0.55))
                         .padding(16)
                 }
                 .buttonStyle(.plain)

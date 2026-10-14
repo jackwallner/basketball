@@ -18,6 +18,9 @@ struct MetricRoute: Hashable {
     /// against whatever the tab's phase happened to be, which landed a playoff
     /// drill-down on the regular-season board under a playoff heading.
     var phase: SeasonPhase? = nil
+    /// The cohort to open on. A profile's bar is a percentile among that
+    /// player's position group, so its leaderboard opens on the same group.
+    var position: PlayerPositionGroup = .all
 }
 
 /// Drill-down from a traditional stat row to its league leaderboard.
@@ -549,6 +552,7 @@ private struct StandardDestinations: ViewModifier {
                     metricCategory: route.category,
                     players: viewModel.players(forSeason: season, phase: phase),
                     season: season,
+                    position: route.position,
                     viewModel: viewModel
                 )
                     .modifier(HardwoodNavBar())

@@ -35,8 +35,8 @@ struct TrialPitchSheet: View {
         case .advancedBoxScore:
             return [
                 Benefit(icon: "sportscourt.fill",
-                        title: "Advanced box scores",
-                        detail: "TS%, usage and plus/minus for every player, every game."),
+                        title: "Player ratings",
+                        detail: "Every player's night in every game, ranked against the season."),
                 Benefit(icon: "flame.fill",
                         title: "The Trends board",
                         detail: "The whole league ranked by who's moving, right now."),

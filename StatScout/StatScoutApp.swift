@@ -246,6 +246,13 @@ struct OnboardingCards: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .always))
                 .indexViewStyle(.page(backgroundDisplayMode: .always))
+                .onAppear {
+                    // The default dots are white on gray, which vanish on the
+                    // pale canvas; the current page is the one that must show.
+                    let dots = UIPageControl.appearance(whenContainedInInstancesOf: [UIViewController.self])
+                    dots.currentPageIndicatorTintColor = UIColor(HardwoodPalette.court)
+                    dots.pageIndicatorTintColor = UIColor(HardwoodPalette.inkTertiary).withAlphaComponent(0.35)
+                }
 
                 bottomButtons
                     .padding(.horizontal, 24)

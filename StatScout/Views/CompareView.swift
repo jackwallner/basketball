@@ -349,7 +349,9 @@ struct CompareView: View {
                 playersB: viewModel.players(
                     forSeason: route.seasonB,
                     phase: route.phaseB
-                )
+                ),
+                clubA: clubSeason(route.teamA, season: route.seasonA, phase: route.phaseA),
+                clubB: clubSeason(route.teamB, season: route.seasonB, phase: route.phaseB)
             )
             .modifier(HardwoodNavBarPublic())
         }
@@ -906,7 +908,7 @@ struct CompareView: View {
                 perkRow("person.2.fill", "Head-to-head comparisons across every metric")
                 perkRow("chart.line.uptrend.xyaxis", "Year-over-year trends for any player")
                 perkRow("calendar.badge.clock", "Every past season unlocked")
-                perkRow("arrow.down.circle.fill", "Available offline, even at the stadium")
+                perkRow("chart.bar.fill", "Last week, 2 week and 4 week form on every player")
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 4)
@@ -1181,10 +1183,28 @@ struct CompareTeamPicker: View {
     }
 }
 
+extension CompareView {
+    /// The team's own numbers when the side is the live regular season.
+    func clubSeason(_ team: String, season: Int, phase: SeasonPhase) -> ClubSeason? {
+        guard season == viewModel.freeSeason, phase == .regular else { return nil }
+        let abbr = normalizedTeamAbbreviation(team)
+        return ClubSeason(standing: viewModel.standings[abbr], rating: viewModel.teamRating(abbr))
+    }
+}
+
+/// A team's own live regular season: its standings line and power rating.
+/// Only the live season has them.
+struct ClubSeason {
+    let standing: StandingsRow?
+    let rating: TeamRating?
+}
+
 struct TeamComparisonView: View {
     let route: TeamComparisonRoute
     let playersA: [Player]
     let playersB: [Player]
+    var clubA: ClubSeason? = nil
+    var clubB: ClubSeason? = nil
 
     private struct StatRow: Identifiable {
         let id: String
@@ -1212,6 +1232,33 @@ struct TeamComparisonView: View {
         }
     }
 
+    /// The teams' own results, not roster sums: record, scoring and the power
+    /// rating. Only when both sides are the live regular season with games
+    /// played, the one season these exist for.
+    private var clubRows: [StatRow] {
+        guard let a = clubA, let b = clubB,
+              let sa = a.standing, let sb = b.standing, sa.games > 0, sb.games > 0 else { return [] }
+        func perGame(_ total: Int, _ games: Int) -> Double { Double(total) / Double(games) }
+        func tenths(_ v: Double) -> String { v.formatted(.number.precision(.fractionLength(1))) }
+        func row(_ label: String, _ x: Double?, _ y: Double?, higherIsBetter: Bool = true, format: (Double) -> String) -> StatRow {
+            let sign: Double = higherIsBetter ? 1 : -1
+            return StatRow(id: "club-" + label, label: label,
+                           aText: x.map(format) ?? "-", bText: y.map(format) ?? "-",
+                           aValue: x.map { $0 * sign }, bValue: y.map { $0 * sign })
+        }
+        return [
+            StatRow(id: "club-record", label: "Record", aText: sa.record, bText: sb.record,
+                    aValue: sa.winPercentage, bValue: sb.winPercentage),
+            row("PTS/G", perGame(sa.pointsFor, sa.games), perGame(sb.pointsFor, sb.games), format: tenths),
+            row("OPP PTS/G", perGame(sa.pointsAgainst, sa.games), perGame(sb.pointsAgainst, sb.games),
+                higherIsBetter: false, format: tenths),
+            row("Margin", perGame(sa.differential, sa.games), perGame(sb.differential, sb.games)) { TeamRating.signed($0) },
+            row("Power", a.rating?.rating, b.rating?.rating) { TeamRating.signed($0) },
+            row("Power OFF", a.rating?.offense, b.rating?.offense) { TeamRating.signed($0) },
+            row("Power DEF", a.rating?.defense, b.rating?.defense) { TeamRating.signed($0) },
+        ]
+    }
+
     /// Advanced rows come from `metrics`, standard rows from `standard_stats`,
     /// so they are built separately and interleaved category by category. The
     /// team card used to show only the standard half, which left the one screen
@@ -1219,7 +1266,7 @@ struct TeamComparisonView: View {
     /// unable to reference a single advanced number - the exact thing the rest
     /// of the app is built on.
     private var statGroups: [(title: String, rows: [StatRow])] {
-        MetricCategory.allCases.flatMap { category -> [(title: String, rows: [StatRow])] in
+        [("TEAM · THIS SEASON", clubRows)] + MetricCategory.allCases.flatMap { category -> [(title: String, rows: [StatRow])] in
             [
                 (category.rawValue.uppercased() + " · ADVANCED", advancedRows(for: category)),
                 (category.rawValue.uppercased() + " · STANDARD", standardRows(for: category)),
@@ -1367,7 +1414,8 @@ struct TeamComparisonView: View {
                     }
                 }
 
-                Text("Totals sum the selected roster's player season lines, and rates are weighted by minutes. Traded players bring their full-season line, so these are roster aggregates rather than official team totals.")
+                Text((clubRows.isEmpty ? "" : "Team · This season is each team's own record, scoring and StatScout Power Rating. ")
+                     + "The other sections sum the selected roster's player season lines, with rates weighted by minutes. Traded players bring their full-season line, so those are roster aggregates rather than official team totals.")
                     .font(HardwoodType.micro)
                     .foregroundStyle(HardwoodPalette.inkTertiary)
                     .fixedSize(horizontal: false, vertical: true)

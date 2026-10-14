@@ -22,6 +22,9 @@ final class DashboardViewModel {
     @ObservationIgnored private var rostersBySeason: [String: [Player]] = [:]
     var searchText = ""
     var selectedConference: NBAConference = .all
+    /// First-season players only. Applies to the live season, the only one
+    /// with profiles loaded.
+    var rookiesOnly = false
     var selectedPosition: PlayerPositionGroup = .all {
         didSet {
             guard oldValue != selectedPosition else { return }
@@ -555,6 +558,38 @@ final class DashboardViewModel {
         "\(day.id)|\(day.phase.rawValue)"
     }
 
+    /// Running scores for games that have tipped off without a posted final,
+    /// keyed by game id, from the league scoreboard.
+    private(set) var liveScores: [String: LiveScore] = [:]
+
+    func liveScore(for game: Game) -> LiveScore? {
+        game.isFinal ? nil : liveScores[game.id]
+    }
+
+    /// True while a game has tipped off and the schedule has no final for it.
+    func hasGamesUnderway(now: Date = .now) -> Bool {
+        (games + upcomingGames).contains { [.inProgress, .awaitingScore].contains($0.status(now: now)) }
+    }
+
+    /// Re-reads the scoreboard for every game that has tipped off without a
+    /// posted final. Clears it when nothing is under way.
+    func refreshLiveScores(now: Date = .now) async {
+        let started = (games + upcomingGames).filter {
+            [.inProgress, .awaitingScore].contains($0.status(now: now))
+        }
+        guard !started.isEmpty else {
+            if !liveScores.isEmpty { liveScores = [:] }
+            return
+        }
+        let dates = Set(started.map { LiveScoreClient.dateKey($0.gameDate) })
+        let fetched = await provider.fetchLiveScores(dates: dates)
+        // A failed read keeps the last scores on screen rather than blanking them.
+        guard !fetched.isEmpty else { return }
+        let ids = Set(started.map(\.id))
+        let next = fetched.filter { ids.contains($0.key) }
+        if next != liveScores { liveScores = next }
+    }
+
     /// The last day of games the live season played, for the "how it ended" card
     /// under the upcoming slate. Empty unless the next season is pending.
     var lastPlayedGames: [Game] {
@@ -976,7 +1011,7 @@ final class DashboardViewModel {
         return seasonPlayers.filter { player in
             let matchesSearch = player.matchesSearch(searchText)
             let matchesPosition = selectedPosition.includes(player)
-            let matchesConference = matchesSelectedConference(player)
+            let matchesConference = matchesBoardFilters(player)
             let matchingMetrics = player.metrics.filter {
                 BasketballMetricRegistry.isSupported($0, by: selectedPosition)
             }
@@ -989,8 +1024,21 @@ final class DashboardViewModel {
         }
     }
 
-    func matchesSelectedConference(_ player: Player) -> Bool {
-        selectedConference.contains(team: player.team)
+    /// Conference, plus the rookie filter where it applies.
+    func matchesBoardFilters(_ player: Player) -> Bool {
+        guard selectedConference.contains(team: player.team) else { return false }
+        return !isRookieFilterActive || isRookie(player)
+    }
+
+    /// Rookies are known for the live season only.
+    var canFilterRookies: Bool {
+        selectedSeason == freeSeason && profiles.values.contains(where: \.isRookie)
+    }
+
+    var isRookieFilterActive: Bool { rookiesOnly && canFilterRookies }
+
+    func isRookie(_ player: Player) -> Bool {
+        profile(for: player)?.isRookie == true
     }
 
     enum QualifierLevel: String, CaseIterable, Identifiable {
@@ -1071,7 +1119,14 @@ final class DashboardViewModel {
               let referenceMetric = eligibleMetrics.first(where: { $0.label == label }) else {
             return filteredPlayers.sorted { $0.name < $1.name }
         }
-        let sorted = filteredPlayers.sorted(
+        // A board ranked by one metric lists the players who have it. Someone
+        // searched for by name still shows, with a dash, so search never
+        // answers "nobody" for a player the board simply can't rank.
+        let searching = !searchText.trimmingCharacters(in: .whitespaces).isEmpty
+        let ranked = searching ? filteredPlayers : filteredPlayers.filter { player in
+            player.metrics.contains { $0.label == label && $0.category == referenceMetric.category }
+        }
+        let sorted = ranked.sorted(
             by: Self.metricComparator(
                 label: label,
                 category: referenceMetric.category,
@@ -1222,7 +1277,7 @@ final class DashboardViewModel {
 
     var allMetrics: [(label: String, category: MetricCategory, best: (player: Player, percentile: Int, actualValue: String)?, worst: (player: Player, percentile: Int, actualValue: String)?)] {
         var metricMap: [String: (category: MetricCategory, values: [(player: Player, percentile: Int, actualValue: String)])] = [:]
-        for player in seasonPlayers where matchesSelectedConference(player) {
+        for player in seasonPlayers where matchesBoardFilters(player) {
             for metric in player.metrics {
                 guard isQualified(player, for: metric.category) else { continue }
                 let compositeKey = "\(metric.label)|\(metric.category.rawValue)"
