@@ -1,1 +1,1 @@
-basketball,percentil,jugadors,comparar,classificació,resultats,directe,box score,fantasy,equips
+basketball,percentil,jugadors,comparar,classificació,resultats,directe,box score,equips

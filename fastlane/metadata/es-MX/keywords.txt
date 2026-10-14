@@ -1,1 +1,1 @@
-basquet,baloncesto,percentil,jugadores,comparar,tabla,marcadores,en vivo,box score,fantasy
+basquet,baloncesto,percentil,jugadores,comparar,tabla,marcadores,en vivo,box score

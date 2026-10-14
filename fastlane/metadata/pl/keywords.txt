@@ -1,1 +1,1 @@
-basketball,kosz,percentyl,zawodnicy,porównanie,ranking,wyniki,na żywo,box score,fantasy,tabela
+basketball,kosz,percentyl,zawodnicy,porównanie,ranking,wyniki,na żywo,box score,tabela

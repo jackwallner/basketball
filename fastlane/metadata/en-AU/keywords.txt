@@ -1,1 +1,1 @@
-percentile,usage,true shooting,compare,player,rankings,teams,fantasy,standings,box score,leaders
+percentile,usage,true shooting,compare,player,rankings,teams,live scores,standings,box score,leaders

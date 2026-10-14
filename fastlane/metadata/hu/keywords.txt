@@ -1,1 +1,1 @@
-basketball,kosár,percentilis,játékosok,összehasonlítás,rangsor,eredmények,élő,box score,fantasy
+basketball,kosár,percentilis,játékosok,összehasonlítás,rangsor,eredmények,élő,box score

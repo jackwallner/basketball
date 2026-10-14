@@ -1,1 +1,1 @@
-basket,percentil,spillere,sammenlign,rangliste,resultater,live,boxscore,fantasy,hold,stilling
+basket,percentil,spillere,sammenlign,rangliste,resultater,live,boxscore,hold,stilling

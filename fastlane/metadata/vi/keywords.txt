@@ -1,1 +1,1 @@
-basketball,phân vị,cầu thủ,so sánh,xếp hạng,tỉ số,trực tiếp,box score,fantasy,đội,bảng xếp hạng
+basketball,phân vị,cầu thủ,so sánh,xếp hạng,tỉ số,trực tiếp,box score,đội,bảng xếp hạng

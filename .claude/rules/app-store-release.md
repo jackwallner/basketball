@@ -27,6 +27,27 @@ paths:
 - Only `en-US` metadata exists. 1.0 carries no What's New (Apple rejects it on
   a first version); the drafted note is in the session scratchpad only.
 
+## Submission scripts
+
+`scripts/asc-readiness.py` reports what the record still needs,
+`scripts/asc-attach-build.py` attaches the newest processed build, and
+`scripts/asc-submit-for-review.py` adds the version to the open review
+submission and submits it (`--dry-run` first). Products cannot be added over
+this API key; the first IAPs are queued by hand in the ASC web UI.
+
+## Localized listing
+
+`scripts/aso/localized_listing.py` writes name, subtitle, keywords, promo
+text and description for 35 translated locales (plus en-AU/CA/GB copies of
+en-US). Edit the dict there, rerun it, then upload. Keywords carry no league
+or team trademarks.
+
+## QA tour
+
+`scripts/tour.sh <udid> [testT..]` runs `StatScoutTourUITests` one section at
+a time on live data and exports numbered frames to `build/tour/`. Source the
+credentials first. Run it before every submission and look at every frame.
+
 ## Screenshots
 
 `scripts/screenshots/capture.py` drives the DEBUG fixture build with
