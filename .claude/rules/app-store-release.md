@@ -25,6 +25,8 @@ paths:
   button, louder than the trial-led button label (football and hockey got
   the same change). Build 6 attached, reply sent in App Review, resubmitted
   the same submission 2026-10-15 (`WAITING_FOR_REVIEW`).
+- Football 1.2.7 (63) and hockey 1.0.1 (9) carry the same paywall and are
+  held on TestFlight until this review clears; submit them on approval.
 - Resubmitting a rejected version: attach the new build, then
   `PATCH /reviewSubmissionItems/{rejected item}` with `resolved: true`, then
   `PATCH /reviewSubmissions/{id}` with `submitted: true`. Skipping the
