@@ -874,9 +874,6 @@ struct PlusDirectCTA: View {
     var style: Style = .bar
     /// Hidden where the surrounding screen already offers plan choice.
     var showsAllPlansLink: Bool = true
-    /// The billed amount leads on every purchase surface. A trial may still be
-    /// shown, but only as the subordinate second line.
-    var emphasis: PriceEmphasis = .billedAmountFirst
 
     @State private var isPurchasing = false
     @State private var statusMessage: String?
@@ -884,23 +881,31 @@ struct PlusDirectCTA: View {
 
     var body: some View {
         VStack(spacing: 8) {
+            // Billed amount, directly above the purchase point. Apple 3.1.2(c):
+            // it has to outweigh every other pricing element in the flow, trial
+            // copy on the button included, so it sits one type step above the
+            // CTA label and nothing else here is allowed to grow past it.
+            //
+            // Fixed height on purpose. `yearlyPackage` is nil until the `.task`
+            // below finishes fetching, which on a first presentation is always
+            // after this view has drawn, so an unreserved slot appears late
+            // and shifts the purchase button out from under a moving thumb.
+            Text(store.yearlyPackage?.priceLabel ?? " ")
+                .font(HardwoodType.priceLead)
+                .foregroundStyle(HardwoodPalette.ink)
+                .multilineTextAlignment(.center)
+                .frame(height: 22)
+
             Button(action: buy) {
                 label
             }
             .buttonStyle(.plain)
             .disabled(isPurchasing)
-            .accessibilityLabel(
-                [
-                    store.directCTALabel(for: trigger, emphasis: emphasis),
-                    store.directCTATrialSubline(for: trigger, emphasis: emphasis),
-                ]
-                .compactMap { $0 }
-                .joined(separator: ". ")
-            )
+            .accessibilityLabel(store.directCTALabel(for: trigger))
 
             // Full auto-renew terms sit beside the purchase point, because this
             // button *is* the purchase point now (Apple 3.1.2).
-            if let disclosure = store.yearlyCTADisclosureText(emphasis: emphasis) ?? store.paywallBlurSubtext {
+            if let disclosure = store.yearlyCTADisclosureText ?? store.paywallBlurSubtext {
                 Text(disclosure)
                     .font(HardwoodType.micro)
                     .tracking(0.3)
@@ -944,7 +949,7 @@ struct PlusDirectCTA: View {
                 } else {
                     Image(systemName: "crown.fill")
                         .font(.system(size: 11))
-                    Text(store.directCTALabel(for: trigger, emphasis: emphasis))
+                    Text(store.directCTALabel(for: trigger))
                         .font(HardwoodType.bodyBold)
                 }
             }
@@ -954,30 +959,17 @@ struct PlusDirectCTA: View {
             .background(HardwoodPalette.court)
             .clipShape(Capsule())
         case .bar:
-            // Two lines only where the emphasis asks for it: the billed amount
-            // in the button's own type, the trial under it in micro at 85%
-            // white. Same button, same height budget; the trial is still sold,
-            // just not louder than the price (Apple 3.1.2(c)).
-            let subline = store.directCTATrialSubline(for: trigger, emphasis: emphasis)
             ZStack {
-                VStack(spacing: 1) {
-                    Text(store.directCTALabel(for: trigger, emphasis: emphasis))
-                        .font(HardwoodType.bodyBold)
-                    if let subline {
-                        Text(subline)
-                            .font(HardwoodType.micro)
-                            .foregroundStyle(.white.opacity(0.85))
-                    }
-                }
-                .opacity(isPurchasing ? 0 : 1)
+                Text(store.directCTALabel(for: trigger))
+                    .font(HardwoodType.bodyBold)
+                    .opacity(isPurchasing ? 0 : 1)
                 if isPurchasing {
                     ProgressView().tint(.white)
                 }
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .frame(minHeight: 50)
-            .padding(.vertical, subline == nil ? 0 : 6)
+            .frame(height: 50)
             .background(HardwoodPalette.court)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
