@@ -26,6 +26,7 @@
   "@graph": [
     {
       "@type": "MobileApplication",
+      "dateModified": "2026-10-15",
       "@id": "https://jackwallner.com/ios/basketball/#app",
       "name": "Basketball: Hardwood StatScout",
       "alternateName": "StatScout",
@@ -248,7 +249,7 @@
 
         .hero .platforms {
             font-size: 13px;
-            color: #86868b;
+            color: #6e6e73;
             letter-spacing: 0.3px;
             margin-bottom: 36px;
         }
@@ -338,20 +339,6 @@
         .feature-card {
             background: #fff;
             padding: 36px 32px;
-        }
-
-        .feature-card .label {
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #86868b;
-            margin-bottom: 10px;
-        }
-
-        .feature-card .label.statscout-plus {
-            color: #2e6fd4;
         }
 
         .feature-card h3 {
@@ -459,7 +446,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: #86868b;
+            color: #6e6e73;
             margin-bottom: 12px;
         }
 
@@ -491,7 +478,7 @@
         }
 
         .specs-table td:first-child {
-            color: #86868b;
+            color: #6e6e73;
             width: 140px;
             font-size: 12px;
             text-transform: uppercase;
@@ -510,7 +497,7 @@
         .disclaimer p {
             font-size: 12px;
             line-height: 1.6;
-            color: #86868b;
+            color: #6e6e73;
             text-align: center;
         }
 
@@ -536,7 +523,7 @@
             position: absolute;
             right: 4px;
             font-weight: 400;
-            color: #86868b;
+            color: #6e6e73;
         }
 
         .faq details[open] summary::after { content: "\2212"; }
@@ -565,7 +552,7 @@
 
         .cta p {
             font-size: 15px;
-            color: #86868b;
+            color: #6e6e73;
             margin-bottom: 28px;
         }
 
@@ -574,11 +561,11 @@
             text-align: center;
             padding: 20px 24px;
             font-size: 12px;
-            color: #86868b;
+            color: #6e6e73;
         }
 
         footer a {
-            color: #86868b;
+            color: #6e6e73;
             text-decoration: none;
             margin: 0 10px;
         }
@@ -603,6 +590,12 @@
 
         @media (max-width: 480px) {
             .showcase-card img { height: 360px; }
+        }
+        .feature-card .tier {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2e6fd4;
         }
     </style>
 </head>
@@ -656,49 +649,45 @@
         </div>
         <div class="features-grid">
             <div class="feature-card">
-                <span class="label">Percentiles</span>
                 <h3>Color you can read</h3>
                 <p>Every metric is a horizontal bar with a marker that shifts from rust at the 0th percentile through sand at the 50th to turf green at the 100th.</p>
             </div>
             <div class="feature-card">
-                <span class="label">Profiles</span>
                 <h3>The whole picture</h3>
                 <p>Scoring, shooting, playmaking, rebounding, defense, and impact percentiles, plus a switch to standard season stats and game-by-game form.</p>
             </div>
             <div class="feature-card">
-                <span class="label">Leaderboards</span>
                 <h3>Sort and search</h3>
                 <p>The full league filtered by position group, sortable on any metric, searchable across every active player.</p>
             </div>
             <div class="feature-card">
-                <span class="label">Game-day updates</span>
                 <h3>Current through last week</h3>
                 <p>StatScout checks for new stats throughout the day in season, so percentiles and standard stats reflect the games just played, with the week and games included on every screen.</p>
             </div>
             <div class="feature-card">
-                <span class="label statscout-plus">Trends &middot; StatScout+</span>
                 <h3>Heating up, cooling off</h3>
                 <p>The whole league ranked by who's rising and falling right now.</p>
+                <p class="tier">Included with StatScout+</p>
             </div>
             <div class="feature-card">
-                <span class="label statscout-plus">Recent form &middot; StatScout+</span>
                 <h3>Last 1, 2, or 4 weeks</h3>
                 <p>Narrow any player, team, or leaderboard to a recent window instead of a full season.</p>
+                <p class="tier">Included with StatScout+</p>
             </div>
             <div class="feature-card">
-                <span class="label statscout-plus">Comparisons &middot; StatScout+</span>
                 <h3>Two players, or two years</h3>
                 <p>Any two players side by side, or one player's seasons against each other.</p>
+                <p class="tier">Included with StatScout+</p>
             </div>
             <div class="feature-card">
-                <span class="label statscout-plus">Team scouting &middot; StatScout+</span>
                 <h3>All 30 teams</h3>
                 <p>Advanced and standard team stats, with the same percentile treatment.</p>
+                <p class="tier">Included with StatScout+</p>
             </div>
             <div class="feature-card">
-                <span class="label statscout-plus">History &middot; StatScout+</span>
                 <h3>Back to 2002-03</h3>
                 <p>Every season since 2002-03, plus all-time career percentiles.</p>
+                <p class="tier">Included with StatScout+</p>
             </div>
         </div>
     </section>
@@ -811,7 +800,7 @@
     </section>
 
     <footer>
-        <div class="divider">&copy; 2026 Jack Wallner</div>
+        <div class="divider">&copy; 2026 Jack Wallner · Last updated <time datetime="2026-10-15" data-updated>October 15, 2026</time></div>
         <div>
             <a href="https://jackwallner.com/ios/">More apps by Jack Wallner</a>
             <a href="true-shooting-percentage-explained.html">True shooting percentage explained</a>
