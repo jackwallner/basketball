@@ -22,6 +22,8 @@ baseball StatScout repo. Metadata/screenshots here are app-specific.
 
 **App Store release workflow and current state:** `.claude/rules/app-store-release.md`.
 
+**Android (Google Play) port** in `android/`: `.claude/rules/android.md`.
+
 **App Store reviews:** `StatScout/Services/ReviewPromptTracker.swift` calls
 `requestReview()` directly (no enjoyment funnel, App Review 5.6.1). Feedback
 `jackwallner+bb@gmail.com`.
