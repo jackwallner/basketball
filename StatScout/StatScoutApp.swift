@@ -549,33 +549,56 @@ struct OnboardingCard: View {
     /// to set on one line at the default text size, and they wrap rather than
     /// truncate if a larger one pushes them over. Losing 20pt of illustration is
     /// nothing next to losing the copy.
+    ///
+    /// Every page shares that short slot, because the upsell block is reserved
+    /// (invisible) on the earlier pages to keep the button still. Once prices
+    /// load the disclosure grows and the slot shrinks again, which cut the
+    /// titles to "Your Pocket..." on every device. So the copy never compresses:
+    /// the card drops the art when it has to, and scrolls as a last resort.
     var body: some View {
+        ViewThatFits(in: .vertical) {
+            content(showsArt: true)
+            content(showsArt: false)
+            ScrollView {
+                content(showsArt: false)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func content(showsArt: Bool) -> some View {
         VStack(spacing: 16) {
             Spacer(minLength: 0)
 
-            ZStack {
-                StatcastBarBackdrop()
-                    .frame(width: 200, height: 104)
+            if showsArt {
                 ZStack {
-                    Circle()
-                        .fill(HardwoodPalette.midnight)
-                        .frame(width: 84, height: 84)
-                    Image(systemName: icon)
-                        .font(.system(size: 36, weight: .semibold))
-                        .foregroundStyle(.white)
+                    StatcastBarBackdrop()
+                        .frame(width: 200, height: 104)
+                    ZStack {
+                        Circle()
+                            .fill(HardwoodPalette.midnight)
+                            .frame(width: 84, height: 84)
+                        Image(systemName: icon)
+                            .font(.system(size: 36, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .shadow(color: HardwoodPalette.midnight.opacity(0.25), radius: 12, y: 4)
                 }
-                .shadow(color: HardwoodPalette.midnight.opacity(0.25), radius: 12, y: 4)
             }
 
             Text(title)
                 .font(HardwoodType.playerName)
                 .foregroundStyle(HardwoodPalette.ink)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 24)
 
             Text(description)
                 .font(HardwoodType.body)
                 .foregroundStyle(HardwoodPalette.inkSecondary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 32)
 
             VStack(alignment: .leading, spacing: 10) {
@@ -600,9 +623,8 @@ struct OnboardingCard: View {
             // own bottom edge and so on top of whatever the card put there.
             .padding(.bottom, 28)
 
-            Spacer()
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

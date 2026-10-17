@@ -178,13 +178,6 @@ struct PlayerComparisonView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                         .buttonStyle(.plain)
-
-                        if let subtext = store.paywallBlurSubtext {
-                            Text(subtext)
-                                .font(HardwoodType.micro)
-                                .foregroundStyle(HardwoodPalette.inkTertiary)
-                                .multilineTextAlignment(.center)
-                        }
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 20)

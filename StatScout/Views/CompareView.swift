@@ -941,12 +941,6 @@ struct CompareView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
-            if let subtext = store.paywallBlurSubtext {
-                Text(subtext)
-                    .font(HardwoodType.micro)
-                    .foregroundStyle(HardwoodPalette.inkTertiary)
-                    .multilineTextAlignment(.center)
-            }
         }
         .padding(20)
         .background(

@@ -504,13 +504,6 @@ struct PlayerProfileView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
-
-            if let subtext = store.paywallBlurSubtext {
-                Text(subtext)
-                    .font(HardwoodType.micro)
-                    .foregroundStyle(HardwoodPalette.inkTertiary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            }
         }
         .padding(16)
         .background(HardwoodPalette.surface)

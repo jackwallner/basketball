@@ -416,12 +416,13 @@ final class StoreService: NSObject, ObservableObject {
         products.first(where: { $0.productKind == .lifetime })?.storeProduct.localizedPriceString
     }
 
-    /// CTA label for the blurred contextual paywalls (Year Compare, Player
-    /// Compare). The localized yearly amount leads, with any trial shown below
-    /// it by the purchase control.
-    var paywallBlurCTA: String {
-        directCTALabel(for: .upgrade)
-    }
+    /// Label for the upsell cards on the player page and both Compare screens.
+    ///
+    /// These buttons never transact: they open the priced pitch sheet or the
+    /// plan picker, which state the price and any trial at the purchase point.
+    /// Build 5 was rejected under 3.1.2(c) for a trial-led button with the price
+    /// in micro text beneath it, so a navigation button names neither.
+    var paywallBlurCTA: String { "See StatScout+ Plans" }
 
     /// The short label every upgrade entry point uses: the nav-bar pill, the
     /// Settings row, the floating tab bar's crown.
