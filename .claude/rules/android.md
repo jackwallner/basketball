@@ -132,20 +132,19 @@ Privacy and terms pages are `docs/android-privacy.html` and
 
 ## Play state (2026-10-17)
 
-Partly staged, not sent for review. Play app id `4974676872954034270` (E3 Apps).
+Staged, not sent for review. Play app id `4974676872954034270` (E3 Apps).
 versionCode 1 (1.0) uploaded with `~/docs/android/tools/play_stage.py`;
 listing, icon, feature graphic and 7 screenshots committed by API; draft
-releases on internal and production. Products from `scripts/play-products.py`
-are active (two subscriptions with `trial-7d`, one lifetime). App content done:
-privacy policy, no ads, no ad ID, not a government app, no financial features,
-App access (instructions only), 18 and over, data safety (RevenueCat: purchase
-history, app interactions, device IDs).
+releases on internal and production, production targets all 178 countries.
+Products from `scripts/play-products.py` are active (two subscriptions with
+`trial-7d`, one lifetime). App content is complete: privacy policy, no ads, no
+ad ID, not a government app, no financial features, App access (instructions
+only), 18 and over, data safety (RevenueCat: purchase history, app
+interactions, device IDs), IARC (not educational; Brazil ClassInd shows 14+),
+category Sports. Publishing overview shows "Submit 11 changes for review".
 
-Still to do in Console: IARC content rating (All Other App Types; Yes only to
-digital purchases, not educational), category Sports, production countries
-(all 178), open the production release (Edit release > Next > Save), then
-confirm Publishing overview shows "Submit N changes for review". Then Jack
-pastes `BASKETBALL_PLAY_REVIEW_CODE` from `~/.basketball_credentials` into App
-access > StatScout+ review unlock > Password and sends it in its pacing slot.
-Grant the RevenueCat service account access and upload the RevenueCat Play
-credentials JSON (console-recipes play.md 2, revenuecat-developer.md B).
+Left for Jack: paste `BASKETBALL_PLAY_REVIEW_CODE` from
+`~/.basketball_credentials` into App access > StatScout+ review unlock >
+Password, then press Send for review when this app's pacing slot comes. Grant
+the RevenueCat service account access to this app and upload the RevenueCat
+Play credentials JSON (console-recipes play.md 2, revenuecat-developer.md B).
