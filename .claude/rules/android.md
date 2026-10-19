@@ -92,18 +92,18 @@ paths:
 
 Follow the `android-dev` skill's Remote MacBook Pro section. Host
 `jackwallner@192.168.4.25` (strict host keys), SDK
-`/Users/jackwallner/Library/Android/sdk`. The Pro has no cmdline-tools. Non-connected
-builds use `fm-gradle <tasks>` from `android/` (jmbp is the Pro), never
-`./gradlew` on the Air. For connected tests on this AVD, sync `android/` (minus `build/`, `.gradle/`, `local.properties`,
-`play-assets/`) to `~/basketball-agent-test/android`, write a debug-only
-`local.properties` (sdk.dir, Supabase URL and anon key, Test Store key, review
-digest), and set
-`JAVA_HOME` to the Pro's `$HOME/jdks/temurin-17/Contents/Home`.
+`/Users/jackwallner/Library/Android/sdk`. The Pro has no cmdline-tools. Build and
+test with `fm-gradle <tasks>` from `android/` (jmbp is the Pro), never
+`./gradlew` on the Air. It syncs the source with a debug-only
+`local.properties` (no Play key or upload secrets), uses the Pro's JDK 17 and
+forwards `ANDROID_SERIAL`, so connected tests need no hand sync.
 Create the temporary AVD `basketball_agent_test` by hand (`.ini` plus a
 `config.ini` cloned from another agent AVD with `hw.lcd.height = 2400`,
 `android-36` `google_apis_playstore` x86_64, 1080x2400), boot it headless on
 port 5564 (`emulator-5564`), and delete only it (and
 `~/basketball-agent-test`) afterwards with `adb -s emulator-5564 emu kill`.
+Run connected tests from `android/` with
+`ANDROID_SERIAL=emulator-5564 fm-gradle --max-workers=2 connectedDebugAndroidTest`.
 Never touch `small_phone` or other agents' AVDs. The Pro is a 2-core 2015
 i7: a cold boot takes about 5 minutes and Play services churn can trip System
 UI ANRs for the first ~30 minutes, so let it settle before trusting a
