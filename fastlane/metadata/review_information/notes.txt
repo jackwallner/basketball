@@ -14,3 +14,5 @@ StatScout+ features (IAP via RevenueCat):
 Data: public ESPN box scores mirrored by the open-source hoopR project, refreshed throughout the day. Live scores for games in progress come from ESPN's public scoreboard. Not affiliated with the NBA, any NBA team, or the NBPA. No league, team, or player imagery is used.
 
 The app has no accounts, social features, betting odds, wagers, or fantasy team management. Game projections are informational estimates, not betting odds.
+
+Subscription pricing (Guideline 3.1.2(c)): on every auto-renewable subscription purchase screen (the last onboarding page, the StatScout+ sheet, and the plan picker), the billed amount ($1.99 / month or $9.99 / year) sits directly above the purchase button in 22 pt bold type. It is the largest pricing text on each screen and about 50 percent larger than the button label. The free trial appears only in the smaller button label and in the smaller fine print next to it.
