@@ -10,7 +10,7 @@ paths:
 
 # App Store release workflow
 
-## Current state, 2026-10-15
+## Current state, 2026-10-19
 
 - App Store Connect app `6820647074` ("Basketball: Hardwood StatScout", SKU
   `basketball-statscout`, bundle id `com.jackwallner.basketball`).
@@ -25,6 +25,15 @@ paths:
   button, louder than the trial-led button label (football and hockey got
   the same change). Build 6 attached, reply sent in App Review, resubmitted
   the same submission 2026-10-15 (`WAITING_FOR_REVIEW`).
+- 2026-10-19: build 6 rejected again under 3.1.2(c). The reviewer flagged
+  the last onboarding page: `priceLead` at `.headline` was not loud enough
+  beside the green trial CTA. Build 9 changes only `priceLead` to `.title2`
+  bold (22 pt, frame height 30) on all three purchase surfaces; the button
+  is unchanged. Review notes describe the layout. Build 9 attached and
+  resubmitted 2026-10-19 (`WAITING_FOR_REVIEW`). Build 8 accidentally
+  contains another session's unfinished share-card work: never submit it.
+- Football and hockey still use `.headline` for `priceLead`: give them the
+  same `.title2` change before submitting either.
 - Football 1.2.7 (63) and hockey 1.0.1 (9) carry the same paywall and are
   held on TestFlight until this review clears; submit them on approval.
 - Resubmitting a rejected version: attach the new build, then
