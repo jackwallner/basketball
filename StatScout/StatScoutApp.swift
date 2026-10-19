@@ -330,7 +330,7 @@ struct OnboardingCards: View {
 
                 // Billed amount, last thing before the CTA. Apple 3.1.2(c):
                 // the trial named on the button can't be more conspicuous than
-                // the price, so this sits one type step above the button label
+                // the price, so this sits well above the button label (title2 vs subheadline)
                 // and stays the largest pricing element on the page.
                 //
                 // Fixed height, for the same reason the status line above it is
@@ -339,7 +339,7 @@ struct OnboardingCards: View {
                 Text(store.monthlyPackage?.priceLabel ?? " ")
                     .font(HardwoodType.priceLead)
                     .foregroundStyle(HardwoodPalette.ink)
-                    .frame(height: 22)
+                    .frame(height: 30)
             }
             .opacity(showsUpsellBlock ? 1 : 0)
             .allowsHitTesting(showsUpsellBlock)

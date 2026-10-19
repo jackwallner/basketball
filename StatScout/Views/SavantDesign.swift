@@ -85,9 +85,10 @@ enum HardwoodType {
     static let micro        = Font.system(.caption2, design: .default, weight: .semibold)
     /// Billed amount shown directly above a purchase button. Apple 3.1.2(c)
     /// wants the price to be the most conspicuous pricing element in the flow,
-    /// so this sits one step above `bodyBold` (the CTA label) and nothing else
-    /// in a purchase surface may outweigh it.
-    static let priceLead    = Font.system(.headline, design: .default, weight: .bold)
+    /// so this sits well above `bodyBold` (the CTA label, about 50% larger)
+    /// and nothing else in a purchase surface may outweigh it. One step above
+    /// was rejected on 1.0 (6) as not conspicuous enough beside the green CTA.
+    static let priceLead    = Font.system(.title2, design: .default, weight: .bold)
 
     // Values and ranks are SF Pro too, with tabular digits so columns still
     // line up. They used to be SF Mono, which put a second typeface on every

@@ -376,7 +376,7 @@ struct PaywallView: View {
             Text(selectedPackage?.priceLabel ?? " ")
                 .font(HardwoodType.priceLead)
                 .foregroundStyle(HardwoodPalette.ink)
-                .frame(height: 22)
+                .frame(height: 30)
 
             Button(action: startPurchase) {
                 ZStack {

@@ -894,7 +894,7 @@ struct PlusDirectCTA: View {
                 .font(HardwoodType.priceLead)
                 .foregroundStyle(HardwoodPalette.ink)
                 .multilineTextAlignment(.center)
-                .frame(height: 22)
+                .frame(height: 30)
 
             Button(action: buy) {
                 label
