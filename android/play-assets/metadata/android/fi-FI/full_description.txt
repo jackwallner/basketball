@@ -1,0 +1,43 @@
+Näe, kuka johtaa pöytäkirjan takana.
+Järjestä NBA-pelaajat analyytikoiden käyttämillä edistyneillä tilastoilla, avaa koko persentiiliprofiili yhdellä napautuksella ja näe, kuka on juuri nyt kuumana ja kenen vire hiipuu.
+
+StatScout kokoaa usage raten, true shootingin, heittoalueiden määrät ja osumaprosentit, syöttö- ja menetysprosentit, levypallo-osuudet, riisto- ja blokkiprosentit, vaikutuksen kentällä sekä tutut ottelukeskiarvot yhteen nopeaan Android-sovellukseen.
+
+PERSENTIILIT YHDELLÄ SILMÄYKSELLÄ
+Jokainen tilasto näkyy persentiilipalkkina värillisellä merkillä, ruosteesta (0. persentiili) hiekan (50.) kautta parketinvihreään (100.), joten huiput erottuvat heti. Pelaajia verrataan oman pelipaikkansa sisällä: sentterin levypalloja senttereihin, takamiehen pelinrakentelua takamiehiin.
+
+KATTAVAT PELAAJAPROFIILIT
+Napauta pelaajaa ja näe kokonaiskuva: persentiilit pisteissä, heittämisessä, pelinrakentelussa, levypalloissa, puolustuksessa ja vaikutuksessa, vaihto edistyneiden ja tavallisten kausitilastojen välillä sekä viimeaikainen vire ottelu kerrallaan.
+
+OTTELUT, ILMAISEKSI
+Live-tulokset otteluiden aikana, jokainen lopputulos pöytäkirjoineen, sarjataulukko pudotuspeli- ja play-in-rajoineen sekä StatScout Power Ratings kaikille 30 joukkueelle. Seuraa joukkuettasi, niin sen ottelu näkyy ylimpänä.
+
+AINA AJAN TASALLA
+Kauden aikana StatScout etsii uusia pöytäkirjoja koko päivän ja päivittyy heti, kun ne julkaistaan. Jokainen näkymä kertoo, mitkä ottelut luvuissa ovat mukana.
+
+TILASTOJOHTAJAT JA SUOSIKIT
+Aloita tutuista listoista, kuten pisteistä per ottelu, tai siirry edistyneisiin rankingeihin. Rajaa takamiehiin, laitureihin tai senttereihin ja hae kuka tahansa aktiivipelaaja. Kokoa joukkueesi ja suosikkipelaajasi Following-näkymään ilmaiseksi.
+
+STATSCOUT+
+Avaa sovelluksen loput ominaisuudet StatScout+:lla:
+- Trendit: koko liiga järjestettynä sen mukaan, kuka nousee ja kuka laskee
+- Viimeaikainen vire: viime viikko, 2 tai 4 viikkoa mille tahansa pelaajalle, joukkueelle tai kokoonpanolle
+- Pelaaja-arviot: jokaisen pelaajan ilta jokaisessa pöytäkirjassa suhteessa kauteen
+- Pelaajavertailu: kaksi pelaajaa rinnakkain tai yksi pelaaja vuodesta toiseen
+- Joukkueiden scouting: kaikkien joukkueiden vire ja kaksi joukkuetta rinnakkain
+- Historialliset kaudet: jokainen vuosi kaudesta 2002-03 alkaen sekä kaikkien aikojen urapersentiilit
+
+Valitse kuukausi, vuosi tai elinikäinen. Yksi osto avaa kaiken.
+
+YKSITYISYYS ENSIN
+Ei tiliä. Ei rekisteröitymistä. Ei mainoksia. Ei kolmansien osapuolten seurantaa. Sovellus tekee vain tilastojen ja ostojen tarkistuksen vaatimat verkkopyynnöt.
+
+Tilauksen tiedot
+StatScout+ on saatavana automaattisesti uusiutuvana tilauksena (kuukausi tai vuosi, ilmainen kokeilujakso oikeutetuille uusille tilaajille) tai kertaostona elinikäiseen käyttöön. Hinnat näytetään sovelluksessa ennen ostoa ja vaihtelevat alueittain. Google Play veloittaa tiliäsi, kun vahvistat oston. Tilaukset uusiutuvat automaattisesti, kunnes peruutat ne. Hallitse tai peruuta milloin tahansa Google Playssa kohdassa Maksut ja tilaukset.
+
+Itse sovellus on englanninkielinen.
+
+Tietosuojakäytäntö: https://jackwallner.github.io/basketball/android-privacy.html
+Käyttöehdot: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout ei ole sidoksissa National Basketball Associationiin (NBA), mihinkään NBA-joukkueeseen tai NBPA:han, eivätkä ne ole valtuuttaneet, hyväksyneet tai sponsoroineet sitä. Pelaajien ja joukkueiden nimiä sekä tilastoja käytetään vain tunnistamiseen ja tiedottamiseen.

@@ -1,0 +1,43 @@
+Vezi cine conduce dincolo de foaia de statistici.
+Clasează jucătorii NBA după statisticile avansate folosite de analiști, deschide cu o atingere profilul complet în percentile și vezi cine e în formă și cine se răcește chiar acum.
+
+StatScout reunește usage rate, true shooting, frecvența și precizia aruncărilor pe zone, ratele de pase decisive și mingi pierdute, ponderea recuperărilor, ratele de intercepții și blocaje, impactul pe teren și mediile clasice pe meci într-o aplicație Android rapidă.
+
+PERCENTILE DINTR-O PRIVIRE
+Fiecare statistică apare ca o bară de percentilă cu un marcaj colorat, de la ruginiu (percentila 0) prin nisipiu (50) până la verde de parchet (100), așa că vezi imediat jucătorii de top. Jucătorii sunt comparați în cadrul postului lor: recuperările unui pivot cu ale pivoților, organizarea unui fundaș cu a fundașilor.
+
+PROFILURI COMPLETE DE JUCĂTORI
+Atinge un jucător și vezi tot: percentile la marcare, aruncări, organizare, recuperări, apărare și impact, comutare între statistici avansate și statisticile obișnuite ale sezonului, plus forma recentă meci cu meci.
+
+MECIURI, GRATUIT
+Scoruri live în timpul meciurilor, fiecare rezultat final cu box score, clasamentul cu liniile de playoff și play-in și StatScout Power Ratings pentru toate cele 30 de echipe. Urmărește-ți echipa ca meciul ei să fie mereu sus.
+
+MEREU LA ZI
+În timpul sezonului, StatScout caută toată ziua box score-uri noi și se actualizează imediat ce apar. Fiecare ecran arată ce meciuri includ cifrele.
+
+CLASAMENTE ȘI FAVORIȚI
+Pornește de la liderii clasici, cum ar fi punctele pe meci, sau treci la clasamentele avansate. Filtrează fundași, extreme sau pivoți și caută orice jucător activ. Păstrează-ți gratuit echipa și jucătorii preferați în Following.
+
+STATSCOUT+
+Deblochează restul aplicației cu StatScout+:
+- Tendințe: toată liga ordonată după cine urcă și cine coboară
+- Forma recentă: ultima săptămână, 2 sau 4 săptămâni pentru orice jucător, echipă sau lot
+- Note pentru jucători: evoluția fiecărui jucător în fiecare box score, raportată la sezon
+- Comparații de jucători: doi jucători unul lângă altul sau un jucător de la an la an
+- Scouting de echipe: forma recentă a fiecărei echipe și două echipe față în față
+- Sezoane istorice: fiecare an până în 2002-03, plus percentile din toată cariera
+
+Alege lunar, anual sau pe viață. O singură achiziție deblochează tot.
+
+CONFIDENȚIALITATEA ÎNAINTE DE TOATE
+Fără cont. Fără înregistrare. Fără reclame. Fără urmărire de la terți. Aplicația face doar cererile de rețea necesare pentru statistici și verificarea achizițiilor.
+
+Detalii despre abonament
+StatScout+ este disponibil ca abonament cu reînnoire automată (lunar sau anual, cu perioadă de probă gratuită pentru abonații noi eligibili) sau ca achiziție unică pe viață. Prețurile apar în aplicație înainte de cumpărare și variază în funcție de regiune. Google Play îți debitează contul la confirmare. Abonamentele se reînnoiesc automat până când le anulezi. Le poți gestiona sau anula oricând în Google Play, la Plăți și abonamente.
+
+Aplicația în sine este în limba engleză.
+
+Politica de confidențialitate: https://jackwallner.github.io/basketball/android-privacy.html
+Termeni de utilizare: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout nu este afiliat, autorizat, susținut sau sponsorizat de National Basketball Association (NBA), de vreo echipă NBA sau de NBPA. Numele jucătorilor și echipelor și statisticile sunt folosite doar pentru identificare și informare.

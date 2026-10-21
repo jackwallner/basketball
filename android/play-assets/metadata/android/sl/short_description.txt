@@ -1,0 +1,1 @@
+Napredna statistika lige NBA in percentili vsakega igralca glede na položaj.

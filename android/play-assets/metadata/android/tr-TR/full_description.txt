@@ -1,0 +1,43 @@
+Box score'un ötesinde kimin öne çıktığını gör.
+NBA oyuncularını analistlerin kullandığı gelişmiş istatistiklerle sırala, tek dokunuşla tam yüzdelik profili aç ve şu anda kimin formda, kimin düşüşte olduğunu gör.
+
+StatScout; usage rate, true shooting, şut bölgelerine göre sıklık ve isabet, asist ve top kaybı oranları, ribaund payları, top çalma ve blok oranları, saha etkisi ve bilinen maç başı ortalamaları tek bir hızlı Android uygulamasında toplar.
+
+BİR BAKIŞTA YÜZDELİKLER
+Her istatistik renkli işaretli bir yüzdelik çubuğu olarak görünür; renk pas renginden (0. yüzdelik) kuma (50.) ve parke yeşiline (100.) döner, böylece en iyileri hemen fark edersin. Oyuncular kendi pozisyonlarıyla karşılaştırılır: bir pivotun ribaundu pivotlarla, bir guardın oyun kuruculuğu guardlarla.
+
+EKSİKSİZ OYUNCU PROFİLLERİ
+Bir oyuncuya dokun ve her şeyi gör: sayı, şut, oyun kurma, ribaund, savunma ve etki yüzdelikleri, gelişmiş ve klasik sezon istatistikleri arasında geçiş, maç maç son form.
+
+MAÇLAR, ÜCRETSİZ
+Maçlar sürerken canlı skorlar, her sonuç box score'uyla, playoff ve play-in çizgileriyle puan durumu ve 30 takımın tamamı için StatScout Power Ratings. Takımını takip et, maçı her zaman en üstte olsun.
+
+HER ZAMAN GÜNCEL
+Sezon boyunca StatScout gün içinde yeni box score'ları kontrol eder ve yayımlanır yayımlanmaz güncellenir. Her ekran rakamların hangi maçları kapsadığını gösterir.
+
+LİDERLER VE FAVORİLER
+Maç başı sayı gibi bilinen liderlerle başla ya da gelişmiş sıralamalara geç. Guard, forvet veya pivotlara göre filtrele ve tüm aktif oyuncularda ara. Takımını ve favori oyuncularını Following bölümünde ücretsiz topla.
+
+STATSCOUT+
+Uygulamanın geri kalanını StatScout+ ile aç:
+- Trendler: tüm lig, kimin yükselip kimin düştüğüne göre sıralı
+- Son form: her oyuncu, takım veya kadro için son 1, 2 ya da 4 hafta
+- Oyuncu notları: her oyuncunun her box score'daki performansı, sezona göre
+- Oyuncu karşılaştırma: iki oyuncu yan yana ya da bir oyuncu yıldan yıla
+- Takım scouting: her takımın son formu ve iki takım yan yana
+- Geçmiş sezonlar: 2002-03'e kadar her yıl, ayrıca tüm zamanların kariyer yüzdelikleri
+
+Aylık, yıllık veya ömür boyu seç. Tek satın alma her şeyi açar.
+
+ÖNCE GİZLİLİK
+Hesap yok. Kayıt yok. Reklam yok. Üçüncü taraf takibi yok. Uygulama yalnızca istatistikler ve satın alma doğrulaması için gereken ağ isteklerini yapar.
+
+Abonelik ayrıntıları
+StatScout+, otomatik yenilenen abonelik (aylık veya yıllık, uygun yeni aboneler için ücretsiz deneme süresiyle) ya da tek seferlik ömür boyu satın alma olarak sunulur. Fiyatlar satın almadan önce uygulamada gösterilir ve bölgeye göre değişir. Google Play onayladığında hesabından ücret alır. Abonelikler iptal edilene kadar otomatik olarak yenilenir. Google Play'de Ödemeler ve abonelikler bölümünden istediğin zaman yönet veya iptal et.
+
+Uygulamanın kendisi İngilizcedir.
+
+Gizlilik Politikası: https://jackwallner.github.io/basketball/android-privacy.html
+Kullanım Koşulları: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout; National Basketball Association (NBA), herhangi bir NBA takımı veya NBPA ile bağlantılı değildir ve bunlar tarafından yetkilendirilmemiş, onaylanmamış ya da sponsor olunmamıştır. Oyuncu ve takım adları ile istatistikler yalnızca tanımlama ve bilgilendirme amacıyla kullanılır.

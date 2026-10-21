@@ -1,0 +1,43 @@
+Se hvem der fører ud over boxscoren.
+Rangér NBA-spillere efter den avancerede statistik, analytikere bruger, åbn en hel percentilprofil med ét tryk, og se hvem der er varme, og hvem der køler af lige nu.
+
+StatScout samler usage rate, true shooting, skudzoner med frekvens og træfprocent, assist- og boldtabsandel, rebound-andel, steal- og blokeringsandel, indflydelse på banen og de velkendte gennemsnit pr. kamp i én hurtig Android-app.
+
+PERCENTILER MED ÉT BLIK
+Hver værdi vises som en percentilbjælke med en farvet markør, fra rust (0. percentil) over sand (50.) til parketgrøn (100.), så du ser topspillerne med det samme. Spillere sammenlignes inden for deres position: en centers rebounds mod centre, en guards spilfordeling mod guards.
+
+KOMPLETTE SPILLERPROFILER
+Tryk på en spiller, og se hele billedet: percentiler for point, skud, spilopbygning, rebounds, forsvar og indflydelse, skift mellem avanceret statistik og almindelig sæsonstatistik, og formen kamp for kamp.
+
+KAMPE, GRATIS
+Liveresultater under kampene, hvert slutresultat med boxscore, stillingen med slutspils- og play-in-streger og StatScout Power Ratings for alle 30 hold. Følg dit hold, så ligger kampen øverst.
+
+ALTID OPDATERET
+I sæsonen leder StatScout efter nye boxscores hele dagen og opdaterer, så snart de udkommer. Hver skærm viser, hvilke kampe tallene bygger på.
+
+RANGLISTER OG FAVORITTER
+Start med kendte toplister som point pr. kamp, eller skift til avancerede ranglister. Filtrér på guards, forwards eller centre, og søg blandt alle aktive spillere. Saml dit hold og dine yndlingsspillere under Following, gratis.
+
+STATSCOUT+
+Lås resten af appen op med StatScout+:
+- Trends: hele ligaen rangeret efter hvem der er varme, og hvem der køler af
+- Aktuel form: sidste uge, 2 eller 4 uger for enhver spiller, ethvert hold eller trup
+- Spillerkarakterer: hver spillers præstation i hver boxscore, målt mod sæsonen
+- Spillersammenligning: to spillere side om side, eller én spiller år for år
+- Holdscouting: formen for alle hold og to hold side om side
+- Historiske sæsoner: hvert år tilbage til 2002-03 plus karrierepercentiler gennem tiden
+
+Vælg måned, år eller livstid. Ét køb låser alt op.
+
+PRIVATLIV FØRST
+Ingen konto. Ingen tilmelding. Ingen reklamer. Ingen sporing fra tredjeparter. Appen foretager kun de netværkskald, der er nødvendige for statistikken og købskontrollen.
+
+Om abonnementet
+StatScout+ fås som abonnement med automatisk fornyelse (måned eller år, med en gratis prøveperiode for kvalificerede nye abonnenter) eller som et engangskøb for livstid. Priserne vises i appen, før du køber, og varierer efter region. Google Play opkræver betaling på din konto, når du bekræfter. Abonnementer fornyes automatisk, indtil du opsiger dem. Administrér eller opsig når som helst i Google Play under Betalinger og abonnementer.
+
+Selve appen er på engelsk.
+
+Privatlivspolitik: https://jackwallner.github.io/basketball/android-privacy.html
+Vilkår for brug: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout er ikke tilknyttet, autoriseret, godkendt eller sponsoreret af National Basketball Association (NBA), noget NBA-hold eller NBPA. Spiller- og holdnavne og statistik bruges kun til identifikation og information.

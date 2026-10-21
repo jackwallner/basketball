@@ -1,0 +1,43 @@
+Pogledajte tko vodi izvan običajnog box scorea.
+Rangirajte NBA igrače po naprednoj statistici kojom se služe analitičari, jednim dodirom otvorite cijeli percentilni profil i pogledajte tko je trenutačno u formi, a tko pada.
+
+StatScout objedinjuje usage rate, true shooting, učestalost i uspješnost šuta po zonama, udjele asistencija i izgubljenih lopti, udio skokova, udjele ukradenih lopti i blokada, utjecaj na terenu te klasične prosjeke po utakmici u jednoj brzoj aplikaciji za Android.
+
+PERCENTILI NA PRVI POGLED
+Svaka statistika prikazana je kao percentilna traka s obojenom oznakom, od hrđave (0. percentil) preko pješčane (50.) do zelene boje parketa (100.), pa najbolje odmah uočite. Igrači se uspoređuju unutar svoje pozicije: skokovi centra s centrima, organizacija igre beka s bekovima.
+
+POTPUNI PROFILI IGRAČA
+Dodirnite igrača i vidite sve: percentile u poenima, šutu, organizaciji igre, skokovima, obrani i utjecaju, prebacivanje između napredne i uobičajene sezonske statistike te trenutačnu formu utakmicu po utakmicu.
+
+UTAKMICE, BESPLATNO
+Rezultati uživo tijekom utakmica, svaki konačni rezultat s box scoreom, tablica s granicama doigravanja i play-ina te StatScout Power Ratings za svih 30 momčadi. Pratite svoju momčad da njezina utakmica uvijek bude na vrhu.
+
+UVIJEK AŽURNO
+Tijekom sezone StatScout cijeli dan traži nove box scoreove i ažurira se čim se objave. Svaki zaslon pokazuje koje su utakmice obuhvaćene brojkama.
+
+LJESTVICE I FAVORITI
+Počnite s poznatim ljestvicama poput poena po utakmici ili prijeđite na napredne poretke. Filtrirajte bekove, krila ili centre i potražite bilo kojeg aktivnog igrača. Svoju momčad i omiljene igrače besplatno okupite u odjeljku Following.
+
+STATSCOUT+
+Otključajte ostatak aplikacije uz StatScout+:
+- Trendovi: cijela liga poredana po tome tko raste, a tko pada
+- Trenutačna forma: zadnji tjedan, 2 ili 4 tjedna za svakog igrača, momčad ili sastav
+- Ocjene igrača: nastup svakog igrača u svakom box scoreu u odnosu na sezonu
+- Usporedba igrača: dva igrača jedan uz drugog ili jedan igrač iz godine u godinu
+- Scouting momčadi: trenutačna forma svih momčadi i dvije momčadi jedna uz drugu
+- Povijesne sezone: svaka godina do 2002-03 te percentili cijele karijere
+
+Odaberite mjesečnu, godišnju ili doživotnu opciju. Jedna kupnja otključava sve.
+
+PRIVATNOST NA PRVOM MJESTU
+Bez računa. Bez registracije. Bez oglasa. Bez praćenja trećih strana. Aplikacija šalje samo zahtjeve potrebne za statistiku i provjeru kupnje.
+
+Pojedinosti pretplate
+StatScout+ dostupan je kao pretplata s automatskom obnovom (mjesečna ili godišnja, s besplatnim probnim razdobljem za nove pretplatnike koji ispunjavaju uvjete) ili kao jednokratna doživotna kupnja. Cijene se prikazuju u aplikaciji prije kupnje i razlikuju se ovisno o regiji. Google Play naplaćuje s vašeg računa kad potvrdite. Pretplate se automatski obnavljaju dok ih ne otkažete. Upravljajte njima ili ih otkažite bilo kada u Google Playu, u odjeljku Plaćanja i pretplate.
+
+Sama aplikacija je na engleskom jeziku.
+
+Pravila o privatnosti: https://jackwallner.github.io/basketball/android-privacy.html
+Uvjeti korištenja: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout nije povezan s National Basketball Association (NBA), nijednom NBA momčadi ni NBPA-om, niti ga oni ovlašćuju, podržavaju ili sponzoriraju. Imena igrača i momčadi te statistika koriste se samo za identifikaciju i informiranje.

@@ -1,0 +1,43 @@
+Descobreix qui destaca més enllà del box score.
+Classifica els jugadors de l'NBA amb les estadístiques avançades que fan servir els analistes, obre un perfil complet de percentils amb un toc i mira qui està en ratxa i qui es refreda ara mateix.
+
+StatScout reuneix el percentatge d'ús, el true shooting, la freqüència i l'encert per zona de tir, les taxes d'assistències i pèrdues, el percentatge de rebots, les taxes de robatoris i taps, l'impacte a pista i les mitjanes per partit de sempre en una app Android ràpida.
+
+PERCENTILS D'UN COP D'ULL
+Cada estadística apareix com una barra de percentil amb un marcador de color que va de l'òxid (percentil 0) al sorra (50) i al verd parquet (100), perquè vegis els millors a l'instant. Cada jugador es compara amb la seva posició: els rebots d'un pivot amb els d'altres pivots i la direcció d'un base amb la d'altres bases.
+
+PERFILS COMPLETS DE JUGADORS
+Toca qualsevol jugador per veure-ho tot: percentils d'anotació, tir, creació, rebot, defensa i impacte, canvi entre estadístiques avançades i estadístiques de la temporada, i la forma recent partit a partit.
+
+PARTITS, GRATIS
+Resultats en directe durant els partits, cada final amb el seu box score, la classificació amb les línies de playoff i play-in, i els StatScout Power Ratings dels 30 equips. Segueix el teu equip per fixar-ne el partit a dalt.
+
+SEMPRE AL DIA
+Durant la temporada, StatScout busca box scores nous al llarg del dia i s'actualitza tan bon punt es publiquen. Cada pantalla indica quins partits inclouen les dades.
+
+LÍDERS I PREFERITS
+Comença pels líders de sempre, com punts per partit, o passa a les classificacions avançades. Filtra per bases i escortes, alers o pivots i cerca qualsevol jugador en actiu. Desa el teu equip i els teus jugadors preferits a Following, gratis.
+
+STATSCOUT+
+Desbloqueja la resta de l'app amb StatScout+:
+- Tendències: tota la lliga ordenada per qui puja i qui baixa
+- Forma recent: l'última setmana, 2 o 4 setmanes de qualsevol jugador, equip o plantilla
+- Valoracions: l'actuació de cada jugador a cada box score, comparada amb la temporada
+- Comparador de jugadors: dos jugadors cara a cara, o un jugador any rere any
+- Scouting d'equips: la forma recent de cada equip i dos equips cara a cara
+- Temporades històriques: cada any des del 2002-03, més percentils de tota la carrera
+
+Tria mensual, anual o vitalici. Una sola compra ho desbloqueja tot.
+
+PRIVADESA PRIMER
+Sense comptes. Sense registre. Sense anuncis. Sense seguiment de tercers. L'app només fa les connexions necessàries per a les estadístiques i per verificar les compres.
+
+Detalls de la subscripció
+StatScout+ es pot obtenir com a subscripció de renovació automàtica (mensual o anual, amb prova gratuïta per als nous subscriptors que compleixin els requisits) o com a compra única vitalícia. Els preus es mostren a l'app abans de comprar i varien segons la regió. Google Play fa el càrrec al teu compte quan confirmes. Les subscripcions es renoven automàticament fins que les cancel·lis. Gestiona-les o cancel·la-les quan vulguis a Google Play, a Pagaments i subscripcions.
+
+L'app en si és en anglès.
+
+Política de privadesa: https://jackwallner.github.io/basketball/android-privacy.html
+Condicions d'ús: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout no està afiliat, autoritzat, avalat ni patrocinat per la National Basketball Association (NBA), cap equip de l'NBA ni la NBPA. Els noms de jugadors i equips i les estadístiques s'utilitzen només amb finalitats d'identificació i informació.

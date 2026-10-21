@@ -1,0 +1,43 @@
+Poglejte, kdo vodi onkraj običajnega box scora.
+Razvrstite igralce lige NBA po napredni statistiki, ki jo uporabljajo analitiki, z enim dotikom odprite celoten percentilni profil in preverite, kdo je trenutno v formi in kdo popušča.
+
+StatScout združuje usage rate, true shooting, pogostost in uspešnost metov po conah, deleže podaj in izgubljenih žog, delež skokov, deleže ukradenih žog in blokad, vpliv na igrišču ter klasična povprečja na tekmo v eni hitri aplikaciji za Android.
+
+PERCENTILI NA PRVI POGLED
+Vsaka statistika je prikazana kot percentilni stolpec z barvno oznako, od rjaste (0. percentil) prek peščene (50.) do zelene barve parketa (100.), zato najboljše opazite takoj. Igralci se primerjajo znotraj svojega položaja: skoki centra s centri, organizacija igre branilca z branilci.
+
+POPOLNI PROFILI IGRALCEV
+Tapnite igralca in si oglejte vse: percentile pri točkah, metu, organizaciji igre, skokih, obrambi in vplivu, preklop med napredno in običajno sezonsko statistiko ter trenutno formo tekmo za tekmo.
+
+TEKME, BREZPLAČNO
+Rezultati v živo med tekmami, vsak končni izid z box scorom, lestvica z mejami končnice in play-ina ter StatScout Power Ratings za vseh 30 ekip. Sledite svoji ekipi, da bo njena tekma vedno na vrhu.
+
+VEDNO POSODOBLJENO
+Med sezono StatScout ves dan išče nove box score in se posodobi takoj, ko so objavljeni. Vsak zaslon pokaže, katere tekme so zajete v številkah.
+
+LESTVICE IN PRILJUBLJENI
+Začnite z znanimi lestvicami, kot so točke na tekmo, ali preklopite na napredne razvrstitve. Filtrirajte branilce, krila ali centre in poiščite katerega koli aktivnega igralca. Svojo ekipo in priljubljene igralce brezplačno zberite v razdelku Following.
+
+STATSCOUT+
+Odklenite preostanek aplikacije s StatScout+:
+- Trendi: vsa liga razvrščena po tem, kdo raste in kdo pada
+- Trenutna forma: zadnji teden, 2 ali 4 tedne za vsakega igralca, ekipo ali zasedbo
+- Ocene igralcev: nastop vsakega igralca v vsakem box scoru v primerjavi s sezono
+- Primerjava igralcev: dva igralca drug ob drugem ali en igralec iz leta v leto
+- Scouting ekip: trenutna forma vseh ekip in dve ekipi drug ob drugi
+- Pretekle sezone: vsako leto do 2002-03 in percentili celotne kariere
+
+Izberite mesečno, letno ali doživljenjsko možnost. En nakup odklene vse.
+
+ZASEBNOST NA PRVEM MESTU
+Brez računa. Brez registracije. Brez oglasov. Brez sledenja tretjih oseb. Aplikacija pošilja le zahteve, potrebne za statistiko in preverjanje nakupov.
+
+Podrobnosti naročnine
+StatScout+ je na voljo kot samodejno podaljšana naročnina (mesečna ali letna, z brezplačnim preizkusom za upravičene nove naročnike) ali kot enkraten doživljenjski nakup. Cene so prikazane v aplikaciji pred nakupom in se razlikujejo glede na regijo. Google Play bremeni vaš račun ob potrditvi. Naročnine se samodejno podaljšujejo, dokler jih ne prekličete. Upravljate ali prekličete jih lahko kadar koli v Google Play v razdelku Plačila in naročnine.
+
+Sama aplikacija je v angleščini.
+
+Pravilnik o zasebnosti: https://jackwallner.github.io/basketball/android-privacy.html
+Pogoji uporabe: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout ni povezan z National Basketball Association (NBA), nobeno ekipo lige NBA ali NBPA, niti ga te ne pooblaščajo, podpirajo ali sponzorirajo. Imena igralcev in ekip ter statistika se uporabljajo samo za prepoznavanje in obveščanje.

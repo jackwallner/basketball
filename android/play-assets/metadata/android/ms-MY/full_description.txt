@@ -1,0 +1,43 @@
+Lihat siapa yang mendahului di sebalik box score.
+Susun pemain NBA mengikut statistik lanjutan yang digunakan penganalisis, buka profil persentil penuh dengan satu ketikan, dan lihat siapa yang sedang hangat dan siapa yang semakin perlahan sekarang.
+
+StatScout menghimpunkan usage rate, true shooting, kekerapan dan ketepatan mengikut zon jaringan, kadar bantuan dan pusing ganti bola (turnover), bahagian lantunan, kadar curi dan sekatan, impak di gelanggang serta purata setiap perlawanan yang biasa dalam satu aplikasi Android yang pantas.
+
+PERSENTIL SEPINTAS LALU
+Setiap statistik dipaparkan sebagai bar persentil dengan penanda berwarna, daripada karat (persentil 0) melalui pasir (50) hingga hijau lantai kayu (100), jadi pemain terbaik terus kelihatan. Setiap pemain dibandingkan dalam posisinya sendiri: lantunan center dengan center lain, susunan permainan guard dengan guard lain.
+
+PROFIL PEMAIN LENGKAP
+Ketik mana-mana pemain untuk melihat semuanya: persentil menjaring, menembak, menyusun permainan, lantunan, pertahanan dan impak, tukar antara statistik lanjutan dan statistik musim biasa, serta prestasi terkini perlawanan demi perlawanan.
+
+PERLAWANAN, PERCUMA
+Skor langsung semasa perlawanan, setiap keputusan akhir dengan box score, kedudukan liga dengan garisan playoff dan play-in, serta StatScout Power Ratings untuk kesemua 30 pasukan. Ikuti pasukan anda supaya perlawanannya sentiasa di atas.
+
+SENTIASA TERKINI
+Sepanjang musim, StatScout menyemak box score baharu sepanjang hari dan dikemas kini sebaik sahaja ia diterbitkan. Setiap skrin menunjukkan perlawanan yang termasuk dalam angka.
+
+PENDAHULU DAN KEGEMARAN
+Mulakan dengan senarai pendahulu yang biasa seperti mata setiap perlawanan, atau beralih ke kedudukan lanjutan. Tapis guard, forward atau center dan cari mana-mana pemain aktif. Simpan pasukan dan pemain kegemaran anda dalam Following, percuma.
+
+STATSCOUT+
+Buka selebihnya aplikasi dengan StatScout+:
+- Trend: seluruh liga disusun mengikut siapa yang naik dan siapa yang turun
+- Prestasi terkini: 1, 2 atau 4 minggu terakhir untuk mana-mana pemain, pasukan atau skuad
+- Penarafan pemain: persembahan setiap pemain dalam setiap box score, berbanding musimnya
+- Perbandingan pemain: dua pemain sebelah-menyebelah, atau seorang pemain dari tahun ke tahun
+- Peninjauan pasukan: prestasi terkini setiap pasukan dan dua pasukan sebelah-menyebelah
+- Musim lampau: setiap tahun hingga 2002-03, serta persentil sepanjang kerjaya
+
+Pilih bulanan, tahunan atau seumur hidup. Satu pembelian membuka semuanya.
+
+PRIVASI DIUTAMAKAN
+Tiada akaun. Tiada pendaftaran. Tiada iklan. Tiada penjejakan pihak ketiga. Aplikasi hanya membuat permintaan rangkaian yang diperlukan untuk statistik dan pengesahan pembelian.
+
+Butiran langganan
+StatScout+ tersedia sebagai langganan yang diperbaharui secara automatik (bulanan atau tahunan, dengan percubaan percuma untuk pelanggan baharu yang layak) atau sebagai pembelian seumur hidup sekali sahaja. Harga dipaparkan dalam aplikasi sebelum anda membeli dan berbeza mengikut rantau. Google Play mengenakan caj pada akaun anda apabila anda mengesahkan. Langganan diperbaharui secara automatik sehingga dibatalkan. Urus atau batalkan pada bila-bila masa dalam Google Play, di bawah Pembayaran & langganan.
+
+Aplikasi ini sendiri dalam bahasa Inggeris.
+
+Dasar Privasi: https://jackwallner.github.io/basketball/android-privacy.html
+Terma Penggunaan: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout tidak bergabung dengan, dibenarkan, disokong atau ditaja oleh National Basketball Association (NBA), mana-mana pasukan NBA atau NBPA. Nama pemain, nama pasukan dan statistik digunakan untuk tujuan pengenalan dan maklumat sahaja.

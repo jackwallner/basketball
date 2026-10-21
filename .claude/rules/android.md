@@ -7,6 +7,7 @@ paths:
   - "scripts/play-upload.sh"
   - "scripts/sync-android-historical.py"
   - "scripts/make_android_icon.py"
+  - "scripts/validate-play-listing.py"
 ---
 
 # Hardwood StatScout Android rules
@@ -28,6 +29,13 @@ paths:
   about 20% under iOS ($1.99 / $9.99 / $19.99); local prices are Play's
   conversion plus the fleet PPP curve. Never put prices in listing copy or app
   literals.
+- Play listing copy is in `android/play-assets/metadata/android/<locale>/`
+  (fastlane supply layout), 50 locales, the same set as Sober. en-US mirrors the
+  live listing exactly. Other locales: native copy, title "<local sport word>:
+  Hardwood StatScout" from the iOS `name.txt` (ta/te/kn/ml use "Basketball",
+  their native words do not fit 30 characters), and every non-English
+  description says the app is in English. Check with
+  `scripts/validate-play-listing.py` (exit 0 required) before any upload.
 - RevenueCat project `projf687e8b0`: Test Store app `appba36335343` (Debug key,
   `apikeyf6fcdf78f1`), Play app `appa1887192a1` (`goog_` key
   `apikey1fe08d6c51`, release only), entitlement `Basketball Pro`
@@ -127,8 +135,9 @@ Store headlines) and the 1024x500 feature graphic. Shot 01 sorts the board by
 Pts/100 like iOS; shot 05 frames the Shooting section (the fixture holds only
 part of each roster, so the scaled team Pts/100 reads high); shot 07 is the
 all-teams grid. The compositor sets font axes by name: SF Rounded has only
-GRAD and Weight. Listing text and the
-changelog are in `android/play-assets/metadata/android/en-US/` (English only).
+GRAD and Weight. Listing text is in
+`android/play-assets/metadata/android/<locale>/` (50 locales); the changelog
+and screenshots are en-US only.
 Privacy and terms pages are `docs/android-privacy.html` and
 `docs/android-terms.html` on GitHub Pages.
 

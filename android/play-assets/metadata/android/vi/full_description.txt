@@ -1,0 +1,43 @@
+Xem ai thực sự nổi bật vượt ra ngoài box score.
+Xếp hạng cầu thủ NBA bằng các chỉ số nâng cao mà giới phân tích sử dụng, mở hồ sơ phân vị đầy đủ chỉ với một chạm và xem ai đang thăng hoa, ai đang chững lại ngay lúc này.
+
+StatScout gom usage rate, true shooting, tần suất và độ chính xác theo vùng ném, tỉ lệ kiến tạo và mất bóng, tỉ lệ bắt bóng bật bảng, tỉ lệ cướp bóng và chắn bóng, tác động trên sân cùng các chỉ số trung bình mỗi trận quen thuộc vào một ứng dụng Android nhanh gọn.
+
+PHÂN VỊ CHỈ TRONG MỘT CÁI NHÌN
+Mỗi chỉ số hiển thị dưới dạng thanh phân vị với điểm đánh dấu có màu, từ màu gỉ sét (phân vị 0) qua màu cát (50) đến xanh sàn gỗ (100), giúp bạn nhận ra ngay những cầu thủ xuất sắc. Mỗi cầu thủ được so với chính vị trí của mình: bóng bật bảng của trung phong so với các trung phong, khả năng kiến thiết của hậu vệ so với các hậu vệ.
+
+HỒ SƠ CẦU THỦ ĐẦY ĐỦ
+Chạm vào bất kỳ cầu thủ nào để xem toàn cảnh: phân vị ghi điểm, ném rổ, kiến thiết, bóng bật bảng, phòng ngự và tác động, chuyển giữa chỉ số nâng cao và thống kê mùa giải thông thường, cùng phong độ gần đây theo từng trận.
+
+TRẬN ĐẤU, MIỄN PHÍ
+Tỉ số trực tiếp khi trận đấu diễn ra, mọi kết quả kèm box score, bảng xếp hạng với vạch playoff và play-in, cùng StatScout Power Ratings cho cả 30 đội. Theo dõi đội của bạn để ghim trận của đội lên đầu.
+
+LUÔN CẬP NHẬT
+Trong mùa giải, StatScout kiểm tra box score mới suốt cả ngày và cập nhật ngay khi có. Mỗi màn hình đều cho biết số liệu bao gồm những trận nào.
+
+BẢNG DẪN ĐẦU VÀ YÊU THÍCH
+Bắt đầu với các bảng quen thuộc như điểm mỗi trận hoặc chuyển sang bảng xếp hạng nâng cao. Lọc theo hậu vệ, tiền phong hoặc trung phong và tìm bất kỳ cầu thủ nào đang thi đấu. Lưu đội và cầu thủ yêu thích của bạn trong Following, miễn phí.
+
+STATSCOUT+
+Mở khóa phần còn lại của ứng dụng với StatScout+:
+- Xu hướng: toàn giải xếp theo ai đang lên và ai đang xuống
+- Phong độ gần đây: 1, 2 hoặc 4 tuần qua của bất kỳ cầu thủ, đội hay đội hình nào
+- Điểm cầu thủ: màn trình diễn của mỗi cầu thủ trong mọi box score, so với cả mùa
+- So sánh cầu thủ: hai cầu thủ đặt cạnh nhau, hoặc một cầu thủ qua từng năm
+- Phân tích đội: phong độ gần đây của mọi đội và hai đội đặt cạnh nhau
+- Các mùa trước: mọi năm về tới 2002-03, cùng phân vị toàn sự nghiệp
+
+Chọn theo tháng, theo năm hoặc trọn đời. Một lần mua mở khóa tất cả.
+
+QUYỀN RIÊNG TƯ LÀ TRÊN HẾT
+Không tài khoản. Không đăng ký. Không quảng cáo. Không theo dõi từ bên thứ ba. Ứng dụng chỉ gửi những yêu cầu mạng cần cho số liệu thống kê và xác minh giao dịch mua.
+
+Chi tiết gói đăng ký
+StatScout+ có dạng gói đăng ký tự động gia hạn (theo tháng hoặc theo năm, có dùng thử miễn phí cho người đăng ký mới đủ điều kiện) hoặc mua trọn đời một lần. Giá được hiển thị trong ứng dụng trước khi mua và khác nhau theo khu vực. Google Play tính phí vào tài khoản của bạn khi bạn xác nhận. Gói đăng ký tự động gia hạn cho đến khi bạn hủy. Quản lý hoặc hủy bất cứ lúc nào trong Google Play, mục Thanh toán và gói thuê bao.
+
+Bản thân ứng dụng dùng tiếng Anh.
+
+Chính sách quyền riêng tư: https://jackwallner.github.io/basketball/android-privacy.html
+Điều khoản sử dụng: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout không liên kết, không được ủy quyền, xác nhận hay tài trợ bởi National Basketball Association (NBA), bất kỳ đội NBA nào hoặc NBPA. Tên cầu thủ, tên đội và số liệu thống kê chỉ được dùng để nhận diện và cung cấp thông tin.

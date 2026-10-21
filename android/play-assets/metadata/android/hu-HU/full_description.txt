@@ -1,0 +1,43 @@
+Nézd meg, ki vezet a jegyzőkönyvön túl is.
+Rangsorold az NBA-játékosokat az elemzők által használt haladó mutatók szerint, egy koppintással nyisd meg a teljes percentilis profilt, és lásd, ki van most formában és ki hanyatlik.
+
+A StatScout egy gyors Android-alkalmazásban egyesíti a usage rate-et, a true shootingot, a dobózónák gyakoriságát és pontosságát, a gólpassz- és eladott labda arányt, a lepattanó-részesedést, a szerzett labda és blokk arányt, a pályán mért hatást és a megszokott meccsenkénti átlagokat.
+
+PERCENTILISEK EGY PILLANTÁSRA
+Minden mutató percentilis sávként jelenik meg színes jelölővel, a rozsdától (0. percentilis) a homokszínen (50.) át a parkettzöldig (100.), így a legjobbak azonnal kitűnnek. A játékosokat a saját posztjukon belül hasonlítjuk össze: a center lepattanóit a centerekéhez, a hátvéd játékszervezését a hátvédekéhez.
+
+TELJES JÁTÉKOSPROFILOK
+Koppints egy játékosra, és mindent látsz: percentiliseket pontszerzésben, dobásban, játékszervezésben, lepattanóban, védekezésben és hatásban, váltást a haladó és a hagyományos szezonstatisztikák között, valamint a friss formát meccsről meccsre.
+
+MECCSEK, INGYEN
+Élő eredmények a meccsek alatt, minden végeredmény jegyzőkönyvvel, tabella a rájátszás- és play-in-vonalakkal, valamint StatScout Power Ratings mind a 30 csapatra. Kövesd a csapatod, és a meccse mindig felül lesz.
+
+MINDIG NAPRAKÉSZ
+A szezon alatt a StatScout egész nap keresi az új jegyzőkönyveket, és azonnal frissül, amint megjelennek. Minden képernyő mutatja, mely meccsek vannak benne a számokban.
+
+RANGSOROK ÉS KEDVENCEK
+Kezdd az ismert listákkal, például a meccsenkénti pontokkal, vagy válts a haladó rangsorokra. Szűrj hátvédekre, bedobókra vagy centerekre, és keress rá bármelyik aktív játékosra. A csapatodat és kedvenc játékosaidat ingyen gyűjtheted a Following részben.
+
+STATSCOUT+
+A StatScout+ feloldja az alkalmazás többi részét:
+- Trendek: az egész liga rangsorolva aszerint, ki van felfelé és ki lefelé
+- Friss forma: az elmúlt hét, 2 vagy 4 hét bármely játékosra, csapatra vagy keretre
+- Játékosértékelések: minden játékos minden meccse a szezonhoz mérve
+- Játékos-összehasonlítás: két játékos egymás mellett, vagy egy játékos évről évre
+- Csapatscouting: minden csapat friss formája és két csapat egymás mellett
+- Korábbi szezonok: minden év 2002-03-ig visszamenőleg, plusz minden idők pályafutás-percentilisei
+
+Választhatsz havi, éves vagy örökös hozzáférést. Egy vásárlás mindent felold.
+
+ADATVÉDELEM ELŐSZÖR
+Nincs fiók. Nincs regisztráció. Nincsenek hirdetések. Nincs harmadik féltől származó követés. Az alkalmazás csak a statisztikákhoz és a vásárlás ellenőrzéséhez szükséges hálózati kéréseket küldi.
+
+Az előfizetés részletei
+A StatScout+ automatikusan megújuló előfizetésként (havi vagy éves, a jogosult új előfizetőknek ingyenes próbaidőszakkal) vagy egyszeri örökös vásárlásként érhető el. Az árak vásárlás előtt megjelennek az alkalmazásban, és régiónként eltérnek. A Google Play a megerősítéskor terheli meg a fiókodat. Az előfizetések automatikusan megújulnak, amíg le nem mondod őket. Bármikor kezelheted vagy lemondhatod őket a Google Playen, a Fizetések és előfizetések menüben.
+
+Maga az alkalmazás angol nyelvű.
+
+Adatvédelmi irányelvek: https://jackwallner.github.io/basketball/android-privacy.html
+Felhasználási feltételek: https://jackwallner.github.io/basketball/android-terms.html
+
+A StatScout nem kapcsolódik a National Basketball Associationhöz (NBA), egyik NBA-csapathoz vagy az NBPA-hoz sem, és azok nem engedélyezték, nem támogatják és nem szponzorálják. A játékosok és csapatok nevét, valamint a statisztikákat csak azonosítás és tájékoztatás céljából használjuk.

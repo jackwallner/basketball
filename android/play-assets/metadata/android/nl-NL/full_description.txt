@@ -1,0 +1,43 @@
+Zie wie verder kijkt dan de boxscore.
+Rangschik NBA-spelers op de geavanceerde cijfers die analisten gebruiken, open met één tik een volledig percentielprofiel en zie meteen wie in vorm is en wie afkoelt.
+
+StatScout bundelt usage rate, true shooting, schotzones met frequentie en rendement, assist- en balverliespercentages, reboundaandeel, steal- en blockpercentages, impact op het veld en de vertrouwde gemiddelden per wedstrijd in één snelle Android-app.
+
+PERCENTIELEN IN ÉÉN OOGOPSLAG
+Elke statistiek staat als percentielbalk met een gekleurde markering, van roest (0e percentiel) via zand (50e) naar parketgroen (100e), zodat je toppers meteen ziet. Spelers worden vergeleken binnen hun positie: de rebounds van een center tegen centers, het spelmaken van een guard tegen guards.
+
+VOLLEDIGE SPELERSPROFIELEN
+Tik op een speler en zie alles: percentielen voor scoren, schieten, spelmaken, rebounden, verdedigen en impact, wisselen tussen geavanceerde en standaard seizoensstatistieken, en de recente vorm per wedstrijd.
+
+WEDSTRIJDEN, GRATIS
+Live-uitslagen tijdens wedstrijden, elke einduitslag met boxscore, de stand met playoff- en play-in-lijnen en StatScout Power Ratings voor alle 30 teams. Volg je team om zijn wedstrijd bovenaan te zetten.
+
+ALTIJD BIJ
+Tijdens het seizoen zoekt StatScout de hele dag naar nieuwe boxscores en werkt bij zodra ze verschijnen. Elk scherm laat zien welke wedstrijden in de cijfers zitten.
+
+RANGLIJSTEN EN FAVORIETEN
+Begin bij bekende lijstjes zoals punten per wedstrijd of schakel naar geavanceerde ranglijsten. Filter op guards, forwards of centers en zoek elke actieve speler op. Bewaar je team en favoriete spelers gratis onder Following.
+
+STATSCOUT+
+Ontgrendel de rest van de app met StatScout+:
+- Trends: de hele competitie gerangschikt op wie stijgt en wie daalt
+- Recente vorm: de laatste week, 2 of 4 weken voor elke speler, elk team of elke selectie
+- Spelerscijfers: elk optreden in elke boxscore, afgezet tegen het seizoen
+- Spelers vergelijken: twee spelers naast elkaar, of één speler jaar na jaar
+- Teamscouting: recente vorm van elk team en twee teams naast elkaar
+- Historische seizoenen: elk jaar terug tot 2002-03, plus carrièrepercentielen aller tijden
+
+Kies maandelijks, jaarlijks of levenslang. Eén aankoop ontgrendelt alles.
+
+PRIVACY VOOROP
+Geen account. Geen aanmelding. Geen advertenties. Geen tracking door derden. De app doet alleen de netwerkverzoeken die nodig zijn voor de statistieken en de aankoopcontrole.
+
+Abonnementsgegevens
+StatScout+ is beschikbaar als automatisch verlengend abonnement (maandelijks of jaarlijks, elk met een gratis proefperiode voor nieuwe abonnees die in aanmerking komen) of als eenmalige levenslange aankoop. Prijzen staan in de app voordat je koopt en verschillen per regio. Google Play brengt de kosten in rekening bij bevestiging. Abonnementen worden automatisch verlengd tot je opzegt. Beheer of annuleer altijd in Google Play onder Betalingen en abonnementen.
+
+De app zelf is in het Engels.
+
+Privacybeleid: https://jackwallner.github.io/basketball/android-privacy.html
+Gebruiksvoorwaarden: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout is niet gelieerd aan, geautoriseerd, onderschreven of gesponsord door de National Basketball Association (NBA), een NBA-team of de NBPA. Namen van spelers en teams en statistieken worden alleen gebruikt ter identificatie en informatie.

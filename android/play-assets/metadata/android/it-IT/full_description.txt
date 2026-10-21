@@ -1,0 +1,43 @@
+Scopri chi domina oltre il tabellino.
+Classifica i giocatori NBA con le statistiche avanzate usate dagli analisti, apri con un tocco il profilo completo in percentili e guarda chi è in forma e chi sta calando in questo momento.
+
+StatScout riunisce usage rate, true shooting, frequenza e precisione per zona di tiro, percentuali di assist e palle perse, quota di rimbalzi, percentuali di palle rubate e stoppate, impatto in campo e le classiche medie a partita in un'app Android veloce.
+
+PERCENTILI A COLPO D'OCCHIO
+Ogni statistica è una barra di percentile con un indicatore colorato, dal ruggine (percentile 0) al sabbia (50) fino al verde parquet (100), così riconosci subito i migliori. Ogni giocatore è confrontato con il suo ruolo: i rimbalzi di un centro con quelli dei centri, la regia di una guardia con quella delle guardie.
+
+PROFILI COMPLETI DEI GIOCATORI
+Tocca un giocatore per vedere tutto: percentili di realizzazione, tiro, regia, rimbalzi, difesa e impatto, passaggio tra statistiche avanzate e statistiche stagionali classiche, e la forma recente partita per partita.
+
+PARTITE, GRATIS
+Risultati live durante le partite, ogni finale con il suo tabellino, la classifica con le linee di playoff e play-in e gli StatScout Power Ratings di tutte le 30 squadre. Segui la tua squadra per fissare la sua partita in cima.
+
+SEMPRE AGGIORNATO
+Durante la stagione StatScout cerca nuovi tabellini per tutto il giorno e si aggiorna appena vengono pubblicati. Ogni schermata indica quali partite sono incluse nei numeri.
+
+CLASSIFICHE E PREFERITI
+Parti dai leader classici come i punti a partita o passa alle classifiche avanzate. Filtra per guardie, ali o centri e cerca qualsiasi giocatore in attività. Tieni la tua squadra e i tuoi giocatori preferiti in Following, gratis.
+
+STATSCOUT+
+Sblocca il resto dell'app con StatScout+:
+- Tendenze: tutta la lega ordinata per chi sale e chi scende
+- Forma recente: ultima settimana, 2 o 4 settimane per ogni giocatore, squadra o roster
+- Voti dei giocatori: la prestazione di ogni giocatore in ogni tabellino, confrontata con la stagione
+- Confronto giocatori: due giocatori fianco a fianco, o un giocatore anno per anno
+- Scouting squadre: la forma recente di ogni squadra e due squadre a confronto
+- Stagioni storiche: ogni anno fino al 2002-03, più i percentili di carriera di sempre
+
+Scegli mensile, annuale o a vita. Un solo acquisto sblocca tutto.
+
+PRIVACY AL PRIMO POSTO
+Nessun account. Nessuna registrazione. Nessuna pubblicità. Nessun tracciamento di terze parti. L'app effettua solo le richieste di rete necessarie per le statistiche e la verifica degli acquisti.
+
+Dettagli dell'abbonamento
+StatScout+ è disponibile come abbonamento a rinnovo automatico (mensile o annuale, con prova gratuita per i nuovi abbonati idonei) oppure come acquisto unico a vita. I prezzi sono mostrati nell'app prima dell'acquisto e variano in base al Paese. Google Play addebita l'importo sul tuo account alla conferma. Gli abbonamenti si rinnovano automaticamente fino alla disdetta. Gestisci o annulla in qualsiasi momento in Google Play, alla voce Pagamenti e abbonamenti.
+
+L'app è in inglese.
+
+Informativa sulla privacy: https://jackwallner.github.io/basketball/android-privacy.html
+Termini di utilizzo: https://jackwallner.github.io/basketball/android-terms.html
+
+StatScout non è affiliato, autorizzato, approvato o sponsorizzato dalla National Basketball Association (NBA), da alcuna squadra NBA o dalla NBPA. Nomi di giocatori e squadre e statistiche sono usati solo a scopo identificativo e informativo.
