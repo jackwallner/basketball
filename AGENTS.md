@@ -36,7 +36,7 @@ on GitHub Actions.
 - **Supabase** project "Basketball" (ref `ftlwpyjymjndadccqrqd`) lives on its own
   Supabase account (org "Basketball"). Creds, the Management token and the DB
   password are in `~/.basketball_credentials`; the same token is in
-  `~/.supabase_keepalive_tokens` here and on the MBP keepalive host. Apply schema with
+  `~/.supabase_keepalive_tokens` here and on the iMac keepalive host. Apply schema with
   `psql` using `SUPABASE_DB_PASSWORD` (`host=db.<ref>.supabase.co user=postgres`).
 - **Data source**: hoopR-nba-data (sportsdataverse's ESPN mirror on GitHub), no key,
   cloud-IP friendly. A hoopR season is named for the year it ends (2027 = 2026-27).

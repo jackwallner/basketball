@@ -92,7 +92,7 @@ paths:
 
 Follow the `android-dev` skill's Remote MacBook Pro section. Host
 `jackwallner@192.168.4.25` (strict host keys), SDK
-`/Users/jackwallner/Library/Android/sdk`. The Pro has no cmdline-tools. Build and
+`/Users/jackwallner/Library/Android/sdk`. Build and
 test with `fm-gradle <tasks>` from `android/` (jmbp is the Pro), never
 `./gradlew` on the Air. It syncs the source with a debug-only
 `local.properties` (no Play key or upload secrets), uses the Pro's JDK 17 and
