@@ -14,8 +14,16 @@ final class DashboardViewModel {
         didSet {
             rostersBySeason.removeAll()
             sortMetricCache = nil
+            historySeasons = Set(playerHistories.values.lazy.flatMap { $0 }.compactMap(\.season))
+            historyGeneration += 1
         }
     }
+    /// Every season the histories hold. The season menu reads it on each
+    /// render, and rebuilding it meant walking every row of every season.
+    @ObservationIgnored private var historySeasons: Set<Int> = []
+    /// Bumped whenever the histories change, so memoized board reads know the
+    /// rows under them moved without comparing them.
+    private var historyGeneration = 0
     /// Season rosters cut from `playerHistories`, rebuilt only when it changes.
     /// Every board reads its roster several times per render, and each cut
     /// walks every season the app holds.
@@ -161,11 +169,13 @@ final class DashboardViewModel {
     }
 
     /// "2026-27 starts Oct 20", the line that sits beside a final season.
-    var upcomingSeasonStartsText: String? {
+    var upcomingSeasonStartsText: String? { upcomingSeasonStartsText(now: .now) }
+
+    func upcomingSeasonStartsText(now: Date) -> String? {
         guard let upcomingSeason, let start = upcomingSeasonStart else { return nil }
         // Once the first game has tipped off, the line says so until the new
         // season's stats publish and the app moves to it.
-        if let firstTip = upcomingGames.compactMap(\.tipoff).min(), firstTip <= Date() {
+        if let firstTip = upcomingGames.compactMap(\.tipoff).min(), firstTip <= now {
             return "\(SeasonLabel.text(upcomingSeason)) under way · stats arriving"
         }
         return "\(SeasonLabel.text(upcomingSeason)) starts \(start)"
@@ -469,7 +479,7 @@ final class DashboardViewModel {
         // Runs through the live season, which is always offered (and is the
         // default) from the day it has published data.
         var seasons = Set(StatScoutSeason.earliest...max(freeSeason, StatScoutSeason.earliest))
-        seasons.formUnion(playerHistories.values.flatMap { $0 }.compactMap(\.season))
+        seasons.formUnion(historySeasons)
         // The career rollup sits under season 0, so a plain descending sort would
         // bury "All Time" underneath 2002-03. It belongs at the top of the menu, as
         // the widest possible frame rather than the narrowest.
@@ -643,7 +653,12 @@ final class DashboardViewModel {
     /// Bio and draft history for the live season, keyed by player. Optional
     /// context: empty until `player_profiles` answers, and every screen that
     /// reads it leaves the line out rather than waiting.
-    private(set) var profiles: [Int: PlayerProfile] = [:]
+    private(set) var profiles: [Int: PlayerProfile] = [:] {
+        didSet { profilesGeneration += 1 }
+    }
+    /// The rookie filter reads profiles, so the memoized boards key on this
+    /// rather than comparing every profile.
+    private var profilesGeneration = 0
     /// Power ratings for the live season, keyed by normalized team.
     private(set) var teamRatings: [String: TeamRating] = [:]
     /// Projected margins for unplayed games, keyed by game id.
@@ -1187,6 +1202,44 @@ final class DashboardViewModel {
 
     var leaderboard: [Player] { rankedBoard(search: searchText) }
 
+    /// Everything a ranked board depends on besides its search text.
+    private struct BoardKey: Equatable {
+        let history: Int
+        let profiles: Int
+        let season: Int
+        let phase: SeasonPhase
+        let position: PlayerPositionGroup
+        let conference: NBAConference
+        let rookiesOnly: Bool
+        let freeSeason: Int
+        let qualifierLevel: QualifierLevel
+        let userSortMetric: String?
+        let sortDescending: Bool
+    }
+
+    private var boardKey: BoardKey {
+        BoardKey(
+            history: historyGeneration,
+            profiles: profilesGeneration,
+            season: selectedSeason,
+            phase: selectedPhase,
+            position: selectedPosition,
+            conference: selectedConference,
+            rookiesOnly: rookiesOnly,
+            freeSeason: freeSeason,
+            qualifierLevel: qualifierLevel,
+            userSortMetric: userSortMetric,
+            sortDescending: sortDescending
+        )
+    }
+
+    /// Ranked boards by search text for one `BoardKey`. The view reads the
+    /// board several times per render, and every loading tick re-renders, so
+    /// it is built once per change of anything it depends on.
+    @ObservationIgnored private var boardCache: (key: BoardKey, boards: [String: [Player]])?
+    @ObservationIgnored private var metricLeadersCache: (key: BoardKey, entries: [MetricLeaderEntry])?
+    @ObservationIgnored private var qualifiedPlayersCache: (key: BoardKey, players: [Player])?
+
     /// Each player's place on the unsearched board, while a search is
     /// narrowing it: a search shows where a player ranks in the league, not
     /// his place among the matches. Nil when nothing is being searched.
@@ -1197,6 +1250,18 @@ final class DashboardViewModel {
     }
 
     private func rankedBoard(search: String) -> [Player] {
+        let key = boardKey
+        if let cached = boardCache, cached.key == key, let board = cached.boards[search] { return board }
+        let board = buildRankedBoard(search: search)
+        if let cached = boardCache, cached.key == key {
+            boardCache?.boards[search] = board
+        } else {
+            boardCache = (key, [search: board])
+        }
+        return board
+    }
+
+    private func buildRankedBoard(search: String) -> [Player] {
         let players = boardPlayers(search: search)
         guard let label = currentSortMetric,
               let referenceMetric = eligibleMetrics.first(where: { $0.label == label }) else {
@@ -1351,14 +1416,28 @@ final class DashboardViewModel {
     /// Players who meet the active qualifier for at least one category they appear in.
     /// Used to filter the StatScout leaders and Box Score so unqualified samples don't pollute results.
     var qualifiedSeasonPlayers: [Player] {
-        seasonPlayers.filter { player in
+        let key = boardKey
+        if let cached = qualifiedPlayersCache, cached.key == key { return cached.players }
+        let players = seasonPlayers.filter { player in
             let categories = Set(player.metrics.map(\.category))
             if categories.isEmpty { return isQualified(player, for: nil) }
             return categories.contains { isQualified(player, for: $0) }
         }
+        qualifiedPlayersCache = (key, players)
+        return players
     }
 
-    var allMetrics: [(label: String, category: MetricCategory, best: (player: Player, percentile: Int, actualValue: String)?, worst: (player: Player, percentile: Int, actualValue: String)?)] {
+    /// Best and worst on every metric. Walks every metric of every player in
+    /// the season, so it is built once per change rather than per render.
+    var allMetrics: [MetricLeaderEntry] {
+        let key = boardKey
+        if let cached = metricLeadersCache, cached.key == key { return cached.entries }
+        let entries = buildAllMetrics()
+        metricLeadersCache = (key, entries)
+        return entries
+    }
+
+    private func buildAllMetrics() -> [MetricLeaderEntry] {
         var metricMap: [String: (category: MetricCategory, values: [(player: Player, percentile: Int, actualValue: String)])] = [:]
         for player in seasonPlayers where matchesBoardFilters(player) {
             for metric in player.metrics {
@@ -1920,11 +1999,7 @@ final class DashboardViewModel {
     }
 
     private func recomputeTeamCache() {
-        let allSeasonPlayers = playerHistories.values.flatMap { $0 }.filter {
-            $0.season == selectedSeason && $0.seasonPhase == selectedPhase
-        }
-        var seenIds = Set<Int>()
-        let uniquePlayers = allSeasonPlayers.filter { seenIds.insert($0.playerId).inserted }
+        let uniquePlayers = seasonPlayers
 
         var teams = Set<String>()
         var teamScoresAccum: [String: (sum: Int, count: Int)] = [:]

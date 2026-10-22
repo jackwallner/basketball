@@ -248,7 +248,20 @@ struct GameDay: Hashable, Identifiable, Sendable {
 
     /// `current(in:)` over days already worked out, in date order.
     static func current(among days: [GameDay], now: Date = .now) -> GameDay? {
-        days.first { now < $0.date.addingTimeInterval(32 * 3_600) } ?? days.last
+        days.first { now < $0.handover } ?? days.last
+    }
+
+    /// 8 AM Eastern the morning after the game date. Counted on the Eastern
+    /// calendar rather than as 32 hours after Eastern midnight, which is an
+    /// hour early on the fall-back night and an hour late on the spring-forward
+    /// one.
+    var handover: Date {
+        var eastern = Calendar(identifier: .gregorian)
+        eastern.timeZone = TimeZone(identifier: "America/New_York") ?? .current
+        let nextMidnight = eastern.date(byAdding: .day, value: 1, to: date)
+            ?? date.addingTimeInterval(24 * 3_600)
+        return eastern.date(bySettingHour: 8, minute: 0, second: 0, of: nextMidnight)
+            ?? nextMidnight.addingTimeInterval(8 * 3_600)
     }
 
     func games(from games: [Game]) -> [Game] {

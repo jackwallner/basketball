@@ -168,8 +168,10 @@ struct Player: Identifiable, Codable, Hashable, Sendable {
         latestGame?.percentileDelta ?? 0
     }
 
-    var weeklyDelta: Int {
-        let cutoff = Date().addingTimeInterval(-7 * 24 * 3600)
+    var weeklyDelta: Int { weeklyDelta(asOf: .now) }
+
+    func weeklyDelta(asOf now: Date) -> Int {
+        let cutoff = now.addingTimeInterval(-7 * 24 * 3600)
         return games.filter { $0.date >= cutoff }
             .map(\.percentileDelta)
             .reduce(0, +)
@@ -729,8 +731,19 @@ enum BasketballMetricRegistry {
     ]
 
     static func definition(for label: String, category: MetricCategory) -> MetricDefinition? {
-        definitions.first { $0.label == label && $0.category == category }
+        definitionIndex[category]?[label]
     }
+
+    /// Lookups run inside board sorts and per-player filters, hundreds of
+    /// thousands of times per render, so the table is keyed once instead of
+    /// scanned on every call. The first entry for a label wins, as the scan did.
+    private static let definitionIndex: [MetricCategory: [String: MetricDefinition]] = {
+        var index: [MetricCategory: [String: MetricDefinition]] = [:]
+        for definition in definitions where index[definition.category]?[definition.label] == nil {
+            index[definition.category, default: [:]][definition.label] = definition
+        }
+        return index
+    }()
 
     /// How a metric combines when several players are pooled into one number -
     /// the roster aggregate the team comparison draws.
