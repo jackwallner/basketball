@@ -149,7 +149,7 @@ final class GamesTests: XCTestCase {
         XCTAssertEqual(model.slateGames.map(\.id), ["o1"])
         XCTAssertEqual(model.currentGameDay?.id, "2026-10-20")
         XCTAssertEqual(model.lastPlayedGames.map(\.id), ["f2"])
-        XCTAssertEqual(model.upcomingSeasonStartsText, "2026-27 starts Oct 20")
+        XCTAssertEqual(model.upcomingSeasonStartsText(now: Date(timeIntervalSince1970: 1_790_000_000)), "2026-27 starts Oct 20")
         XCTAssertNotNil(model.game(id: "o1"))
         XCTAssertNotNil(model.game(id: "f1"))
         // The team schedule shows both seasons, in the order they happen.
