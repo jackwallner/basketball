@@ -1,0 +1,19 @@
+# Basketball: Hardwood StatScout
+
+> Hardwood StatScout is an NBA advanced stats app for iPhone that ranks every player on percentiles for usage, true shooting, shot zones and impact. No account.
+
+## App
+
+- [NBA Advanced Stats App | Basketball: Hardwood StatScout](https://jackwallner.com/ios/basketball/index.html.md): Hardwood StatScout is an NBA advanced stats app for iPhone that ranks every player on percentiles for usage, true shooting, shot zones and impact. No account.
+
+## Guides
+
+- [True Shooting Percentage Explained (Formula and Usage Rate)](https://jackwallner.com/ios/basketball/true-shooting-percentage-explained.html.md): True shooting percentage (TS%) counts threes and free throws to measure scoring efficiency. See the formula, a worked example, and how usage rate fits in.
+
+## Optional
+
+- [Hoops Edge: Hardwood StatScout for Android Privacy Policy](https://jackwallner.github.io/basketball/android-privacy.html.md): Hoops Edge: Hardwood StatScout for Android Privacy Policy
+- [Hoops Edge: Hardwood StatScout for Android Terms of Use](https://jackwallner.github.io/basketball/android-terms.html.md): Hoops Edge: Hardwood StatScout for Android Terms of Use
+- [Basketball: Hardwood StatScout Privacy Policy](https://jackwallner.com/ios/basketball/privacy-policy.html.md): Basketball: Hardwood StatScout Privacy Policy
+- [Support - Basketball: Hardwood StatScout](https://jackwallner.com/ios/basketball/support.html.md): Get help with StatScout. Contact support, read FAQs, and learn more about NBA percentile rankings.
+- [Basketball: Hardwood StatScout Terms of Use](https://jackwallner.com/ios/basketball/terms.html.md): Basketball: Hardwood StatScout Terms of Use
