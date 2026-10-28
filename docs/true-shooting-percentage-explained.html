@@ -40,7 +40,7 @@
         "url": "https://jackwallner.com/"
       },
       "datePublished": "2026-10-12",
-      "dateModified": "2026-10-19",
+      "dateModified": "2026-10-28",
       "mainEntityOfPage": "https://jackwallner.com/ios/basketball/true-shooting-percentage-explained.html",
       "image": "https://jackwallner.github.io/basketball/appstore-screenshot-01.png",
       "about": {
@@ -58,6 +58,7 @@
       "@type": "FAQPage",
       "@id": "https://jackwallner.com/ios/basketball/true-shooting-percentage-explained.html#faq",
       "mainEntity": [
+        {"@type": "Question", "name": "What was the NBA league-average true shooting percentage in 2024-25?", "acceptedAnswer": {"@type": "Answer", "text": "It was .576 in the 2024-25 regular season, between .580 in 2023-24 and .581 in 2025-26. Ten years earlier, in 2015-16, it was .541."}},
         {
           "@type": "Question",
           "name": "What is true shooting percentage?",
@@ -165,21 +166,21 @@ th { font-weight: 600; background: #f5f5f7; }
 .sources li { font-size: 15px; margin-bottom: 6px; }
 .sources a { word-break: break-word; }
 footer { text-align: center; padding: 20px 24px; font-size: 12px; color: #6e6e73; border-top: 1px solid rgba(0,0,0,0.08); }
-footer a { color: #6e6e73; text-decoration: none; margin: 0 10px; }
+footer a { display: inline-block; padding: 6px 0; color: #6e6e73; text-decoration: none; margin: 0 10px; }
 @media (max-width: 768px) { article h1 { font-size: 28px; } article { padding: 36px 0 56px; } .answer { font-size: 18px; } }
 </style>
 </head>
 <body>
 <nav>
 <div class="container">
-<a class="nav-brand" href="./"><img src="icon_256.png" alt="StatScout"><span>StatScout</span></a>
+<a class="nav-brand" href="./"><img src="icon_64.webp" alt="" width="32" height="32"><span>StatScout</span></a>
 
 </div>
 </nav>
 <article>
 <div class="container">
 <h1>True shooting percentage explained (and usage rate)</h1>
-<p class="meta">By Jack Wallner. Last updated <time datetime="2026-10-19" data-updated>October 19, 2026</time>.</p>
+<p class="meta">By Jack Wallner. Last updated <time datetime="2026-10-28" data-updated>October 28, 2026</time>.</p>
 <p class="answer">True shooting percentage (TS%) measures how efficiently a player scores by folding two-pointers, three-pointers and free throws into one number. The formula is points divided by twice the player's true shooting attempts, where true shooting attempts equal field goal attempts plus 0.44 times free throw attempts. Usage rate (USG%) is the companion number: how many of his team's possessions a player ends while he is on the floor.</p>
 
 <h2>How do you calculate true shooting percentage?</h2>
@@ -206,6 +207,27 @@ footer a { color: #6e6e73; text-decoration: none; margin: 0 10px; }
 <p class="note">League-wide TS% over all players' combined totals was .581. Percentiles are interpolated from the Basketball-Reference advanced table.</p>
 <p>So a .581 TS% is average, .641 is top-tenth, and anything above .650 is well past the 90th percentile. Shai Gilgeous-Alexander (.665) and Nikola Jokic (.670) were both above that line with real scoring loads. Be careful reading the very top of the list: the highest qualified mark, Jericho Sims at .772, came with a usage rate of 9.8 percent, so it describes a player who rarely shoots, not one who carries an offense.</p>
 
+<h2>Has the league-average TS% gone up?</h2>
+<p>Yes. League-wide true shooting rose from .541 in 2015-16 to .581 in 2025-26, so a TS% that was above average ten years ago is below average now. Compare a player only to the league in his own season.</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Season</th><th>League TS%</th></tr></thead>
+<tbody>
+<tr><td>2015-16</td><td>.541</td></tr>
+<tr><td>2016-17</td><td>.552</td></tr>
+<tr><td>2017-18</td><td>.556</td></tr>
+<tr><td>2018-19</td><td>.560</td></tr>
+<tr><td>2019-20</td><td>.565</td></tr>
+<tr><td>2020-21</td><td>.572</td></tr>
+<tr><td>2021-22</td><td>.566</td></tr>
+<tr><td>2022-23</td><td>.581</td></tr>
+<tr><td>2023-24</td><td>.580</td></tr>
+<tr><td>2024-25</td><td>.576</td></tr>
+<tr><td>2025-26</td><td>.581</td></tr>
+<tr><td>2026-27 (so far)</td><td>.570</td></tr>
+</tbody></table></div>
+<p class="note">Regular season, from the Basketball-Reference league averages table. The 2026-27 figure covers the first 56 team games and will move.</p>
+<p>The 2024-25 qualified leaders show why the top of the list needs context: Jarrett Allen (.724), Jalen Duren (.703), Rudy Gobert (.687), Christian Braun (.665) and Keon Ellis (.664). The first three are centers who finish at the rim on usage rates of 13 to 16 percent. Nikola Jokic was sixth at .663 while using 29.5 percent of Denver's plays, which is the rarer feat.</p>
+
 <h2>What is usage rate in basketball?</h2>
 <div class="formula">USG% = 100 * ((FGA + 0.44 * FTA + TOV) * (Tm MP / 5)) / (MP * (Tm FGA + 0.44 * Tm FTA + Tm TOV))</div>
 <p>Usage rate is an estimate of the percentage of team plays a player uses while on the floor, which is how Basketball-Reference describes usage percentage. A play is used when it ends in a shot, a trip to the line or a turnover. Five players share the floor, so an average usage is around 20 percent. In 2025-26 the median qualified player was 19.2 percent. Luka Doncic led qualified players at 38.1 percent.</p>
@@ -221,6 +243,7 @@ footer a { color: #6e6e73; text-decoration: none; margin: 0 10px; }
 <details><summary>What is true shooting percentage?</summary><p>True shooting percentage is a measure of scoring efficiency that counts two-point shots, three-point shots and free throws. It equals points divided by twice the sum of field goal attempts and 0.44 times free throw attempts.</p></details>
 <details><summary>Why is the free throw multiplier 0.44?</summary><p>Not every free throw attempt ends a possession, because some come in pairs, some follow made baskets and some come in threes. The 0.44 factor estimates how many possessions a free throw attempt represents on average.</p></details>
 <details><summary>What is a good true shooting percentage in the NBA?</summary><p>In 2025-26 the league-wide figure was about .581, and the 90th percentile among players with at least 1,000 minutes was about .641. Above .650 is past the 90th percentile.</p></details>
+<details><summary>What was the NBA league-average true shooting percentage in 2024-25?</summary><p>It was .576 in the 2024-25 regular season, between .580 in 2023-24 and .581 in 2025-26. Ten years earlier, in 2015-16, it was .541.</p></details>
 <details><summary>What is usage rate in basketball?</summary><p>Usage rate is an estimate of the percentage of a team&#x27;s plays that a player uses while he is on the floor. A play is used when it ends in a field goal attempt, a trip to the free throw line or a turnover.</p></details>
 <details><summary>What is a high usage rate in the NBA?</summary><p>In 2025-26 the median player with at least 1,000 minutes was 19.2 percent. About 27.4 percent was the 90th percentile, and Luka Doncic led at 38.1 percent.</p></details>
 </div>
@@ -230,6 +253,8 @@ footer a { color: #6e6e73; text-decoration: none; margin: 0 10px; }
 <li><a href="https://www.basketball-reference.com/about/glossary.html" rel="noopener">Basketball-Reference: Glossary (TS%, TSA, USG%)</a></li>
 <li><a href="https://www.basketball-reference.com/leagues/NBA_2026_advanced.html" rel="noopener">Basketball-Reference: 2025-26 NBA advanced stats</a></li>
 <li><a href="https://www.basketball-reference.com/leagues/NBA_2026_totals.html" rel="noopener">Basketball-Reference: 2025-26 NBA player totals</a></li>
+<li><a href="https://www.basketball-reference.com/leagues/NBA_stats_per_game.html" rel="noopener">Basketball-Reference: NBA league averages per game (TS% by season)</a></li>
+<li><a href="https://www.basketball-reference.com/leagues/NBA_2025_leaders.html" rel="noopener">Basketball-Reference: 2024-25 NBA leaders</a></li>
 </ol>
 </div>
 </article>

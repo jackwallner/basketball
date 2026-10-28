@@ -6,7 +6,7 @@ Web page: https://jackwallner.com/ios/basketball/true-shooting-percentage-explai
 
 ## True shooting percentage explained (and usage rate)
 
-By Jack Wallner. Last updated October 19, 2026.
+By Jack Wallner. Last updated October 28, 2026.
 
 True shooting percentage (TS%) measures how efficiently a player scores by folding two-pointers, three-pointers and free throws into one number. The formula is points divided by twice the player's true shooting attempts, where true shooting attempts equal field goal attempts plus 0.44 times free throw attempts. Usage rate (USG%) is the companion number: how many of his team's possessions a player ends while he is on the floor.
 
@@ -40,6 +40,29 @@ League-wide TS% over all players' combined totals was .581. Percentiles are inte
 
 So a .581 TS% is average, .641 is top-tenth, and anything above .650 is well past the 90th percentile. Shai Gilgeous-Alexander (.665) and Nikola Jokic (.670) were both above that line with real scoring loads. Be careful reading the very top of the list: the highest qualified mark, Jericho Sims at .772, came with a usage rate of 9.8 percent, so it describes a player who rarely shoots, not one who carries an offense.
 
+## Has the league-average TS% gone up?
+
+Yes. League-wide true shooting rose from .541 in 2015-16 to .581 in 2025-26, so a TS% that was above average ten years ago is below average now. Compare a player only to the league in his own season.
+
+| Season | League TS% |
+| --- | --- |
+| 2015-16 | .541 |
+| 2016-17 | .552 |
+| 2017-18 | .556 |
+| 2018-19 | .560 |
+| 2019-20 | .565 |
+| 2020-21 | .572 |
+| 2021-22 | .566 |
+| 2022-23 | .581 |
+| 2023-24 | .580 |
+| 2024-25 | .576 |
+| 2025-26 | .581 |
+| 2026-27 (so far) | .570 |
+
+Regular season, from the Basketball-Reference league averages table. The 2026-27 figure covers the first 56 team games and will move.
+
+The 2024-25 qualified leaders show why the top of the list needs context: Jarrett Allen (.724), Jalen Duren (.703), Rudy Gobert (.687), Christian Braun (.665) and Keon Ellis (.664). The first three are centers who finish at the rim on usage rates of 13 to 16 percent. Nikola Jokic was sixth at .663 while using 29.5 percent of Denver's plays, which is the rarer feat.
+
 ## What is usage rate in basketball?
 
 USG% = 100 \* ((FGA + 0.44 \* FTA + TOV) \* (Tm MP / 5)) / (MP \* (Tm FGA + 0.44 \* Tm FTA + Tm TOV))
@@ -70,6 +93,10 @@ Not every free throw attempt ends a possession, because some come in pairs, some
 
 In 2025-26 the league-wide figure was about .581, and the 90th percentile among players with at least 1,000 minutes was about .641. Above .650 is past the 90th percentile.
 
+### What was the NBA league-average true shooting percentage in 2024-25?
+
+It was .576 in the 2024-25 regular season, between .580 in 2023-24 and .581 in 2025-26. Ten years earlier, in 2015-16, it was .541.
+
 ### What is usage rate in basketball?
 
 Usage rate is an estimate of the percentage of a team's plays that a player uses while he is on the floor. A play is used when it ends in a field goal attempt, a trip to the free throw line or a turnover.
@@ -85,3 +112,5 @@ Related: [What are expected goals (xG) in hockey? (And GSAx for goalies)](https:
 1. [Basketball-Reference: Glossary (TS%, TSA, USG%)](https://www.basketball-reference.com/about/glossary.html)
 2. [Basketball-Reference: 2025-26 NBA advanced stats](https://www.basketball-reference.com/leagues/NBA_2026_advanced.html)
 3. [Basketball-Reference: 2025-26 NBA player totals](https://www.basketball-reference.com/leagues/NBA_2026_totals.html)
+4. [Basketball-Reference: NBA league averages per game (TS% by season)](https://www.basketball-reference.com/leagues/NBA_stats_per_game.html)
+5. [Basketball-Reference: 2024-25 NBA leaders](https://www.basketball-reference.com/leagues/NBA_2025_leaders.html)
