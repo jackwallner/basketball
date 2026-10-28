@@ -32,7 +32,7 @@
   "@graph": [
     {
       "@type": "MobileApplication",
-      "dateModified": "2026-10-27",
+      "dateModified": "2026-10-28",
       "@id": "https://jackwallner.com/ios/basketball/#app",
       "name": "Basketball: Hardwood StatScout",
       "alternateName": "StatScout",
@@ -571,7 +571,7 @@
             color: #6e6e73;
         }
 
-        footer a {
+        footer a { display: inline-block; padding: 6px 0;
             color: #6e6e73;
             text-decoration: none;
             margin: 0 10px;
@@ -611,8 +611,8 @@
 
     <nav>
         <div class="container">
-            <a class="nav-brand" href="./">
-                <img src="icon_256.png" alt="StatScout">
+            <a class="nav-brand" href="./" aria-label="StatScout">
+                <img src="icon_64.webp" alt="" width="32" height="32">
                 <span>StatScout</span>
             </a>
         </div>
@@ -628,22 +628,22 @@
     <section class="showcase">
         <div class="showcase-scroll">
             <div class="showcase-card">
-                <img src="appstore-screenshot-01.webp" alt="Rank the league. Guard leaderboard sorted by advanced metrics" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-01.webp" srcset="appstore-screenshot-01-360.webp 360w, appstore-screenshot-01-540.webp 540w, appstore-screenshot-01.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Rank the league. Guard leaderboard sorted by advanced metrics" loading="lazy" decoding="async" width="720" height="1564">
             </div>
             <div class="showcase-card">
-                <img src="appstore-screenshot-02.webp" alt="One tap, full profile. Visual percentile bars across scoring, shooting, playmaking, rebounding, defense, and impact" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-02.webp" srcset="appstore-screenshot-02-360.webp 360w, appstore-screenshot-02-540.webp 540w, appstore-screenshot-02.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="One tap, full profile. Visual percentile bars across scoring, shooting, playmaking, rebounding, defense, and impact" loading="lazy" decoding="async" width="720" height="1564">
             </div>
             <div class="showcase-card">
-                <img src="appstore-screenshot-03.webp" alt="Who's heating up. League-wide trends over the last few games" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-03.webp" srcset="appstore-screenshot-03-360.webp 360w, appstore-screenshot-03-540.webp 540w, appstore-screenshot-03.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Who's heating up. League-wide trends over the last few games" loading="lazy" decoding="async" width="720" height="1564">
             </div>
             <div class="showcase-card">
-                <img src="appstore-screenshot-04.webp" alt="Head to head. Two players compared side by side" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-04.webp" srcset="appstore-screenshot-04-360.webp 360w, appstore-screenshot-04-540.webp 540w, appstore-screenshot-04.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Head to head. Two players compared side by side" loading="lazy" decoding="async" width="720" height="1564">
             </div>
             <div class="showcase-card">
-                <img src="appstore-screenshot-05.webp" alt="Scout the team. Advanced and standard stats for all 30 teams" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-05.webp" srcset="appstore-screenshot-05-360.webp 360w, appstore-screenshot-05-540.webp 540w, appstore-screenshot-05.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Scout the team. Advanced and standard stats for all 30 teams" loading="lazy" decoding="async" width="720" height="1564">
             </div>
             <div class="showcase-card">
-                <img src="appstore-screenshot-06.webp" alt="Year over year. One player's seasons compared back to 2002-03" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-06.webp" srcset="appstore-screenshot-06-360.webp 360w, appstore-screenshot-06-540.webp 540w, appstore-screenshot-06.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Year over year. One player's seasons compared back to 2002-03" loading="lazy" decoding="async" width="720" height="1564">
             </div>
         </div>
     </section>
@@ -808,7 +808,7 @@
     </section>
 
     <footer>
-        <div class="divider">&copy; 2026 Jack Wallner · Last updated <time datetime="2026-10-27" data-updated>October 27, 2026</time></div>
+        <div class="divider">&copy; 2026 Jack Wallner · Last updated <time datetime="2026-10-28" data-updated>October 28, 2026</time></div>
         <div>
             <a href="https://jackwallner.com/ios/">More apps by Jack Wallner</a>
             <a href="true-shooting-percentage-explained.html">True shooting percentage explained</a>
