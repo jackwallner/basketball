@@ -229,6 +229,24 @@ final class GamesTests: XCTestCase {
         XCTAssertEqual(GameDetailView.shortName("Shai Gilgeous-Alexander"), "S. Gilgeous-Alexander")
     }
 
+    /// "Plays that decided it" lists its rows by `BigPlay.id`. Both free throws
+    /// of a trip are logged at the same stopped clock with the same opening
+    /// words, so an id built from the clock and the first 24 characters of the
+    /// text gave the pair a single identity: SwiftUI draws one row for it, with
+    /// the first throw's text and margin.
+    func testBigPlaysAtTheSameClockKeepDistinctIdentities() throws {
+        let json = """
+        [{"game_id":"g","away_team":"NYK","home_team":"SAS",
+          "big_plays":[{"qtr":4,"kind":"late_score","team":"NYK","clock":"0:23","points":1,
+                        "description":"Jalen Brunson makes free throw 1 of 2","home_margin":-3},
+                       {"qtr":4,"kind":"late_score","team":"NYK","clock":"0:23","points":1,
+                        "description":"Jalen Brunson makes free throw 2 of 2","home_margin":-4}]}]
+        """.data(using: .utf8)!
+        let detail = try XCTUnwrap(JSONDecoder.statScout.decode([GameDetail].self, from: json).first)
+        XCTAssertEqual(detail.bigPlays.count, 2)
+        XCTAssertEqual(Set(detail.bigPlays.map(\.id)).count, 2, "ids: \(detail.bigPlays.map(\.id))")
+    }
+
     func testFreshnessReportsAdvancedPending() throws {
         let json = """
         {"status":"degraded","refresh_id":"r","max_game_date":"2026-10-21","max_week":3,

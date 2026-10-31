@@ -122,7 +122,11 @@ struct GameDetail: Decodable, Sendable {
         let homeMargin: Int
         let kind: Kind?
 
-        var id: String { "\(qtr)-\(clock)-\(description.prefix(24))" }
+        /// Both free throws of a trip are logged at the same stopped clock and
+        /// open with the same words ("Jalen Brunson makes free "), so the clock
+        /// and the start of the text are not an identity. The margin after the
+        /// play is: every scoring play moves it.
+        var id: String { "\(qtr)-\(clock)-\(homeMargin)-\(points)-\(description)" }
 
         enum CodingKeys: String, CodingKey {
             case qtr, clock, team, description, points, kind
