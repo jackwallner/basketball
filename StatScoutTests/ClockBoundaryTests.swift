@@ -298,6 +298,47 @@ final class ClockBoundaryTests: XCTestCase {
         XCTAssertEqual(leap.age(on: local(la, 2027, 3, 1), calendar: la), 27)
     }
 
+    /// New guard: ages are a Gregorian fact. Thailand's default calendar is
+    /// Buddhist and Saudi Arabia's is Umm al-Qura, so `Calendar.current` there
+    /// numbers this year 2569 or 1448; reading the year off it made a 1995 birth
+    /// "574 yrs" (or a negative age) on every player page. The viewer's calendar
+    /// supplies the zone and nothing else.
+    func testAgeDoesNotDependOnTheDeviceCalendar() throws {
+        let player = try profile(born: "1995-03-10")
+        for identifier in Self.nonGregorianCalendars {
+            let calendar = viewerCalendar(identifier)
+            XCTAssertEqual(player.age(on: local(la, 2026, 10, 31, 12), calendar: calendar), 31, "\(identifier)")
+            XCTAssertEqual(player.age(on: local(la, 2026, 3, 9, 23, 59, 59), calendar: calendar), 30, "\(identifier) eve")
+            XCTAssertEqual(player.age(on: local(la, 2026, 3, 10), calendar: calendar), 31, "\(identifier) birthday")
+        }
+    }
+
+    /// New guard, same cause: the season flip is the Gregorian 1 October. On a
+    /// Japanese or Umm al-Qura calendar the first launch (no remembered live
+    /// season yet) resolved to season 9 or 1448 and asked the feed for it.
+    func testCalendarSeasonDoesNotDependOnTheDeviceCalendar() {
+        for identifier in Self.nonGregorianCalendars {
+            let calendar = viewerCalendar(identifier)
+            XCTAssertEqual(
+                StatScoutSeason.calendarSeason(on: local(la, 2026, 9, 30, 23, 59, 59), calendar: calendar), 2026, "\(identifier)")
+            XCTAssertEqual(
+                StatScoutSeason.calendarSeason(on: local(la, 2026, 10, 1), calendar: calendar), 2027, "\(identifier)")
+            XCTAssertEqual(
+                StatScoutSeason.calendarSeason(on: local(la, 2027, 3, 14, 2, 30), calendar: calendar), 2027, "\(identifier)")
+        }
+    }
+
+    /// Calendars an iPhone can be set to, and the ones whole regions default to.
+    private static let nonGregorianCalendars: [Calendar.Identifier] = [
+        .buddhist, .japanese, .islamicUmmAlQura, .persian, .hebrew, .republicOfChina, .indian,
+    ]
+
+    private func viewerCalendar(_ identifier: Calendar.Identifier) -> Calendar {
+        var calendar = Calendar(identifier: identifier)
+        calendar.timeZone = la.timeZone
+        return calendar
+    }
+
     func testWeeklyDeltaWindowEdge() {
         let now = instant("2026-11-03T12:00:00Z")
         func trend(_ id: String, ageSeconds: TimeInterval, delta: Int) -> GameTrend {

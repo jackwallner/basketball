@@ -49,8 +49,14 @@ enum StatScoutSeason {
     /// The season the calendar names today: October through December belong to
     /// the season that ends next summer. Same rule as
     /// `backend/nbacodes.py::season_for_date`.
+    ///
+    /// The year and month are Gregorian whatever the device calendar is;
+    /// `calendar` only supplies the zone. A Japanese or Umm al-Qura calendar
+    /// would otherwise name season 9 or 1448 on a first launch.
     static func calendarSeason(on date: Date = .now, calendar: Calendar = .current) -> Int {
-        let parts = calendar.dateComponents([.year, .month], from: date)
+        var gregorian = Calendar(identifier: .gregorian)
+        gregorian.timeZone = calendar.timeZone
+        let parts = gregorian.dateComponents([.year, .month], from: date)
         guard let year = parts.year, let month = parts.month else { return bundledNewest }
         return month >= 10 ? year + 1 : year
     }
