@@ -119,6 +119,25 @@ def test_clean_player_box_dedupes_and_parses():
     assert frame.iloc[0]["game_date"] == "2026-01-05"
 
 
+def test_clean_player_box_corrects_only_the_stale_davis_attempt():
+    raw = _player_box([
+        {"game_id": 401909277, "athlete_id": 6583, "field_goals_made": 8, "field_goals_attempted": 18},
+        {"game_id": 401909278, "athlete_id": 6583, "field_goals_attempted": 18},
+        {"game_id": 401909277, "athlete_id": 9999, "field_goals_attempted": 18},
+    ])
+
+    frame = boxscore.clean_player_box(raw).set_index(["game_id", "athlete_id"])
+
+    assert frame.loc[(401909277, 6583), "fga"] == 17
+    assert frame.loc[(401909278, 6583), "fga"] == 18
+    assert frame.loc[(401909277, 9999), "fga"] == 18
+
+    already_current = boxscore.clean_player_box(_player_box([
+        {"game_id": 401909277, "athlete_id": 6583, "field_goals_attempted": 17},
+    ]))
+    assert already_current.iloc[0]["fga"] == 17
+
+
 def test_player_possessions_scale_with_minutes():
     teams = pd.DataFrame([
         {"game_id": 1, "team_id": 1, "fgm": 40, "fga": 90, "fg3a": 30, "fta": 22, "tov": 14,
