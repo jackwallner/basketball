@@ -66,6 +66,13 @@ COUNT_COLUMNS = [
 ]
 POSITION_FOLD = {"G": "g", "PG": "g", "SG": "g", "F": "f", "SF": "f", "PF": "f", "C": "c"}
 
+# The hoopR player-box parquet still reports 8-for-18 for this game, while
+# ESPN's current public box score reports 8-for-17. Keep this ID-keyed correction
+# until the upstream parquet agrees; it is idempotent if the source is refreshed.
+PLAYER_BOX_CORRECTIONS = {
+    (401909277, 6583): {"fga": (18, 17)},  # 2026-10-30 WAS-CHA, Anthony Davis
+}
+
 
 # --------------------------------------------------------------------------- #
 # Pure formulas (unit-tested against hand-computed examples)
@@ -166,7 +173,13 @@ def clean_player_box(player_box: pl.DataFrame) -> pd.DataFrame:
     for column in ("game_id", "athlete_id", "team_id", "opp_team_id"):
         frame[column] = frame[column].astype("int64")
     frame = frame.drop(columns=["home_away", "did_not_play"])
-    return frame.drop_duplicates(["game_id", "athlete_id"], keep="last").reset_index(drop=True)
+    frame = frame.drop_duplicates(["game_id", "athlete_id"], keep="last").reset_index(drop=True)
+    for (game_id, athlete_id), corrections in PLAYER_BOX_CORRECTIONS.items():
+        mask = frame["game_id"].eq(game_id) & frame["athlete_id"].eq(athlete_id)
+        for column, (stale_value, corrected_value) in corrections.items():
+            stale_row = mask & frame[column].eq(stale_value)
+            frame.loc[stale_row, column] = corrected_value
+    return frame
 
 
 def team_game_table(team_box: pl.DataFrame, players: pd.DataFrame) -> pd.DataFrame:
