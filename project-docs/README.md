@@ -8,4 +8,4 @@ Pages site). One line per file.
 - The full ASO plan lands here once the listing is live and Astro can resolve the app.
 
 ## audits
-- (none yet)
+- `audits/presubmit-review-2026-11-08-deep.md`: deep pre-submit review of 1.0.1 (12), every user path on main.
