@@ -247,6 +247,21 @@ final class GamesTests: XCTestCase {
         XCTAssertEqual(Set(detail.bigPlays.map(\.id)).count, 2, "ids: \(detail.bigPlays.map(\.id))")
     }
 
+    /// The margin chart draws `ForEach(points)`. The series has a point per
+    /// play, so a free-throw trip, or the end of one quarter and the start of
+    /// the next, gives two points the same second: keyed by time, the chart
+    /// had duplicate identities.
+    func testMarginPointsAtTheSameSecondKeepDistinctIdentities() throws {
+        let json = """
+        [{"game_id":"g","away_team":"NYK","home_team":"SAS",
+          "win_probability":[[0,0],[700,3],[700,4],[720,4],[720,4],[2880,-1],[1]]}]
+        """.data(using: .utf8)!
+        let detail = try XCTUnwrap(JSONDecoder.statScout.decode([GameDetail].self, from: json).first)
+        XCTAssertEqual(detail.margin.count, 6, "the malformed pair is dropped")
+        XCTAssertEqual(Set(detail.margin.map(\.id)).count, 6)
+        XCTAssertEqual(detail.margin.map(\.homeMargin), [0, 3, 4, 4, 4, -1])
+    }
+
     func testFreshnessReportsAdvancedPending() throws {
         let json = """
         {"status":"degraded","refresh_id":"r","max_game_date":"2026-10-21","max_week":3,

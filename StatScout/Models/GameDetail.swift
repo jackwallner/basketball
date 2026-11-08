@@ -157,10 +157,16 @@ struct GameDetail: Decodable, Sendable {
 
     /// One step of the score margin: seconds elapsed in the game and home score
     /// minus away score. Positive is the home team ahead.
+    ///
+    /// The series has a point for every play, so two share a second whenever
+    /// both free throws of a trip land on one clock, and the end of a quarter
+    /// and the start of the next share one too. The chart's identity is the
+    /// point's position in the series, never its time.
     struct MarginPoint: Hashable, Sendable, Identifiable {
+        let index: Int
         let elapsed: Double
         let homeMargin: Double
-        var id: Double { elapsed }
+        var id: Int { index }
     }
 
     let gameId: String
@@ -193,8 +199,8 @@ struct GameDetail: Decodable, Sendable {
         home = sides?.home ?? [:]
         players = (try? c.decodeIfPresent([Lossy<PlayerLine>].self, forKey: .players))?.compactMap(\.value) ?? []
         let raw = (try? c.decodeIfPresent([[Double]].self, forKey: .margin)) ?? []
-        margin = raw.compactMap { pair in
-            pair.count == 2 ? MarginPoint(elapsed: pair[0], homeMargin: pair[1]) : nil
+        margin = raw.filter { $0.count == 2 }.enumerated().map { index, pair in
+            MarginPoint(index: index, elapsed: pair[0], homeMargin: pair[1])
         }
         bigPlays = (try? c.decodeIfPresent([Lossy<BigPlay>].self, forKey: .bigPlays))?.compactMap(\.value) ?? []
     }
