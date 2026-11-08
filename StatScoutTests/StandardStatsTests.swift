@@ -121,4 +121,13 @@ final class StandardStatsTests: XCTestCase {
         XCTAssertEqual(curve?.percentile(for: 400), 80)
         XCTAssertNil(LeaguePercentileCurve(points: [(100, 20)]))
     }
+
+    /// A subscriber's saved Best & Worst board survived only until the launch
+    /// frame, where `isPro` still read false and the board was reset.
+    func testBestWorstBoardWaitsForEntitlementBeforeResetting() {
+        XCTAssertEqual(StatsBoard.launchBoard(.bestWorst, isPro: false, entitlementKnown: false), .bestWorst)
+        XCTAssertEqual(StatsBoard.launchBoard(.bestWorst, isPro: true, entitlementKnown: true), .bestWorst)
+        XCTAssertEqual(StatsBoard.launchBoard(.bestWorst, isPro: false, entitlementKnown: true), .advanced)
+        XCTAssertEqual(StatsBoard.launchBoard(.standard, isPro: false, entitlementKnown: true), .standard)
+    }
 }

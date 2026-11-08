@@ -71,10 +71,12 @@ struct StatsView: View {
         .sheet(item: $paywallTrigger) { trigger in
             TrialPitchSheet(trigger: trigger)
         }
-        .onAppear {
-            // The board choice persists; a free user who peeked at the Best &
-            // Worst gate must not relaunch onto it.
-            if !store.isPro && board == .bestWorst { board = .advanced }
+        .task(id: store.customerInfo != nil) {
+            board = StatsBoard.launchBoard(
+                board,
+                isPro: store.isPro,
+                entitlementKnown: store.customerInfo != nil
+            )
         }
     }
 

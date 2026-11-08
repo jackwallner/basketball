@@ -5,6 +5,15 @@ enum StatsBoard: String, Hashable {
     case advanced
     case standard
     case bestWorst
+
+    /// The board to open on. A free user who peeked at the Best & Worst gate
+    /// must not relaunch onto it, but `isPro` reads false until RevenueCat's
+    /// customer info lands, so the reset waits for that: deciding on the
+    /// launch frame sent every subscriber back to Advanced on every launch.
+    static func launchBoard(_ stored: StatsBoard, isPro: Bool, entitlementKnown: Bool) -> StatsBoard {
+        guard stored == .bestWorst, entitlementKnown, !isPro else { return stored }
+        return .advanced
+    }
 }
 
 /// The traditional line offered for each position cohort: the same fifteen
