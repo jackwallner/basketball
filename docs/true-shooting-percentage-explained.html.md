@@ -1,12 +1,12 @@
-# True Shooting Percentage Explained (Formula and Usage Rate)
+# What Is a Good True Shooting Percentage? (TS% Formula)
 
-> True shooting percentage (TS%) counts threes and free throws to measure scoring efficiency. See the formula, a worked example, and how usage rate fits in.
+> A .581 TS% was league average in 2025-26 and .641 put a player in the top 10%. See the true shooting formula, a worked example, and how usage rate fits in.
 
 Web page: https://jackwallner.com/ios/basketball/true-shooting-percentage-explained.html
 
 ## True shooting percentage explained (and usage rate)
 
-By Jack Wallner. Last updated October 28, 2026.
+By Jack Wallner. Last updated November 11, 2026.
 
 True shooting percentage (TS%) measures how efficiently a player scores by folding two-pointers, three-pointers and free throws into one number. The formula is points divided by twice the player's true shooting attempts, where true shooting attempts equal field goal attempts plus 0.44 times free throw attempts. Usage rate (USG%) is the companion number: how many of his team's possessions a player ends while he is on the floor.
 
