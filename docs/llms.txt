@@ -10,6 +10,14 @@
 
 - [What Is a Good True Shooting Percentage? (TS% Formula)](https://jackwallner.com/ios/basketball/true-shooting-percentage-explained.html.md): A .581 TS% was league average in 2025-26 and .641 put a player in the top 10%. See the true shooting formula, a worked example, and how usage rate fits in.
 
+## Other languages
+
+- [Τι θεωρείται καλό true shooting (TS%); Τύπος και τιμές](https://jackwallner.com/ios/basketball/el/true-shooting-percentage-explained.html.md): Στο NBA του 2025-26 ο μέσος όρος TS% ήταν 58,1% και με 64,1% ένας παίκτης έμπαινε στο καλύτερο 10%. Ο τύπος του true shooting, παράδειγμα και usage rate.
+- [¿Qué es un buen True Shooting (TS%)? Fórmula y datos](https://jackwallner.com/ios/basketball/es/true-shooting-percentage-explained.html.md): Un TS% del 58,1 % fue la media de la NBA en 2025-26, y un 64,1 % ya situaba a un jugador en el 10 % mejor. Fórmula, ejemplo real y relación con el USG%.
+- [Quel est un bon true shooting (TS%) ? Formule et repères](https://jackwallner.com/ios/basketball/fr/true-shooting-percentage-explained.html.md): En NBA, 58,1 % de TS% était la moyenne en 2025-26 et 64,1 % plaçait un joueur dans les 10 % meilleurs. Formule, exemple chiffré et lien avec l'usage.
+- [Qual è una buona true shooting (TS%)? Formula e valori](https://jackwallner.com/ios/basketball/it/true-shooting-percentage-explained.html.md): Nella NBA 2025-26 la media di TS% era il 58,1% e con il 64,1% si entrava nel miglior 10%. Formula della true shooting, esempio reale e rapporto con l'usage.
+- [İyi bir true shooting yüzdesi (TS%) nedir? Formül](https://jackwallner.com/ios/basketball/tr/true-shooting-percentage-explained.html.md): NBA'de 2025-26'da lig ortalaması %58,1 TS% idi, %64,1 ise oyuncuyu en iyi %10'a sokuyordu. True shooting formülü, gerçek bir örnek ve kullanım oranıyla ilişkisi.
+
 ## Optional
 
 - [Hoops Edge: Hardwood StatScout for Android Privacy Policy](https://jackwallner.github.io/basketball/android-privacy.html.md): Hoops Edge: Hardwood StatScout for Android Privacy Policy
