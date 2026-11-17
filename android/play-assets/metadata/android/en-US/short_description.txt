@@ -1,1 +1,1 @@
-Every NBA player ranked by advanced stats, with percentile bars by position.
+Every pro basketball player ranked by advanced stats, with percentile bars.

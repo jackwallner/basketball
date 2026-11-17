@@ -1,1 +1,1 @@
-Stats NBA avancées et percentiles pour chaque joueur, comparés par poste.
+Stats basket avancées et percentiles pour chaque joueur, comparés par poste.

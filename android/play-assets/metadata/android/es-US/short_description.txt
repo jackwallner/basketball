@@ -1,1 +1,1 @@
-Estadísticas NBA avanzadas, marcadores en vivo y percentiles por posición.
+Estadísticas de básquet, marcadores en vivo y percentiles por posición.

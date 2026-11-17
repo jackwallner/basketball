@@ -1,1 +1,1 @@
-Thống kê NBA nâng cao và phân vị mọi cầu thủ theo vị trí, kèm tỉ số trực tiếp.
+Thống kê bóng rổ nâng cao, phân vị mọi cầu thủ theo vị trí và tỉ số trực tiếp.

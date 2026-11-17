@@ -1,1 +1,1 @@
-Estadístiques avançades de l'NBA i percentils de cada jugador per posició.
+Estadístiques avançades de bàsquet i percentils de cada jugador per posició.

@@ -1,1 +1,1 @@
-Zaawansowane statystyki NBA i percentyle każdego zawodnika według pozycji.
+Zaawansowane statystyki koszykarskie i percentyle każdego zawodnika wg pozycji.

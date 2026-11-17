@@ -1,1 +1,1 @@
-Avansert NBA-statistikk og persentiler for hver spiller, sortert etter posisjon.
+Avansert basketballstatistikk og persentiler for hver spiller, etter posisjon.

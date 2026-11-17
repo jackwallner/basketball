@@ -1,1 +1,1 @@
-Statistik NBA lanjutan dan persentil setiap pemain per posisi, plus skor live.
+Statistik basket lanjutan dan persentil tiap pemain per posisi, plus skor live.

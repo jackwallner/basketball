@@ -1,1 +1,1 @@
-Pokročilé štatistiky NBA a percentily každého hráča podľa pozície.
+Pokročilé basketbalové štatistiky a percentily každého hráča podľa pozície.
