@@ -12,6 +12,10 @@ paths:
 
 ## Current state, 2026-10-19
 
+- 2026-11-19: 1.0.1 (12) released by hand, the app's first App Store release
+  (READY_FOR_SALE). Build 13 (uploaded 2026-11-17) carries the fixes made after
+  12. Ten locale subtitles and 36 descriptions still name the league; strip
+  them in the next version (Google Play suspended the Android listing for it).
 - App Store Connect app `6820647074` ("Basketball: Hardwood StatScout", SKU
   `basketball-statscout`, bundle id `com.jackwallner.basketball`).
 - Version 1.0, build 5, submitted for review 2026-10-14 (review submission
