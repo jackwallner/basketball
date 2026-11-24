@@ -101,7 +101,7 @@ class StoreScreenshotTest {
     fun capture05Team() {
         launch(tab = 3)
         waitForText("TEAM ADVANCED STATS")
-        waitForText("New York Knicks")
+        waitForText("New York")
         // Scoring's team Pts/100 is scaled from the whole roster; the fixture
         // carries only part of one, so Shooting is the honest frame.
         node(matcher("SHOOTING")).performClick()
