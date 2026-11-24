@@ -176,7 +176,8 @@ class SubscriptionService(
         return if (trigger == PaywallTrigger.Winback) "Restart StatScout+" else "Unlock StatScout+"
     }
 
-    val paywallBlurCTA: String get() = directCTALabel(PaywallTrigger.Upgrade)
+    /** Label for the upsell cards on the player page and Compare, which navigate and never transact. */
+    val paywallBlurCTA: String get() = PriceCopy.UPSELL_CARD_LABEL
 
     val paywallBlurSubtext: String?
         get() {

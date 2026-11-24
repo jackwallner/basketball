@@ -298,7 +298,6 @@ fun PlayerComparisonView(playerA: Player, playerB: Player, catalog: ComparisonCa
                     .clickable { actions.openTrialPitch(PaywallTrigger.PlayerComparison) }.testTag("compareUnlock"),
                 contentAlignment = Alignment.Center,
             ) { Text(store.paywallBlurCTA, style = HardwoodType.bodyBold, color = Color.White) }
-            store.paywallBlurSubtext?.let { Text(it, style = HardwoodType.micro, color = HardwoodPalette.inkTertiary, textAlign = TextAlign.Center) }
         }
     }
 
