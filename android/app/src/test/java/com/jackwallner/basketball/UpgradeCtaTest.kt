@@ -28,6 +28,16 @@ class UpgradeCtaTest {
         }
     }
 
+    /** Upsell cards only navigate, so they name neither a price nor a trial (iOS 30ef703). */
+    @Test
+    fun upsellCardsNameNoPriceOrTrial() {
+        val label = PriceCopy.UPSELL_CARD_LABEL
+        assertEquals("See StatScout+ Plans", label)
+        assertFalse(label.contains("free", ignoreCase = true))
+        assertFalse(label.contains("trial", ignoreCase = true))
+        assertFalse(label.any { it.isDigit() })
+    }
+
     @Test
     fun knownProductsMapToPurchasePackages() {
         assertEquals(PackageKind.YEARLY, PackageKind.fromIdentifiers(StatScoutProduct.YEARLY))

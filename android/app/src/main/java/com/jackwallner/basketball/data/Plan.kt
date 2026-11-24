@@ -134,6 +134,13 @@ fun yearlySavingsPercent(yearly: Plan, monthly: Plan?): Int? {
 object PriceCopy {
     const val RENEW = "Auto-renews unless cancelled before the end of the current period. Manage or cancel in Google Play › Payments & subscriptions."
 
+    /**
+     * The upsell cards on the player page and Compare. They only open the
+     * priced pitch sheet, which states the price and any trial at the purchase
+     * point, so a navigation button names neither.
+     */
+    const val UPSELL_CARD_LABEL = "See StatScout+ Plans"
+
     /** Navigation affordances that open the offer: "Try Free" or "Upgrade". */
     fun upgradeCTALabel(trialAvailable: Boolean): String = if (trialAvailable) "Try Free" else "Upgrade"
 

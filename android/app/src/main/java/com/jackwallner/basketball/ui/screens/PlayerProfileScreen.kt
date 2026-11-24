@@ -605,7 +605,6 @@ private fun ProUpsellCard(name: String, onTap: () -> Unit) {
             Text(store.paywallBlurCTA, style = HardwoodType.bodyBold, color = Color.White)
             SfIcon("arrow.right", 14.dp, Color.White)
         }
-        store.paywallBlurSubtext?.let { Text(it, style = HardwoodType.micro, color = HardwoodPalette.inkTertiary, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) }
     }
 }
 
