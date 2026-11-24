@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Contrast
@@ -146,6 +147,7 @@ fun sf(name: String): ImageVector = when (name) {
     "slider.horizontal.3" -> Icons.Filled.Tune
     "snowflake" -> Icons.Filled.AcUnit
     "sportscourt.fill" -> Icons.Filled.SportsBasketball
+    "square.and.arrow.up" -> Icons.Filled.Share
     "square.and.pencil" -> Icons.Filled.Edit
     "star" -> Icons.Outlined.StarOutline
     "star.fill" -> Icons.Filled.Star
