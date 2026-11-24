@@ -10,7 +10,7 @@ Hardwood StatScout is an NBA advanced stats app for iPhone: every player ranked 
 
 iPhone · Fresh after every game · No account
 
-Coming soon to the App Store
+[Download for free](https://apps.apple.com/us/app/basketball-hardwood-statscout/id6820647074?pt=128748779&ct=jw-basketball-home&mt=8)
 
 ## What does Hardwood StatScout show?
 
@@ -116,7 +116,7 @@ Quick answers about the app.
 
 ## Is there an NBA advanced stats app for iPhone?
 
-Yes. Basketball: Hardwood StatScout is an NBA advanced stats app for iPhone that ranks every player on percentiles for usage, true shooting, shot zones, assist and rebound rates, steals, blocks and on-court impact, next to the familiar per-game totals. It is coming soon to the App Store.
+Yes. Basketball: Hardwood StatScout is an NBA advanced stats app for iPhone that ranks every player on percentiles for usage, true shooting, shot zones, assist and rebound rates, steals, blocks and on-court impact, next to the familiar per-game totals. It is free on the App Store.
 
 ## What is true shooting percentage?
 
@@ -148,4 +148,4 @@ StatScout is not affiliated with, authorized, endorsed by, or sponsored by the N
 
 Free to use. No account required. StatScout+ optional.
 
-Coming soon to the App Store
+[Download for free](https://apps.apple.com/us/app/basketball-hardwood-statscout/id6820647074?pt=128748779&ct=jw-basketball-home&mt=8)
