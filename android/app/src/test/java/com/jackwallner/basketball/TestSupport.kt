@@ -111,7 +111,8 @@ fun TestScope.dashboard(
     provider: StatcastProviding,
     cache: PlayerCaching? = null,
     store: KeyValueStore = InMemoryStore(),
-) = DashboardViewModel(provider, cache, store, this, io = StandardTestDispatcher(testScheduler))
+    clock: () -> Instant = Instant::now,
+) = DashboardViewModel(provider, cache, store, this, io = StandardTestDispatcher(testScheduler), clock = clock)
 
 /** Three players a team, one per cohort, so every cohort is present. */
 fun completeSeasonPlayers(season: Int, namePrefix: String): List<Player> =

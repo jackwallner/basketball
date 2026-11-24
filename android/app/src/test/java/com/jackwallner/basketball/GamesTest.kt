@@ -163,7 +163,8 @@ class GamesTest {
             status = DataFreshnessStatus.PENDING, rawStatus = "source_pending",
             season = 2027, publishedSeason = 2026, lastErrorCode = "season_pending",
         )
-        val vm = dashboard(GamesProvider(finals + opening, pending))
+        // A fixed clock before opening night: the wall clock read "under way" after Oct 20.
+        val vm = dashboard(GamesProvider(finals + opening, pending), clock = { date("2026-09-21T14:13:20Z") })
         vm.checkForUpdates(force = true)
         vm.loadGames(force = true)
 
