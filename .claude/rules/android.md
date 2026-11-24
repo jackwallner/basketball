@@ -12,6 +12,8 @@ paths:
 
 # Hardwood StatScout Android rules
 
+Last iOS sync: eb95d0ed89e9e1bdf1754db2d7e536c9d11594f6 (iOS 1.0.1 build 12, 2026-11-24)
+
 ## Identity and products
 
 - Native Android code is in `android/`, a screen-for-screen port of the iOS app
