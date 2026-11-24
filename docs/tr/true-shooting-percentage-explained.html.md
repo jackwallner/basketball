@@ -6,7 +6,7 @@ Web page: https://jackwallner.com/ios/basketball/tr/true-shooting-percentage-exp
 
 ## True shooting yüzdesi (TS%): nedir, nasıl hesaplanır, kaç iyidir?
 
-Yazan: Jack Wallner. Son güncelleme: 11.11.2026.
+Yazan: Jack Wallner. Son güncelleme: 24.11.2026.
 
 True shooting yüzdesi (TS%, gerçek şut yüzdesi), ikilikleri, üçlükleri ve serbest atışları tek bir sayıda toplayarak bir oyuncunun ne kadar verimli sayı ürettiğini ölçer. Formül, sayıların gerçek şut denemelerinin iki katına bölünmesidir. Gerçek şut denemesi de saha içi şut denemeleri artı serbest atış denemelerinin 0,44 katıdır. Kullanım oranı (usage rate, USG%) ise onu tamamlayan sayıdır: oyuncu sahadayken takımının hücumlarından ne kadarını kendisi bitirdiğini gösterir.
 
@@ -77,7 +77,7 @@ Kullanım oranı oyuncunun hücumun ne kadarını taşıdığını, TS% ise tak�
 
 ## StatScout TS% ve kullanım oranını nasıl gösterir?
 
-[Basketball: Hardwood StatScout](https://jackwallner.com/ios/basketball/), NBA ile bağlantısı olmayan bağımsız bir iPhone uygulamasıdır. TS%, USG% ve diğer ileri istatistikleri diğer NBA oyuncularına göre yüzdelik çubukları olarak göstermek için tasarlandı ve yakında App Store'da olacak. Yüzdelik görünümü "%59 iyi mi?" sorusunu tek bakışta yanıtlar, yukarıdaki tabloyu ezberlemeniz gerekmez.
+[Basketball: Hardwood StatScout](https://jackwallner.com/ios/basketball/), NBA ile bağlantısı olmayan bağımsız bir iPhone uygulamasıdır. TS%, USG% ve diğer ileri istatistikleri diğer NBA oyuncularına göre yüzdelik çubukları olarak göstermek için tasarlandı ve App Store'da ücretsiz. Yüzdelik görünümü "%59 iyi mi?" sorusunu tek bakışta yanıtlar, yukarıdaki tabloyu ezberlemeniz gerekmez.
 
 ## Sık sorulan sorular
 

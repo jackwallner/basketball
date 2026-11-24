@@ -6,7 +6,7 @@ Web page: https://jackwallner.com/ios/basketball/true-shooting-percentage-explai
 
 ## True shooting percentage explained (and usage rate)
 
-By Jack Wallner. Last updated November 11, 2026.
+By Jack Wallner. Last updated November 24, 2026.
 
 True shooting percentage (TS%) measures how efficiently a player scores by folding two-pointers, three-pointers and free throws into one number. The formula is points divided by twice the player's true shooting attempts, where true shooting attempts equal field goal attempts plus 0.44 times free throw attempts. Usage rate (USG%) is the companion number: how many of his team's possessions a player ends while he is on the floor.
 
@@ -77,7 +77,7 @@ Two cautions. TS% ignores turnovers and assists, so it only judges the shots. An
 
 ## How does StatScout show TS% and usage?
 
-[Basketball: Hardwood StatScout](https://jackwallner.com/ios/basketball/) is an independent iPhone app, not affiliated with the NBA, built to show TS%, USG% and other advanced metrics as percentile bars against other NBA players. It is coming to the App Store. The percentile view answers "is .590 good?" at a glance, so you do not have to remember the table above.
+[Basketball: Hardwood StatScout](https://jackwallner.com/ios/basketball/) is an independent iPhone app, not affiliated with the NBA, built to show TS%, USG% and other advanced metrics as percentile bars against other NBA players. It is free on the App Store. The percentile view answers "is .590 good?" at a glance, so you do not have to remember the table above.
 
 ## Frequently asked questions
 
