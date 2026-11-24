@@ -163,7 +163,8 @@ class GamesTest {
             status = DataFreshnessStatus.PENDING, rawStatus = "source_pending",
             season = 2027, publishedSeason = 2026, lastErrorCode = "season_pending",
         )
-        val vm = dashboard(GamesProvider(finals + opening, pending))
+        // Pinned to the offseason, before the opener tips off.
+        val vm = dashboard(GamesProvider(finals + opening, pending), clock = { java.time.Instant.parse("2026-09-01T12:00:00Z") })
         vm.checkForUpdates(force = true)
         vm.loadGames(force = true)
 
