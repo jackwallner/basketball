@@ -1,5 +1,5 @@
 See who leads beyond the box score.
-Rank NBA players by the advanced metrics analysts actually use, read a full percentile profile in one tap, and track who is heating up or cooling off right now.
+Rank basketball players by the advanced metrics analysts actually use, read a full percentile profile in one tap, and track who is heating up or cooling off right now.
 
 StatScout puts usage rate, true shooting, shot-zone frequency and accuracy, assist and turnover rates, rebounding shares, steal and block rates, on-court impact, and the familiar per-game totals in one fast Android app.
 
@@ -38,4 +38,4 @@ StatScout+ is available as an auto-renewing subscription (Monthly or Yearly, eac
 Privacy Policy: https://jackwallner.github.io/basketball/android-privacy.html
 Terms of Use: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout is not affiliated with, authorized, endorsed by, or sponsored by the National Basketball Association (NBA), any NBA team, or the NBPA. Player names, team names, and statistics are used for identification and informational purposes only.
+StatScout is an independent app. It is not affiliated with, authorized, endorsed by, or sponsored by any professional basketball league, team, or players association. Player names, team names, and statistics are used for identification and informational purposes only.

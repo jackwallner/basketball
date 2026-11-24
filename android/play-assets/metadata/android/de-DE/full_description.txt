@@ -1,5 +1,5 @@
 Sieh, wer jenseits des Boxscores vorne liegt.
-Vergleiche NBA-Spieler anhand der fortgeschrittenen Werte, mit denen auch Analysten arbeiten, öffne mit einem Tipp das komplette Perzentil-Profil und sieh sofort, wer gerade heißläuft und wer abkühlt.
+Vergleiche Basketballspieler anhand der fortgeschrittenen Werte, mit denen auch Analysten arbeiten, öffne mit einem Tipp das komplette Perzentil-Profil und sieh sofort, wer gerade heißläuft und wer abkühlt.
 
 StatScout bündelt Usage Rate, True Shooting, Wurfzonen mit Häufigkeit und Wurfquote, Assist- und Turnover-Rate, Rebound-Anteile, Steal- und Block-Rate, On-Court-Impact und die klassischen Werte pro Spiel in einer schnellen Android-App.
 
@@ -40,4 +40,4 @@ Die App selbst ist auf Englisch.
 Datenschutz: https://jackwallner.github.io/basketball/android-privacy.html
 Nutzungsbedingungen: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout ist nicht mit der National Basketball Association (NBA), einem NBA-Team oder der NBPA verbunden und wird von diesen weder autorisiert, unterstützt noch gesponsert. Spieler- und Teamnamen sowie Statistiken dienen nur der Identifikation und Information.
+StatScout ist nicht mit einer professionellen Basketballliga, einem Team oder einer Spielergewerkschaft verbunden und wird von diesen weder autorisiert, unterstützt noch gesponsert. Spieler- und Teamnamen sowie Statistiken dienen nur der Identifikation und Information.

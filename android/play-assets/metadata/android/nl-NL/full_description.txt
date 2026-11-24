@@ -1,5 +1,5 @@
 Zie wie verder kijkt dan de boxscore.
-Rangschik NBA-spelers op de geavanceerde cijfers die analisten gebruiken, open met één tik een volledig percentielprofiel en zie meteen wie in vorm is en wie afkoelt.
+Rangschik basketbalspelers op de geavanceerde cijfers die analisten gebruiken, open met één tik een volledig percentielprofiel en zie meteen wie in vorm is en wie afkoelt.
 
 StatScout bundelt usage rate, true shooting, schotzones met frequentie en rendement, assist- en balverliespercentages, reboundaandeel, steal- en blockpercentages, impact op het veld en de vertrouwde gemiddelden per wedstrijd in één snelle Android-app.
 
@@ -40,4 +40,4 @@ De app zelf is in het Engels.
 Privacybeleid: https://jackwallner.github.io/basketball/android-privacy.html
 Gebruiksvoorwaarden: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout is niet gelieerd aan, geautoriseerd, onderschreven of gesponsord door de National Basketball Association (NBA), een NBA-team of de NBPA. Namen van spelers en teams en statistieken worden alleen gebruikt ter identificatie en informatie.
+StatScout is niet gelieerd aan, geautoriseerd, onderschreven of gesponsord door een professionele basketbalcompetitie, een team of een spelersvakbond. Namen van spelers en teams en statistieken worden alleen gebruikt ter identificatie en informatie.

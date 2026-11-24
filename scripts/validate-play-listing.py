@@ -4,7 +4,7 @@
 Checks every locale folder for Play's limits (title 30, short 80, full 4000),
 the house rules (no em dashes, no prices, no Apple wording, no promo words in
 the title), the brand in the title, the Google Play billing paragraph, the
-policy links, the NBA non-affiliation line, and that every non-English
+policy links, no league names in any field, and that every non-English
 description says the app is in English. Also checks the folder set is exactly
 the 50 target locales and that en-US matches .play-live-listing.json when that
 file is present. Exit 1 on any failure.
@@ -21,9 +21,14 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 # Play suspended Football on 2026-11-16 (Impersonation) for league names in localized
-# titles and short descriptions. Keep marks out of both; the full description may name
-# the league only in the non-affiliation line and factual copy.
-LEAGUE_MARK = re.compile(r"NFL|NBA|MLB|NHL|NFLPA|NBPA|MLBPA|NHLPA|НХЛ|Statcast|스탯캐스트")
+# titles and short descriptions; Google denied both appeals. Keep league names, their
+# local forms and league data brands out of the title, short and full description.
+LEAGUE_MARK = re.compile(
+    r"NFLPA|NFL|National Football League|NBPA|NBA|National Basketball Association|"
+    r"MLBPA|MLB|Major League Baseball|Grandes Ligas|大联盟|大聯盟|メジャーリーグ|메이저리그|"
+    r"NHLPA|NHL|National Hockey League|Ligue nationale de hockey|LNH|НХЛ|"
+    r"Национальн\w* хоккейн|Національн\w* хокейн|Statcast|스탯캐스트|Baseball Savant"
+)
 
 ROOT = REPO / "android/play-assets/metadata/android"
 LIVE = REPO / ".play-live-listing.json"
@@ -78,7 +83,7 @@ def check(locale_dir: Path) -> list[str]:
     loc = locale_dir.name
     if loc not in PLAY_LANGS:
         errs.append(f"unknown Play language code {loc}")
-    for name in ("title.txt", "short_description.txt"):
+    for name in ("title.txt", "short_description.txt", "full_description.txt"):
         p = locale_dir / name
         hit = LEAGUE_MARK.search(p.read_text(encoding="utf-8")) if p.exists() else None
         if hit:
@@ -116,8 +121,6 @@ def check(locale_dir: Path) -> list[str]:
     for url in POLICY_URLS:
         if url not in full:
             errs.append(f"full description lacks {url}")
-    if "National Basketball Association" not in full or "NBPA" not in full:
-        errs.append("full description lacks the NBA non-affiliation line")
     lang = loc.split("-")[0]
     if lang != "en":
         phrase = IN_ENGLISH.get(lang)

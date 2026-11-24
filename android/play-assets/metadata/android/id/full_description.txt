@@ -1,5 +1,5 @@
 Lihat siapa yang unggul di luar box score.
-Peringkatkan pemain NBA dengan statistik lanjutan yang dipakai para analis, buka profil persentil lengkap dengan sekali ketuk, dan lihat siapa yang sedang panas dan siapa yang menurun saat ini.
+Peringkatkan pemain basket dengan statistik lanjutan yang dipakai para analis, buka profil persentil lengkap dengan sekali ketuk, dan lihat siapa yang sedang panas dan siapa yang menurun saat ini.
 
 StatScout menghadirkan usage rate, true shooting, frekuensi dan akurasi per zona tembakan, rasio assist dan turnover, porsi rebound, rasio steal dan blok, dampak di lapangan, serta rata-rata per pertandingan yang sudah dikenal dalam satu aplikasi Android yang cepat.
 
@@ -40,4 +40,4 @@ Aplikasinya sendiri berbahasa Inggris.
 Kebijakan Privasi: https://jackwallner.github.io/basketball/android-privacy.html
 Ketentuan Penggunaan: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout tidak berafiliasi dengan, diotorisasi, didukung, atau disponsori oleh National Basketball Association (NBA), tim NBA mana pun, atau NBPA. Nama pemain, nama tim, dan statistik hanya digunakan untuk identifikasi dan informasi.
+StatScout tidak berafiliasi dengan, diotorisasi, didukung, atau disponsori oleh liga basket profesional, tim, atau asosiasi pemain mana pun. Nama pemain, nama tim, dan statistik hanya digunakan untuk identifikasi dan informasi.

@@ -1,5 +1,5 @@
 看清技術統計之外，誰才真正領先。
-用分析師常用的進階數據替NBA球員排名，輕點一下就能打開完整的百分位檔案，馬上看出誰手感正熱、誰狀態下滑。
+用分析師常用的進階數據替籃球球員排名，輕點一下就能打開完整的百分位檔案，馬上看出誰手感正熱、誰狀態下滑。
 
 StatScout 把使用率、真實命中率、各投籃區域的出手頻率與命中率、助攻率與失誤率、籃板占有率、抄截率與阻攻率、場上影響力，以及熟悉的場均數據，集中在一款流暢的 Android 應用程式裡。
 
@@ -40,4 +40,4 @@ StatScout+ 提供自動續訂的訂閱方案（按月或按年，符合資格的
 隱私權政策：https://jackwallner.github.io/basketball/android-privacy.html
 使用條款：https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout 與 National Basketball Association（NBA）、任何NBA球隊或NBPA均無關聯，也未獲其授權、認可或贊助。球員姓名、球隊名稱和數據僅供識別和資訊用途。
+StatScout 是一款獨立的 App。它與任何職業籃球聯盟、球隊或球員工會均無關聯，也未獲其授權、認可或贊助。球員姓名、球隊名稱和數據僅供識別和資訊用途。

@@ -1,5 +1,5 @@
 Scopri chi domina oltre il tabellino.
-Classifica i giocatori NBA con le statistiche avanzate usate dagli analisti, apri con un tocco il profilo completo in percentili e guarda chi è in forma e chi sta calando in questo momento.
+Classifica i giocatori di basket con le statistiche avanzate usate dagli analisti, apri con un tocco il profilo completo in percentili e guarda chi è in forma e chi sta calando in questo momento.
 
 StatScout riunisce usage rate, true shooting, frequenza e precisione per zona di tiro, percentuali di assist e palle perse, quota di rimbalzi, percentuali di palle rubate e stoppate, impatto in campo e le classiche medie a partita in un'app Android veloce.
 
@@ -40,4 +40,4 @@ L'app è in inglese.
 Informativa sulla privacy: https://jackwallner.github.io/basketball/android-privacy.html
 Termini di utilizzo: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout non è affiliato, autorizzato, approvato o sponsorizzato dalla National Basketball Association (NBA), da alcuna squadra NBA o dalla NBPA. Nomi di giocatori e squadre e statistiche sono usati solo a scopo identificativo e informativo.
+StatScout non è affiliato, autorizzato, approvato o sponsorizzato da alcuna lega professionistica di basket, squadra o associazione dei giocatori. Nomi di giocatori e squadre e statistiche sono usati solo a scopo identificativo e informativo.

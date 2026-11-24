@@ -1,5 +1,5 @@
 Box score'un ötesinde kimin öne çıktığını gör.
-NBA oyuncularını analistlerin kullandığı gelişmiş istatistiklerle sırala, tek dokunuşla tam yüzdelik profili aç ve şu anda kimin formda, kimin düşüşte olduğunu gör.
+Basketbol oyuncularını analistlerin kullandığı gelişmiş istatistiklerle sırala, tek dokunuşla tam yüzdelik profili aç ve şu anda kimin formda, kimin düşüşte olduğunu gör.
 
 StatScout; usage rate, true shooting, şut bölgelerine göre sıklık ve isabet, asist ve top kaybı oranları, ribaund payları, top çalma ve blok oranları, saha etkisi ve bilinen maç başı ortalamaları tek bir hızlı Android uygulamasında toplar.
 
@@ -40,4 +40,4 @@ Uygulamanın kendisi İngilizcedir.
 Gizlilik Politikası: https://jackwallner.github.io/basketball/android-privacy.html
 Kullanım Koşulları: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout; National Basketball Association (NBA), herhangi bir NBA takımı veya NBPA ile bağlantılı değildir ve bunlar tarafından yetkilendirilmemiş, onaylanmamış ya da sponsor olunmamıştır. Oyuncu ve takım adları ile istatistikler yalnızca tanımlama ve bilgilendirme amacıyla kullanılır.
+StatScout; hiçbir profesyonel basketbol ligi, takım veya oyuncular birliği ile bağlantılı değildir ve bunlar tarafından yetkilendirilmemiş, onaylanmamış ya da sponsor olunmamıştır. Oyuncu ve takım adları ile istatistikler yalnızca tanımlama ve bilgilendirme amacıyla kullanılır.

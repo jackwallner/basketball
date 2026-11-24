@@ -1,5 +1,5 @@
 看清技术统计之外，谁才真正领先。
-用分析师常用的进阶数据为NBA球员排名，一点即可打开完整的百分位档案，马上看出谁正手感火热、谁在状态下滑。
+用分析师常用的进阶数据为篮球球员排名，一点即可打开完整的百分位档案，马上看出谁正手感火热、谁在状态下滑。
 
 StatScout 把使用率、真实命中率、各投篮区域的出手频率与命中率、助攻率与失误率、篮板占有率、抢断率与盖帽率、场上影响力，以及熟悉的场均数据，集中在一款流畅的 Android 应用里。
 
@@ -40,4 +40,4 @@ StatScout+ 提供自动续订的订阅（按月或按年，符合条件的新订
 隐私政策：https://jackwallner.github.io/basketball/android-privacy.html
 使用条款：https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout 与 National Basketball Association（NBA）、任何NBA球队或NBPA均无关联，也未获得其授权、认可或赞助。球员姓名、球队名称和数据仅用于识别和信息用途。
+StatScout 是一款独立应用。它与任何职业篮球联盟、球队或球员工会均无关联，也未获得其授权、认可或赞助。球员姓名、球队名称和数据仅用于识别和信息用途。

@@ -1,5 +1,5 @@
 Descobreix qui destaca més enllà del box score.
-Classifica els jugadors de l'NBA amb les estadístiques avançades que fan servir els analistes, obre un perfil complet de percentils amb un toc i mira qui està en ratxa i qui es refreda ara mateix.
+Classifica els jugadors de bàsquet amb les estadístiques avançades que fan servir els analistes, obre un perfil complet de percentils amb un toc i mira qui està en ratxa i qui es refreda ara mateix.
 
 StatScout reuneix el percentatge d'ús, el true shooting, la freqüència i l'encert per zona de tir, les taxes d'assistències i pèrdues, el percentatge de rebots, les taxes de robatoris i taps, l'impacte a pista i les mitjanes per partit de sempre en una app Android ràpida.
 
@@ -40,4 +40,4 @@ L'app en si és en anglès.
 Política de privadesa: https://jackwallner.github.io/basketball/android-privacy.html
 Condicions d'ús: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout no està afiliat, autoritzat, avalat ni patrocinat per la National Basketball Association (NBA), cap equip de l'NBA ni la NBPA. Els noms de jugadors i equips i les estadístiques s'utilitzen només amb finalitats d'identificació i informació.
+StatScout és una app independent. No està afiliada, autoritzada, avalada ni patrocinada per cap lliga de bàsquet professional, cap equip ni cap associació de jugadors. Els noms de jugadors i equips i les estadístiques s'utilitzen només amb finalitats d'identificació i informació.

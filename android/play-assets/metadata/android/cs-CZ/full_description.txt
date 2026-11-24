@@ -1,5 +1,5 @@
 Podívejte se, kdo vede i mimo běžný box score.
-Seřaďte hráče NBA podle pokročilých statistik, se kterými pracují analytici, otevřete jedním klepnutím celý percentilový profil a sledujte, kdo je právě ve formě a kdo chladne.
+Seřaďte basketbalisty podle pokročilých statistik, se kterými pracují analytici, otevřete jedním klepnutím celý percentilový profil a sledujte, kdo je právě ve formě a kdo chladne.
 
 StatScout spojuje usage rate, true shooting, četnost a úspěšnost střelby podle zón, podíl asistencí a ztrát, podíl doskoků, podíl zisků a bloků, dopad na hřišti a klasické průměry na zápas v jedné rychlé aplikaci pro Android.
 
@@ -40,4 +40,4 @@ Samotná aplikace je v angličtině.
 Zásady ochrany soukromí: https://jackwallner.github.io/basketball/android-privacy.html
 Podmínky použití: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout není přidružen k National Basketball Association (NBA), žádnému týmu NBA ani NBPA a není jimi autorizován, podporován ani sponzorován. Jména hráčů, názvy týmů a statistiky slouží pouze k identifikaci a informování.
+StatScout není přidružen k žádné profesionální basketbalové lize, týmu ani asociaci hráčů a není jimi autorizován, podporován ani sponzorován. Jména hráčů, názvy týmů a statistiky slouží pouze k identifikaci a informování.

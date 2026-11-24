@@ -1,5 +1,5 @@
 Vezi cine conduce dincolo de foaia de statistici.
-Clasează jucătorii NBA după statisticile avansate folosite de analiști, deschide cu o atingere profilul complet în percentile și vezi cine e în formă și cine se răcește chiar acum.
+Clasează jucătorii de baschet după statisticile avansate folosite de analiști, deschide cu o atingere profilul complet în percentile și vezi cine e în formă și cine se răcește chiar acum.
 
 StatScout reunește usage rate, true shooting, frecvența și precizia aruncărilor pe zone, ratele de pase decisive și mingi pierdute, ponderea recuperărilor, ratele de intercepții și blocaje, impactul pe teren și mediile clasice pe meci într-o aplicație Android rapidă.
 
@@ -40,4 +40,4 @@ Aplicația în sine este în limba engleză.
 Politica de confidențialitate: https://jackwallner.github.io/basketball/android-privacy.html
 Termeni de utilizare: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout nu este afiliat, autorizat, susținut sau sponsorizat de National Basketball Association (NBA), de vreo echipă NBA sau de NBPA. Numele jucătorilor și echipelor și statisticile sunt folosite doar pentru identificare și informare.
+StatScout nu este afiliat, autorizat, susținut sau sponsorizat de nicio ligă profesionistă de baschet, echipă sau asociație a jucătorilor. Numele jucătorilor și echipelor și statisticile sunt folosite doar pentru identificare și informare.

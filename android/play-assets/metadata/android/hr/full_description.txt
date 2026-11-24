@@ -1,5 +1,5 @@
 Pogledajte tko vodi izvan običajnog box scorea.
-Rangirajte NBA igrače po naprednoj statistici kojom se služe analitičari, jednim dodirom otvorite cijeli percentilni profil i pogledajte tko je trenutačno u formi, a tko pada.
+Rangirajte košarkaše po naprednoj statistici kojom se služe analitičari, jednim dodirom otvorite cijeli percentilni profil i pogledajte tko je trenutačno u formi, a tko pada.
 
 StatScout objedinjuje usage rate, true shooting, učestalost i uspješnost šuta po zonama, udjele asistencija i izgubljenih lopti, udio skokova, udjele ukradenih lopti i blokada, utjecaj na terenu te klasične prosjeke po utakmici u jednoj brzoj aplikaciji za Android.
 
@@ -40,4 +40,4 @@ Sama aplikacija je na engleskom jeziku.
 Pravila o privatnosti: https://jackwallner.github.io/basketball/android-privacy.html
 Uvjeti korištenja: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout nije povezan s National Basketball Association (NBA), nijednom NBA momčadi ni NBPA-om, niti ga oni ovlašćuju, podržavaju ili sponzoriraju. Imena igrača i momčadi te statistika koriste se samo za identifikaciju i informiranje.
+StatScout nije povezan ni s jednom profesionalnom košarkaškom ligom, momčadi ni udrugom igrača, niti ga oni ovlašćuju, podržavaju ili sponzoriraju. Imena igrača i momčadi te statistika koriste se samo za identifikaciju i informiranje.

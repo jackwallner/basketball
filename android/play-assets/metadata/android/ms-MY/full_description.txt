@@ -1,5 +1,5 @@
 Lihat siapa yang mendahului di sebalik box score.
-Susun pemain NBA mengikut statistik lanjutan yang digunakan penganalisis, buka profil persentil penuh dengan satu ketikan, dan lihat siapa yang sedang hangat dan siapa yang semakin perlahan sekarang.
+Susun pemain bola keranjang mengikut statistik lanjutan yang digunakan penganalisis, buka profil persentil penuh dengan satu ketikan, dan lihat siapa yang sedang hangat dan siapa yang semakin perlahan sekarang.
 
 StatScout menghimpunkan usage rate, true shooting, kekerapan dan ketepatan mengikut zon jaringan, kadar bantuan dan pusing ganti bola (turnover), bahagian lantunan, kadar curi dan sekatan, impak di gelanggang serta purata setiap perlawanan yang biasa dalam satu aplikasi Android yang pantas.
 
@@ -40,4 +40,4 @@ Aplikasi ini sendiri dalam bahasa Inggeris.
 Dasar Privasi: https://jackwallner.github.io/basketball/android-privacy.html
 Terma Penggunaan: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout tidak bergabung dengan, dibenarkan, disokong atau ditaja oleh National Basketball Association (NBA), mana-mana pasukan NBA atau NBPA. Nama pemain, nama pasukan dan statistik digunakan untuk tujuan pengenalan dan maklumat sahaja.
+StatScout tidak bergabung dengan, dibenarkan, disokong atau ditaja oleh mana-mana liga bola keranjang profesional, pasukan atau persatuan pemain. Nama pemain, nama pasukan dan statistik digunakan untuk tujuan pengenalan dan maklumat sahaja.

@@ -1,5 +1,5 @@
 Veja quem se destaca além do box score.
-Classifique os jogadores da NBA pelas estatísticas avançadas que os analistas usam, abra um perfil completo de percentis com um toque e veja quem está em alta e quem está esfriando agora.
+Classifique os jogadores de basquete pelas estatísticas avançadas que os analistas usam, abra um perfil completo de percentis com um toque e veja quem está em alta e quem está esfriando agora.
 
 O StatScout reúne taxa de uso, true shooting, frequência e aproveitamento por zona de arremesso, taxas de assistências e erros, participação nos rebotes, taxas de roubos e tocos, impacto em quadra e as médias por jogo de sempre em um app Android rápido.
 
@@ -40,4 +40,4 @@ O app em si está em inglês.
 Política de Privacidade: https://jackwallner.github.io/basketball/android-privacy.html
 Termos de Uso: https://jackwallner.github.io/basketball/android-terms.html
 
-O StatScout não é afiliado, autorizado, endossado nem patrocinado pela National Basketball Association (NBA), por nenhum time da NBA ou pela NBPA. Nomes de jogadores e times e estatísticas são usados apenas para identificação e informação.
+O StatScout não é afiliado, autorizado, endossado nem patrocinado por nenhuma liga profissional de basquete, time ou associação de jogadores. Nomes de jogadores e times e estatísticas são usados apenas para identificação e informação.

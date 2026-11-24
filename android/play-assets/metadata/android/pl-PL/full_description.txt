@@ -1,5 +1,5 @@
 Zobacz, kto rządzi poza zwykłym box score.
-Układaj zawodników NBA według zaawansowanych statystyk, z których korzystają analitycy, otwieraj pełny profil percentylowy jednym dotknięciem i sprawdzaj, kto jest teraz w gazie, a kto słabnie.
+Układaj koszykarzy według zaawansowanych statystyk, z których korzystają analitycy, otwieraj pełny profil percentylowy jednym dotknięciem i sprawdzaj, kto jest teraz w gazie, a kto słabnie.
 
 StatScout łączy usage rate, true shooting, częstotliwość i skuteczność rzutów z poszczególnych stref, wskaźniki asyst i strat, udział w zbiórkach, wskaźniki przechwytów i bloków, wpływ na grę oraz klasyczne średnie na mecz w jednej szybkiej aplikacji na Androida.
 
@@ -40,4 +40,4 @@ Sama aplikacja jest w języku angielskim.
 Polityka prywatności: https://jackwallner.github.io/basketball/android-privacy.html
 Warunki korzystania: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout nie jest powiązany z National Basketball Association (NBA), żadną drużyną NBA ani NBPA, ani przez nie autoryzowany, popierany czy sponsorowany. Nazwiska zawodników, nazwy drużyn i statystyki służą wyłącznie identyfikacji i celom informacyjnym.
+StatScout nie jest powiązany z żadną profesjonalną ligą koszykówki, drużyną ani związkiem zawodowym graczy, ani przez nie autoryzowany, popierany czy sponsorowany. Nazwiska zawodników, nazwy drużyn i statystyki służą wyłącznie identyfikacji i celom informacyjnym.

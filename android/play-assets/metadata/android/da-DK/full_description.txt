@@ -1,5 +1,5 @@
 Se hvem der fører ud over boxscoren.
-Rangér NBA-spillere efter den avancerede statistik, analytikere bruger, åbn en hel percentilprofil med ét tryk, og se hvem der er varme, og hvem der køler af lige nu.
+Rangér basketballspillere efter den avancerede statistik, analytikere bruger, åbn en hel percentilprofil med ét tryk, og se hvem der er varme, og hvem der køler af lige nu.
 
 StatScout samler usage rate, true shooting, skudzoner med frekvens og træfprocent, assist- og boldtabsandel, rebound-andel, steal- og blokeringsandel, indflydelse på banen og de velkendte gennemsnit pr. kamp i én hurtig Android-app.
 
@@ -40,4 +40,4 @@ Selve appen er på engelsk.
 Privatlivspolitik: https://jackwallner.github.io/basketball/android-privacy.html
 Vilkår for brug: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout er ikke tilknyttet, autoriseret, godkendt eller sponsoreret af National Basketball Association (NBA), noget NBA-hold eller NBPA. Spiller- og holdnavne og statistik bruges kun til identifikation og information.
+StatScout er ikke tilknyttet, autoriseret, godkendt eller sponsoreret af nogen professionel basketballliga, noget hold eller nogen spillerforening. Spiller- og holdnavne og statistik bruges kun til identifikation og information.

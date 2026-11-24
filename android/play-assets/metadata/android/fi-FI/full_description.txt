@@ -1,5 +1,5 @@
 Näe, kuka johtaa pöytäkirjan takana.
-Järjestä NBA-pelaajat analyytikoiden käyttämillä edistyneillä tilastoilla, avaa koko persentiiliprofiili yhdellä napautuksella ja näe, kuka on juuri nyt kuumana ja kenen vire hiipuu.
+Järjestä koripalloilijat analyytikoiden käyttämillä edistyneillä tilastoilla, avaa koko persentiiliprofiili yhdellä napautuksella ja näe, kuka on juuri nyt kuumana ja kenen vire hiipuu.
 
 StatScout kokoaa usage raten, true shootingin, heittoalueiden määrät ja osumaprosentit, syöttö- ja menetysprosentit, levypallo-osuudet, riisto- ja blokkiprosentit, vaikutuksen kentällä sekä tutut ottelukeskiarvot yhteen nopeaan Android-sovellukseen.
 
@@ -40,4 +40,4 @@ Itse sovellus on englanninkielinen.
 Tietosuojakäytäntö: https://jackwallner.github.io/basketball/android-privacy.html
 Käyttöehdot: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout ei ole sidoksissa National Basketball Associationiin (NBA), mihinkään NBA-joukkueeseen tai NBPA:han, eivätkä ne ole valtuuttaneet, hyväksyneet tai sponsoroineet sitä. Pelaajien ja joukkueiden nimiä sekä tilastoja käytetään vain tunnistamiseen ja tiedottamiseen.
+StatScout ei ole sidoksissa mihinkään koripallon ammattilaisliigaan, joukkueeseen tai pelaajayhdistykseen, eivätkä ne ole valtuuttaneet, hyväksyneet tai sponsoroineet sitä. Pelaajien ja joukkueiden nimiä sekä tilastoja käytetään vain tunnistamiseen ja tiedottamiseen.

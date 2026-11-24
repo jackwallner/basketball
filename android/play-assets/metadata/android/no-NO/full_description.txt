@@ -1,5 +1,5 @@
 Se hvem som leder utover boxscoren.
-Ranger NBA-spillere etter den avanserte statistikken analytikere bruker, åpne en hel persentilprofil med ett trykk og se hvem som er varme og hvem som kjølner akkurat nå.
+Ranger basketballspillere etter den avanserte statistikken analytikere bruker, åpne en hel persentilprofil med ett trykk og se hvem som er varme og hvem som kjølner akkurat nå.
 
 StatScout samler usage rate, true shooting, skuddsoner med frekvens og treffprosent, assist- og ballmistingsandel, returandel, steal- og blokkandel, påvirkning på banen og de vanlige snittene per kamp i én rask Android-app.
 
@@ -40,4 +40,4 @@ Selve appen er på engelsk.
 Personvern: https://jackwallner.github.io/basketball/android-privacy.html
 Vilkår for bruk: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout er ikke tilknyttet, autorisert, godkjent eller sponset av National Basketball Association (NBA), noe NBA-lag eller NBPA. Spiller- og lagnavn og statistikk brukes kun til identifikasjon og informasjon.
+StatScout er ikke tilknyttet, autorisert, godkjent eller sponset av noen profesjonell basketballiga, noe lag eller noen spillerforening. Spiller- og lagnavn og statistikk brukes kun til identifikasjon og informasjon.

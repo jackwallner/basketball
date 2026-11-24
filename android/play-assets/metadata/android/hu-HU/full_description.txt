@@ -1,5 +1,5 @@
 Nézd meg, ki vezet a jegyzőkönyvön túl is.
-Rangsorold az NBA-játékosokat az elemzők által használt haladó mutatók szerint, egy koppintással nyisd meg a teljes percentilis profilt, és lásd, ki van most formában és ki hanyatlik.
+Rangsorold a kosárlabdázókat az elemzők által használt haladó mutatók szerint, egy koppintással nyisd meg a teljes percentilis profilt, és lásd, ki van most formában és ki hanyatlik.
 
 A StatScout egy gyors Android-alkalmazásban egyesíti a usage rate-et, a true shootingot, a dobózónák gyakoriságát és pontosságát, a gólpassz- és eladott labda arányt, a lepattanó-részesedést, a szerzett labda és blokk arányt, a pályán mért hatást és a megszokott meccsenkénti átlagokat.
 
@@ -40,4 +40,4 @@ Maga az alkalmazás angol nyelvű.
 Adatvédelmi irányelvek: https://jackwallner.github.io/basketball/android-privacy.html
 Felhasználási feltételek: https://jackwallner.github.io/basketball/android-terms.html
 
-A StatScout nem kapcsolódik a National Basketball Associationhöz (NBA), egyik NBA-csapathoz vagy az NBPA-hoz sem, és azok nem engedélyezték, nem támogatják és nem szponzorálják. A játékosok és csapatok nevét, valamint a statisztikákat csak azonosítás és tájékoztatás céljából használjuk.
+A StatScout nem kapcsolódik egyetlen hivatásos kosárlabdaligához, csapathoz vagy játékosszövetséghez sem, és azok nem engedélyezték, nem támogatják és nem szponzorálják. A játékosok és csapatok nevét, valamint a statisztikákat csak azonosítás és tájékoztatás céljából használjuk.

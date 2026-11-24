@@ -1,5 +1,5 @@
 Xem ai thực sự nổi bật vượt ra ngoài box score.
-Xếp hạng cầu thủ NBA bằng các chỉ số nâng cao mà giới phân tích sử dụng, mở hồ sơ phân vị đầy đủ chỉ với một chạm và xem ai đang thăng hoa, ai đang chững lại ngay lúc này.
+Xếp hạng cầu thủ bóng rổ bằng các chỉ số nâng cao mà giới phân tích sử dụng, mở hồ sơ phân vị đầy đủ chỉ với một chạm và xem ai đang thăng hoa, ai đang chững lại ngay lúc này.
 
 StatScout gom usage rate, true shooting, tần suất và độ chính xác theo vùng ném, tỉ lệ kiến tạo và mất bóng, tỉ lệ bắt bóng bật bảng, tỉ lệ cướp bóng và chắn bóng, tác động trên sân cùng các chỉ số trung bình mỗi trận quen thuộc vào một ứng dụng Android nhanh gọn.
 
@@ -40,4 +40,4 @@ Bản thân ứng dụng dùng tiếng Anh.
 Chính sách quyền riêng tư: https://jackwallner.github.io/basketball/android-privacy.html
 Điều khoản sử dụng: https://jackwallner.github.io/basketball/android-terms.html
 
-StatScout không liên kết, không được ủy quyền, xác nhận hay tài trợ bởi National Basketball Association (NBA), bất kỳ đội NBA nào hoặc NBPA. Tên cầu thủ, tên đội và số liệu thống kê chỉ được dùng để nhận diện và cung cấp thông tin.
+StatScout không liên kết, không được ủy quyền, xác nhận hay tài trợ bởi bất kỳ giải bóng rổ chuyên nghiệp, đội hay hiệp hội cầu thủ nào. Tên cầu thủ, tên đội và số liệu thống kê chỉ được dùng để nhận diện và cung cấp thông tin.
