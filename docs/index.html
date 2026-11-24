@@ -39,7 +39,7 @@
       "alternateName": "StatScout",
       "description": "Basketball: Hardwood StatScout is an NBA advanced stats app for iPhone that ranks every player on advanced percentiles, including usage rate, true shooting, shot-zone frequency and accuracy, assist and rebound rates, steals, blocks and on-court impact. Leaderboards and full player profiles are free, with no account and no ads, and an optional StatScout+ upgrade adds trends, recent form, comparisons, team scouting and history back to 2002-03.",
       "applicationCategory": "SportsApplication",
-      "operatingSystem": "iOS 17+",
+      "operatingSystem": "iOS 17+, Android 8.0+",
       "url": "https://jackwallner.com/ios/basketball/",
       "screenshot": [
         "https://jackwallner.github.io/basketball/appstore-screenshot-01.png",
@@ -56,9 +56,9 @@
         "Stats refreshed throughout the day in season",
         "StatScout+ trends, recent form windows, player comparisons, team scouting for all 30 teams, and history back to 2002-03"
       ],
-      "downloadUrl": "https://apps.apple.com/us/app/id6820647074",
-      "installUrl": "https://apps.apple.com/us/app/id6820647074",
-      "sameAs": ["https://apps.apple.com/us/app/id6820647074"],
+      "downloadUrl": ["https://apps.apple.com/us/app/id6820647074", "https://play.google.com/store/apps/details?id=com.jackwallner.basketball"],
+      "installUrl": ["https://apps.apple.com/us/app/id6820647074", "https://play.google.com/store/apps/details?id=com.jackwallner.basketball"],
+      "sameAs": ["https://apps.apple.com/us/app/id6820647074", "https://play.google.com/store/apps/details?id=com.jackwallner.basketball"],
       "offers": {
         "@type": "Offer",
         "price": "0",
@@ -607,6 +607,14 @@
             color: #2e6fd4;
         }
             summary > h2.faq-q { display: inline; margin: 0; font: inherit; letter-spacing: inherit; color: inherit; }
+.store-badges { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }
+.store-badges.start { justify-content: flex-start; }
+.play-badge { display: inline-flex; transition: opacity 0.15s; }
+.play-badge:hover { opacity: 0.85; }
+.play-badge img { display: block; height: 46px; width: auto; }
+.nav-actions { display: flex; align-items: center; gap: 10px; }
+.nav-actions .play-badge img { height: 36px; }
+@media (max-width: 480px) { .nav-actions .play-badge { display: none; } }
 </style>
 </head>
 <body>
@@ -623,8 +631,9 @@
     <section class="hero">
         <h1>See who leads <span>beyond the box score</span></h1>
         <p class="tagline">Hardwood StatScout is an NBA advanced stats app for iPhone: every player ranked on percentiles within his position, with the full profile one tap away and the whole league sorted by who's heating up.</p>
-        <p class="platforms">iPhone &middot; Fresh after every game &middot; No account</p>
-        <a class="download-btn" href="https://apps.apple.com/us/app/basketball-hardwood-statscout/id6820647074?pt=128748779&amp;ct=jw-basketball-home&amp;mt=8">Download for free</a>
+        <p class="platforms">iPhone &middot; Android &middot; Fresh after every game &middot; No account</p>
+        <div class="store-badges"><a class="download-btn" href="https://apps.apple.com/us/app/basketball-hardwood-statscout/id6820647074?pt=128748779&amp;ct=jw-basketball-home&amp;mt=8">Download for free</a>
+<a class="play-badge" href="https://play.google.com/store/apps/details?id=com.jackwallner.basketball" rel="noopener"><img src="google-play-badge.webp" alt="Get it on Google Play" width="155" height="46"></a></div>
     </section>
 
     <section class="showcase">
@@ -806,7 +815,8 @@
     <section class="cta">
         <h2>Know who's actually good</h2>
         <p>Free to use. No account required. StatScout+ optional.</p>
-        <a class="download-btn" href="https://apps.apple.com/us/app/basketball-hardwood-statscout/id6820647074?pt=128748779&amp;ct=jw-basketball-home&amp;mt=8">Download for free</a>
+        <div class="store-badges"><a class="download-btn" href="https://apps.apple.com/us/app/basketball-hardwood-statscout/id6820647074?pt=128748779&amp;ct=jw-basketball-home&amp;mt=8">Download for free</a>
+<a class="play-badge" href="https://play.google.com/store/apps/details?id=com.jackwallner.basketball" rel="noopener"><img src="google-play-badge.webp" alt="Get it on Google Play" width="155" height="46"></a></div>
     </section>
 
     <footer>

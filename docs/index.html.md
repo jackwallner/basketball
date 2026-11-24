@@ -8,7 +8,7 @@ Web page: https://jackwallner.com/ios/basketball/
 
 Hardwood StatScout is an NBA advanced stats app for iPhone: every player ranked on percentiles within his position, with the full profile one tap away and the whole league sorted by who's heating up.
 
-iPhone · Fresh after every game · No account
+iPhone · Android · Fresh after every game · No account
 
 [Download for free](https://apps.apple.com/us/app/basketball-hardwood-statscout/id6820647074?pt=128748779&ct=jw-basketball-home&mt=8)
 
