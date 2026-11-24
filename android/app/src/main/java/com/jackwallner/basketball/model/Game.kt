@@ -163,6 +163,13 @@ data class GameDay(val date: LocalDate, val phase: SeasonPhase) {
     /** Eastern midnight of the game date. */
     val start: Instant get() = date.atStartOfDay(EASTERN).toInstant()
 
+    /**
+     * 8 AM Eastern the morning after the game date, counted on the Eastern
+     * calendar rather than as 32 hours after Eastern midnight, which is an hour
+     * early on the fall-back night and an hour late on the spring-forward one.
+     */
+    val handover: Instant get() = date.plusDays(1).atTime(8, 0).atZone(EASTERN).toInstant()
+
     /** Chip text: "Oct 20". */
     val shortLabel: String get() = DateTimeFormatter.ofPattern("MMM d", Locale.US).format(date)
 
@@ -195,7 +202,7 @@ data class GameDay(val date: LocalDate, val phase: SeasonPhase) {
         /** [current] over days already worked out, in date order. */
         @JvmName("currentOfDays")
         fun current(days: List<GameDay>, now: Instant = Instant.now()): GameDay? =
-            days.firstOrNull { now < it.start.plusSeconds(32 * 3_600) } ?: days.lastOrNull()
+            days.firstOrNull { now < it.handover } ?: days.lastOrNull()
     }
 }
 
