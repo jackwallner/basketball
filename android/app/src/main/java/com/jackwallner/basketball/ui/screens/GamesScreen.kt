@@ -56,6 +56,7 @@ import com.jackwallner.basketball.model.SeasonLabel
 import com.jackwallner.basketball.model.displayTeamAbbr
 import com.jackwallner.basketball.model.normalizedTeamAbbreviation
 import com.jackwallner.basketball.model.teamFullName
+import com.jackwallner.basketball.model.teamNickname
 import com.jackwallner.basketball.ui.HomeTopBar
 import com.jackwallner.basketball.ui.LocalGraph
 import com.jackwallner.basketball.ui.components.CrownYellow
@@ -406,7 +407,7 @@ private fun TeamLine(game: Game, team: String, score: Int?, status: GameStatus, 
         )
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             // The full name plus a record does not fit beside the score, so a row that carries a record shows the nickname.
-            val name = if (record == null) teamFullName(team) else teamFullName(team).split(" ").lastOrNull() ?: team
+            val name = if (record == null) teamFullName(team) else teamNickname(team)
             FitText(name, HardwoodType.small, HardwoodPalette.inkTertiary, Modifier.weight(1f, fill = false), minScale = 0.85f)
             record?.let {
                 Text(it, style = HardwoodType.micro.copy(fontFeatureSettings = "tnum"), color = HardwoodPalette.inkTertiary, maxLines = 1, softWrap = false)

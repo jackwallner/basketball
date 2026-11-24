@@ -14,6 +14,8 @@ import com.jackwallner.basketball.model.SeasonLabel
 import com.jackwallner.basketball.model.SeasonPhase
 import com.jackwallner.basketball.model.StatScoutSeason
 import com.jackwallner.basketball.model.leagueTeamAbbreviations
+import com.jackwallner.basketball.model.teamNickname
+import com.jackwallner.basketball.model.cityOnlyTeamNames
 import com.jackwallner.basketball.model.normalizedTeamAbbreviation
 import com.jackwallner.basketball.model.teamFullName
 import com.jackwallner.basketball.ui.theme.HardwoodPalette
@@ -44,6 +46,23 @@ class DashboardViewModelTest {
     private fun boardPlayer(id: Int, type: String, metrics: List<Metric>) = testPlayer(
         id, "P$id", "BOS", type.uppercase(), live, type = type, metrics = metrics.mapIndexed { i, m -> m.copy(id = "m$id-$i") },
     )
+
+    @Test
+    fun cityOnlyTeamNamesDropTheClubName() {
+        assertEquals("New York Knicks", teamFullName("NYK"))
+        assertEquals("Oklahoma City Thunder", teamFullName("OKC"))
+        cityOnlyTeamNames = true
+        try {
+            assertEquals("New York", teamFullName("NYK"))
+            assertEquals("Oklahoma City", teamFullName("OKC"))
+            assertEquals("Portland", teamFullName("POR"))
+            assertEquals("Golden State", teamFullName("GSW"))
+            assertEquals("New York", teamNickname("NYK"))
+            assertEquals("Unknown", teamFullName("Unknown"))
+        } finally {
+            cityOnlyTeamNames = false
+        }
+    }
 
     @Test
     fun allMetricsKeyCollision() = runTest {
