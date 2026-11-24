@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -134,6 +135,8 @@ fun PlayerProfileScreen(player: Player, history: List<Player>, vm: DashboardView
     val state = rememberRetained("profile-${player.id}") { ProfileState() }
     var showPercentileInfo by remember { mutableStateOf(false) }
     var showingPlayerPicker by remember { mutableStateOf(false) }
+    var shareRequest by remember { mutableStateOf<ShareRequest?>(null) }
+    val context = LocalContext.current
     val isPro = store.isPro
 
     val phaseHistory = history.filter { it.seasonPhase == player.seasonPhase }
@@ -224,6 +227,21 @@ fun PlayerProfileScreen(player: Player, history: List<Player>, vm: DashboardView
             title = player.name,
             onBack = { navigator.pop() },
             trailing = {
+                // Hidden until there is a ranked metric to draw, so a share never produces an empty card.
+                val shareGroups = remember(displayed) { PlayerShare.groups(displayed) }
+                if (shareGroups.isNotEmpty()) {
+                    Box(
+                        Modifier.size(44.dp).clip(CircleShape).clickable(enabled = shareRequest == null) {
+                            shareRequest = ShareRequest(
+                                player = displayed,
+                                groups = shareGroups,
+                                seasonLabel = seasonLabel,
+                                footnote = PlayerShare.footnote((activeSeason ?: vm.freeSeason) == vm.freeSeason, displayed.updatedAt),
+                            )
+                        }.semantics { contentDescription = "Share ${player.name}'s percentiles" }.testTag("sharePlayerCard"),
+                        contentAlignment = Alignment.Center,
+                    ) { SfIcon("square.and.arrow.up", 22.dp, Color.White) }
+                }
                 val isFavorite = favorites.isFavorite(player.playerId)
                 Box(
                     Modifier.size(44.dp).clip(CircleShape).clickable {
@@ -240,6 +258,21 @@ fun PlayerProfileScreen(player: Player, history: List<Player>, vm: DashboardView
                 ) { SfIcon("person.2.fill", 22.dp, Color.White) }
             },
         )
+        shareRequest?.let { request ->
+            ShareCardCapture(request) { image ->
+                if (image == null) {
+                    shareRequest = null
+                    return@ShareCardCapture
+                }
+                scope.launch {
+                    try {
+                        shareCard(context, image, request)
+                    } finally {
+                        shareRequest = null
+                    }
+                }
+            }
+        }
         RefreshableBox({
             vm.load()
             state.recentFormsKey = null
