@@ -1689,7 +1689,7 @@ final class DashboardViewModel {
                hasUnsafeSnapshotRegression(current, against: fallbackPlayers) {
                 acceptedCurrent = []
             }
-            let allPlayers = acceptedCurrent.isEmpty ? fallbackPlayers : mergePlayers(replacing: acceptedCurrent)
+            let allPlayers = acceptedCurrent.isEmpty ? fallbackPlayers : mergePlayers(replacing: acceptedCurrent, authoritative: true)
 
             if allPlayers.isEmpty {
                 // No current data (offseason / cold cache / offline). Fall back to
@@ -1780,7 +1780,7 @@ final class DashboardViewModel {
             // Merge again rather than installing the list built before the
             // coverage and status round trips: the past-season archive can
             // land in between, and the older list would drop it for the session.
-            ingestPlayers(acceptedCurrent.isEmpty ? playersToIngest : mergePlayers(replacing: acceptedCurrent))
+            ingestPlayers(acceptedCurrent.isEmpty ? playersToIngest : mergePlayers(replacing: acceptedCurrent, authoritative: true))
             StartupTrace.mark("live players on screen")
         }
         if loadedCurrentData {
@@ -2022,9 +2022,20 @@ final class DashboardViewModel {
         _teamCachePhase = selectedPhase
     }
 
-    private func mergePlayers(replacing replacements: [Player]) -> [Player] {
+    /// The rows on hand with `replacements` laid over them.
+    ///
+    /// With `authoritative`, `replacements` is a live-season feed the publisher
+    /// just served, and it is the whole truth for every season and phase it
+    /// carries: the publisher deletes the snapshots it no longer builds
+    /// (`backend/ingest.py` `_prune_orphans`), so a row it dropped must leave
+    /// the board too. Seasons and phases the feed does not carry are kept.
+    private func mergePlayers(replacing replacements: [Player], authoritative: Bool = false) -> [Player] {
+        let feedSlices = Set(replacements.map { "\($0.season ?? 0)-\($0.seasonPhase.rawValue)" })
         var merged: [String: Player] = [:]
         for player in playerHistories.values.flatMap({ $0 }) {
+            if authoritative, feedSlices.contains("\(player.season ?? 0)-\(player.seasonPhase.rawValue)") {
+                continue
+            }
             merged[player.id] = player
         }
         for player in replacements {
