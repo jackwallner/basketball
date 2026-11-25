@@ -500,12 +500,12 @@ struct PaywallView: View {
                 case .pending:
                     // Ask-to-Buy / deferred payment: nothing is unlocked yet and
                     // no error occurred - tell the user instead of going silent.
-                    restoreMessage = "Purchase pending approval. StatScout+ unlocks automatically once it's approved."
+                    restoreMessage = PurchaseFailure.pendingApprovalMessage
                 case .cancelled:
                     errorMessage = "Purchase cancelled. Tap again to continue."
                 }
             } catch {
-                errorMessage = store.lastError ?? "Couldn't complete the purchase. Please try again."
+                errorMessage = PurchaseFailure(error).message
             }
         }
     }

@@ -306,7 +306,10 @@ struct OnboardingCards: View {
                 // above the button shifts either.
                 Text(trialError ?? " ")
                     .font(HardwoodType.micro)
-                    .foregroundStyle(HardwoodPalette.performanceLow)
+                    // Waiting on a parent's approval is not an error.
+                    .foregroundStyle(trialError == PurchaseFailure.pendingApprovalMessage
+                        ? HardwoodPalette.inkSecondary
+                        : HardwoodPalette.performanceLow)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .frame(height: 32, alignment: .top)
@@ -481,12 +484,12 @@ struct OnboardingCards: View {
                 case .pending:
                     // Ask-to-Buy / deferred payment: onboarding stays up because
                     // isPro hasn't flipped, explain instead of appearing dead.
-                    trialError = "Purchase pending approval. StatScout+ unlocks automatically once it's approved."
+                    trialError = PurchaseFailure.pendingApprovalMessage
                 case .cancelled:
                     trialError = "Purchase cancelled. Tap again to continue."
                 }
             } catch {
-                trialError = store.lastError ?? "Couldn't complete the purchase. Please try again."
+                trialError = PurchaseFailure(error).message
             }
         }
     }

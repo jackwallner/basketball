@@ -985,7 +985,7 @@ struct PlusDirectCTA: View {
                 break
             case .pending:
                 // Ask-to-Buy / deferred payment: not unlocked, not an error.
-                statusMessage = "Purchase pending approval. StatScout+ unlocks automatically once it's approved."
+                statusMessage = PurchaseFailure.pendingApprovalMessage
             case .cancelled:
                 statusMessage = "Purchase cancelled. Tap again to continue."
             case .failed(let message):

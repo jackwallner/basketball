@@ -215,6 +215,48 @@ enum DirectPurchaseOutcome: Equatable {
     case needsPlanPicker
 }
 
+/// What a failed purchase call is shown as.
+///
+/// A pending Ask to Buy is not a failure: RevenueCat reports it by throwing
+/// `paymentPendingError`, and the customer sees a calm waiting line, never an
+/// error. A lost connection says so. Nothing shows RevenueCat's own English
+/// description, and nothing reuses `lastError`, which an unrelated refresh
+/// may have written earlier.
+enum PurchaseFailure: Equatable {
+    case pendingApproval
+    case failed(String)
+
+    static let pendingApprovalMessage = "Waiting for approval. Your purchase unlocks once it is approved."
+    static let unreachableMessage = "Couldn't complete the purchase. Check your connection and try again."
+    static let genericMessage = "Couldn't complete the purchase. Please try again."
+
+    init(_ error: Error) {
+        if let code = error as? RevenueCat.ErrorCode {
+            switch code {
+            case .paymentPendingError:
+                self = .pendingApproval
+            case .networkError, .offlineConnectionError:
+                self = .failed(Self.unreachableMessage)
+            default:
+                self = .failed(Self.genericMessage)
+            }
+        } else if let storeError = error as? StoreServiceError {
+            self = .failed(storeError.localizedDescription)
+        } else if error is URLError {
+            self = .failed(Self.unreachableMessage)
+        } else {
+            self = .failed(Self.genericMessage)
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .pendingApproval: return Self.pendingApprovalMessage
+        case .failed(let message): return message
+        }
+    }
+}
+
 enum StoreServiceError: LocalizedError {
     case purchasesUnavailableInSimulator
 
@@ -759,7 +801,15 @@ final class StoreService: NSObject, ObservableObject {
         defer { purchaseInFlight = false }
 
         let startedTrial = isEligibleForIntroOffer(product)
-        let result = try await Purchases.shared.purchase(package: product)
+        let result: PurchaseResultData
+        do {
+            result = try await Purchases.shared.purchase(package: product)
+        } catch {
+            // Ask to Buy: the request is with a parent. Approval arrives later
+            // through the delegate (`receivedUpdated`), which unlocks in place.
+            if PurchaseFailure(error) == .pendingApproval { return .pending }
+            throw error
+        }
         apply(customerInfo: result.customerInfo)
         if result.userCancelled {
             return .cancelled
@@ -799,7 +849,7 @@ final class StoreService: NSObject, ObservableObject {
                 return .cancelled
             }
         } catch {
-            return .failed(lastError ?? "Couldn't complete the purchase. Please try again.")
+            return .failed(PurchaseFailure(error).message)
         }
     }
 
