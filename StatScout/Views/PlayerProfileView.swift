@@ -60,6 +60,9 @@ struct PlayerProfileView: View {
     @State private var standardWindow: RecentWindow = .twoWeeks
     @State private var favorites = FavoritesStore.shared
     @State private var shareImage: PlayerShareImage?
+    /// `onAppear` fires again on every pop back from a metric board or
+    /// Compare, which is the same profile, not a new open.
+    @State private var hasCountedOpen = false
 
     private let profileOpenCountKey = "profileOpenCount"
 
@@ -259,6 +262,8 @@ struct PlayerProfileView: View {
             )
         }
         .onAppear {
+            guard !hasCountedOpen else { return }
+            hasCountedOpen = true
             // Defer the first-impression pitch: a user verifying one stat from a
             // group chat shouldn't hit a subscription story before scrolling a
             // single row. Show it from the *second* profile open onward (Pro-only
