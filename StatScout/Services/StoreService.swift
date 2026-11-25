@@ -458,6 +458,18 @@ final class StoreService: NSObject, ObservableObject {
     /// trial copy only appears for users StoreKit will actually grant a trial.
     @Published private(set) var introEligibility: [String: Bool] = [:]
 
+    /// The current offering's metadata, so a running RevenueCat Experiment's
+    /// variant is what `RemoteConfig` reads. Empty until offerings load, which
+    /// reads as every control.
+    @Published private(set) var remoteMetadata: [String: Any] = [:]
+
+    /// The trial button wording arm for this customer.
+    var trialCTA: TrialCTA { TrialCTA.from(metadata: remoteMetadata) }
+
+    func isOn(_ remoteSwitch: RemoteSwitch) -> Bool {
+        RemoteConfig.isOn(remoteSwitch, in: remoteMetadata)
+    }
+
     private var paywallImpressionsThisSession: Set<String> = []
 
     var proPrice: String? {
@@ -503,7 +515,8 @@ final class StoreService: NSObject, ObservableObject {
             return Self.directCTALabel(
                 price: yearly.priceLabel,
                 trial: isEligibleForIntroOffer(yearly) ? yearly.introOfferLabel : nil,
-                isWinback: trigger == .winback
+                isWinback: trigger == .winback,
+                cta: trialCTA
             )
         }
         if let price = proPrice {
@@ -525,10 +538,11 @@ final class StoreService: NSObject, ObservableObject {
     nonisolated static func directCTALabel(
         price: String,
         trial: String?,
-        isWinback: Bool
+        isWinback: Bool,
+        cta: TrialCTA = .sevenDay
     ) -> String {
         if !isWinback, let trial {
-            return "Start \(trial)"
+            return cta.oneTapTitle(trial: trial)
         }
         return "\(isWinback ? "Restart" : "Try") StatScout+ for \(price)"
     }
@@ -538,15 +552,20 @@ final class StoreService: NSObject, ObservableObject {
     /// The billed amount for the selected plan sits on its own `priceLead` line
     /// directly above this button, so repeating it inside the button buys
     /// nothing. Matches the approved Baseball Savvy StatScout ladder verbatim.
-    nonisolated static func planPickerCTALabel(isLifetime: Bool, trialEligible: Bool) -> String {
+    nonisolated static func planPickerCTALabel(
+        isLifetime: Bool,
+        trialEligible: Bool,
+        cta: TrialCTA = .sevenDay
+    ) -> String {
         if isLifetime { return "Unlock Lifetime" }
-        return trialEligible ? "Start Free Trial" : "Subscribe"
+        return trialEligible ? cta.planPickerTitle : "Subscribe"
     }
 
     func planPickerCTALabel(for package: Package) -> String {
         Self.planPickerCTALabel(
             isLifetime: package.productKind == .lifetime,
-            trialEligible: isEligibleForIntroOffer(package) && package.introOfferLabel != nil
+            trialEligible: isEligibleForIntroOffer(package) && package.introOfferLabel != nil,
+            cta: trialCTA
         )
     }
 
@@ -612,7 +631,8 @@ final class StoreService: NSObject, ObservableObject {
         return Self.directCTALabel(
             price: monthly.priceLabel,
             trial: isEligibleForIntroOffer(monthly) ? monthly.introOfferLabel : nil,
-            isWinback: false
+            isWinback: false,
+            cta: trialCTA
         )
     }
 
@@ -694,6 +714,9 @@ final class StoreService: NSObject, ObservableObject {
         if let offering = currentOffering?.identifier {
             attributes["offering_id"] = offering
         }
+        // The wording arm this customer's trial buttons show, so a
+        // `trial_cta` test can be read by attribute too.
+        attributes[TrialCTA.metadataKey] = trialCTA.rawValue
         Purchases.shared.attribution.setAttributes(attributes)
     }
 
@@ -750,6 +773,9 @@ final class StoreService: NSObject, ObservableObject {
             let offerings = try await Purchases.shared.offerings()
             let offering = offerings.paywallOffering
             currentOffering = offering
+            remoteMetadata = offerings.current?.metadata ?? [:]
+            // A pitch seen before the offering landed reported the control arm.
+            syncConversionAttributes()
             let offeringPackages = offering?.sortedPackages ?? []
             products = offeringPackages.isEmpty
                 ? await fetchDirectPackages()

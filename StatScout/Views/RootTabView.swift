@@ -61,13 +61,16 @@ struct RootTabView: View {
     /// moment, with no question of our own first. Apple decides whether to show
     /// it; either way the cooldown starts so we do not ask again soon.
     private func scheduleReviewRequestAfterPositiveMoment() {
-        guard ReviewPromptTracker.shouldRequestAfterPositiveMoment(hasCompletedOnboarding: hasCompletedOnboarding),
+        // RevenueCat's `rating_prompt: off` pauses the asks without a release.
+        guard store.isOn(.ratingPrompt),
+              ReviewPromptTracker.shouldRequestAfterPositiveMoment(hasCompletedOnboarding: hasCompletedOnboarding),
               !reviewRequestedThisSession
         else { return }
 
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 3_500_000_000)
-            guard ReviewPromptTracker.shouldRequestAfterPositiveMoment(hasCompletedOnboarding: hasCompletedOnboarding)
+            guard store.isOn(.ratingPrompt),
+                  ReviewPromptTracker.shouldRequestAfterPositiveMoment(hasCompletedOnboarding: hasCompletedOnboarding)
             else { return }
             reviewRequestedThisSession = true
             ReviewPromptTracker.markRequested()

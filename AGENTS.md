@@ -53,6 +53,9 @@ entitlement `Basketball Pro` (display "StatScout+"), offering `default` with
 `$rc_monthly` / `$rc_annual` / `$rc_lifetime`. Products
 `com.jackwallner.basketball.pro.monthly` ($1.99, 7-day trial),
 `.pro.yearly` ($9.99, 7-day trial), `.pro` lifetime ($19.99).
+Wording tests go through offering metadata `trial_cta` (`seven_day` control, `my`,
+`your`; `StatScout/Services/RemoteConfig.swift`); `rating_prompt: off` pauses the
+star prompt. Set switch keys the same on every offering.
 
 ---
 Shared iOS conventions (build, simulator, release scripts, ASC key, review funnel, signing, gotchas):
